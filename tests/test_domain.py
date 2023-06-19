@@ -44,3 +44,9 @@ def test_poles_square():
         [poles_answer[i] for i in range(len(poles_answer))]
     ).reshape(len(poles_answer), poles_answer[0].shape[1])
     assert np.allclose(poles, poles_answer)
+
+
+if __name__ == "__main__":
+    test_import_domain()
+    test_domain_spacing_rectangle()
+    test_poles_square()

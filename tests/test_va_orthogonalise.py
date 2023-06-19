@@ -69,7 +69,20 @@ def test_large_va_orthongalise():
     assert np.allclose(Q.conj().T @ Q, len(Z) * np.eye(11), atol=1e-10)
 
 
+def test_va_orthogonalise_jit():
+    """Run the jit test works."""
+    from pyls.numerics import va_orthogonalise, va_orthogonalise_jit
+    import numpy as np
+
+    Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100)).reshape(100, 1)
+    hessenbergs_jit, Q_jit = va_orthogonalise_jit(Z, 10)
+    hessenbergs, Q = va_orthogonalise(Z, 10)
+    assert np.allclose(hessenbergs_jit, hessenbergs)
+    assert np.allclose(Q_jit, Q)
+
+
 if __name__ == "__main__":
     test_import_va_orthogonalise()
     test_simple_va_orthogonalise()
     test_large_va_orthongalise()
+    test_va_orthogonalise_jit()

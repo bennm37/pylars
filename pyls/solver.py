@@ -1,4 +1,4 @@
-from pyls.numerics import get_hessenbergs, get_basis_functions
+from pyls.numerics import va_orthogonalise, va_evaluate
 import scipy.linalg as linalg
 import pickle as pkl
 
@@ -27,11 +27,11 @@ class Solver:
 
     def solve(self, pickle=False, filename="solution.pickle"):
         self.check_boundary_conditions()
-        self.hessenbergs = get_hessenbergs(
-            self.boundary_points, self.degree, self.poles
+        self.hessenbergs, self.Q = va_orthogonalise(
+            self.boundary_points, self.degree, self.domain.poles
         )
-        self.basis_functions = get_basis_functions(
-            self.boundary_points, self.hessenbergs
+        self.basis, self.basis_derivatives = va_evaluate(
+            self.boundary_points, self.hessenbergs, self.domain.poles
         )
         self.construct_linear_system()
         results = linalg.lstsq(self.A, self.b)
