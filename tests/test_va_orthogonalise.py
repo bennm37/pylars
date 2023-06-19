@@ -48,22 +48,28 @@ def test_large_va_orthongalise():
     import numpy as np
     from scipy.io import loadmat
 
-    Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100))
+    Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100)).reshape(100, 1)
     H_answer = loadmat("tests/data/VAorthog_circle_H.mat")["H"]
     Q_answer = loadmat("tests/data/VAorthog_circle_Q.mat")["Q"]
     # check matlab input is correct using arnoldi recurrence relation
     for k in range(1, 10):
-        left = np.diag(Z) @ Q_answer[:, :k]
+        left = np.diag(Z.flatten()) @ Q_answer[:, :k]
         right = Q_answer[:, : k + 1] @ H_answer[: k + 1, :k]
         assert np.allclose(left, right, atol=1e-10)
-    Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100))
+    Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100)).reshape(100, 1)
     hessenbergs, Q = va_orthogonalise(Z, 10)
     H = hessenbergs[0]
     assert np.allclose(H, H_answer)
     assert np.allclose(Q, Q_answer)
     for k in range(1, 10):
-        left = np.diag(Z) @ Q[:, :k]
+        left = np.diag(Z.flatten()) @ Q[:, :k]
         right = Q[:, : k + 1] @ H[: k + 1, :k]
         assert np.allclose(left, right, atol=1e-10)
     # check Q has orthogonal columns with norm M
     assert np.allclose(Q.conj().T @ Q, len(Z) * np.eye(11), atol=1e-10)
+
+
+if __name__ == "__main__":
+    test_import_va_orthogonalise()
+    test_simple_va_orthogonalise()
+    test_large_va_orthongalise()

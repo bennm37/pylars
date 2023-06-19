@@ -8,19 +8,20 @@ Raises:
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number
-from pyls.numerics import cart
+from pyls.numerics import cart, cluster
 
 
 class Domain:
     """Create a polygonal domain from a list of corners."""
 
     def __init__(
-        self, corners, num_boundary_points=100, num_poles=24, sigma=4
+        self, corners, num_boundary_points=100, num_poles=24, sigma=4, L=1
     ):
         self.corners = np.array(corners)
         self.num_boundary_points = num_boundary_points
         self.num_poles = num_poles
         self.sigma = sigma
+        self.L = L
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
@@ -48,10 +49,11 @@ class Domain:
         spacing = (
             np.tanh(np.linspace(-16, 16, self.num_boundary_points)) + 1
         ) / 2
+        nc = len(self.corners)
         self.boundary_points = np.array(
             [
-                self.corners[i - 1]
-                + (self.corners[i] - self.corners[i - 1]) * spacing
+                self.corners[i]
+                + (self.corners[(i + 1) % nc] - self.corners[i]) * spacing
                 for i in range(len(self.corners))
             ]
         ).flatten()
@@ -59,11 +61,8 @@ class Domain:
     def generate_poles(self):
         """Generate exponentially clustered lighting poles.
 
-        Poles are clustered using"""
-        pole_spacing = np.exp(
-            self.sigma
-            * (np.sqrt(range(self.num_poles, 1, -1)) - np.sqrt(self.num_poles))
-        )
+        Poles are clustered exponentially."""
+        pole_spacing = cluster(self.num_poles, self.L, self.sigma)
         # find the exterior angle bisector at each corner
         bisectors = np.array(
             [
@@ -99,24 +98,26 @@ class Domain:
                 self.corners[i] + signs[i] * bisectors[i] * pole_spacing
                 for i in range(len(self.corners))
             ]
-        ).flatten()
+        )
 
     def show(self):
         """Display the labelled polygon."""
         fig, ax = plt.subplots()
-        x_min = min(self.poles.real)
-        x_max = max(self.poles.real)
-        y_min = min(self.poles.imag)
-        y_max = max(self.poles.imag)
+        flat_poles = self.poles.flatten()
+        x_min = min(flat_poles.real)
+        x_max = max(flat_poles.real)
+        y_min = min(flat_poles.imag)
+        y_max = max(flat_poles.imag)
         ax.set_xlim(x_min - 0.1, x_max + 0.1)
         ax.set_ylim(y_min - 0.1, y_max + 0.1)
         cartesian_corners = np.array([self.corners.real, self.corners.imag]).T
         polygon = plt.Polygon(cartesian_corners, fill=True, alpha=0.5)
         ax.add_patch(polygon)
         # label each edge of the polygon in order
-        for i in range(len(self.corners)):
-            x = (self.corners[i].real + self.corners[i - 1].real) / 2
-            y = (self.corners[i].imag + self.corners[i - 1].imag) / 2
+        nc = len(self.corners)
+        for i in range(nc):
+            x = (self.corners[(i + 1) % nc].real + self.corners[i].real) / 2
+            y = (self.corners[(i + 1) % nc].imag + self.corners[i].imag) / 2
             ax.text(
                 x,
                 y,
@@ -125,7 +126,7 @@ class Domain:
                 ha="center",
                 va="center",
             )
-        total_points = self.num_boundary_points * len(self.corners)
+        total_points = self.num_boundary_points * nc
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
         print(f"Shape of boundary_points: {self.boundary_points.shape}")
@@ -138,8 +139,8 @@ class Domain:
             s=5,
         )
         ax.scatter(
-            self.poles.real,
-            self.poles.imag,
+            flat_poles.real,
+            flat_poles.imag,
             c="red",
             s=10,
         )
