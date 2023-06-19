@@ -135,11 +135,13 @@ class Domain:
             c=color,
             vmin=0,
             vmax=total_points,
+            s=5,
         )
         ax.scatter(
             self.poles.real,
             self.poles.imag,
             c="red",
+            s=10,
         )
         ax.set_aspect("equal")
         plt.show()

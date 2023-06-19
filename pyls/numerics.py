@@ -2,9 +2,12 @@
 import numpy as np
 
 
-def VA_orthogonalise(basis):
+def va_orthogonalise(Z, n):
     """Orthogonalise the series using the Vandermonde with Arnoldi method."""
-    pass
+    H = np.zeros((n + 1, n), dtype=complex)
+    Q = np.zeros((len(Z), n + 1), dtype=complex)
+    hessenbergs = [H]
+    return hessenbergs, Q
 
 
 def cart(z):

@@ -3,7 +3,8 @@ import numpy as np
 
 # Create a square domain
 corners = [0, 1, 1 + 1j, 1j]
-domain = Domain(corners)
+domain = Domain(corners, num_boundary_points=100)
+print(domain.boundary_points.shape)
 domain.show()
 
 # Create a regular hexagonal domain
