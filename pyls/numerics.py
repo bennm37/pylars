@@ -95,5 +95,5 @@ def va_evaluate(Z, hessenbergs, poles=None):
             )
             / hkk
         ).reshape(m)
-        
+
     return Q, D

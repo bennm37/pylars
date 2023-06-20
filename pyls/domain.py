@@ -12,7 +12,10 @@ from pyls.numerics import cart, cluster
 
 
 class Domain:
-    """Create a polygonal domain from a list of corners."""
+    """Create a polygonal domain from a list of corners.
+    
+    The corners must be in anticlockwise order. 
+    """
 
     def __init__(
         self, corners, num_boundary_points=100, num_poles=24, sigma=4, L=1
@@ -57,6 +60,22 @@ class Domain:
                 for i in range(len(self.corners))
             ]
         ).flatten()
+        self.sides = [str(i) for i in range(len(self.corners))]
+        self.indicies = {
+            side: [
+                i
+                for i in range(
+                    j * self.num_boundary_points,
+                    (j + 1) * self.num_boundary_points,
+                )
+            ]
+            for j, side in enumerate(self.sides)
+        }
+
+    def name_side(self, old, new):
+        """Rename the sides of the polygon."""
+        self.sides[self.sides.index(old)] = new
+        self.indicies[new] = self.indicies.pop(old)
 
     def generate_poles(self):
         """Generate exponentially clustered lighting poles.
