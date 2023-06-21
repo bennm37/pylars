@@ -16,11 +16,18 @@ def test_lid_driven_cavity_dependents():
     sol = Solver(dom, degree=24)
     sol.setup()
     # check basis functions
-    assert np.allclose(sol.basis, basis_answer)
+    assert np.allclose(sol.basis.real, basis_answer.real)
+    assert np.allclose(sol.basis.imag, basis_answer.imag)
     assert np.allclose(sol.basis_derivatives, basis_deriv_answer)
+    assert np.allclose(sol.basis_derivatives.real, basis_deriv_answer.real)
+    assert np.allclose(sol.basis_derivatives.imag, basis_deriv_answer.imag)
     U = sol.U
     V = sol.V
     PSI = sol.stream_fuction
+    # test a block of MATLAB against Python basis 
+    assert np.allclose(U[:, 121:242], sol.basis_derivatives.real)
+    assert np.allclose(U_answer[:, 121:242], basis_deriv_answer.real)
+    assert np.allclose(U[:, 121:242], basis_deriv_answer.real)
     assert np.allclose(U, U_answer)
     assert np.allclose(V, V_answer)
     assert np.allclose(PSI, PSI_answer)

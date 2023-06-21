@@ -27,6 +27,8 @@ def test_small_va_evaluate():
     ).T
     assert np.allclose(basis, Q)
     assert np.allclose(basis_deriv, basis_deriv_answer)
+    assert np.allclose(basis_deriv.real, basis_deriv_answer.real)
+    assert np.allclose(basis_deriv.imag, basis_deriv_answer.imag)
 
 
 def test_large_va_evaluate():
@@ -42,6 +44,10 @@ def test_large_va_evaluate():
     basis_deriv_answer = loadmat("tests/data/VAorthog_circle_R1.mat")["R1"]
     assert np.allclose(basis, basis_answer)
     assert np.allclose(basis_deriv, basis_deriv_answer)
+    assert np.allclose(basis.real, basis_answer.real)
+    assert np.allclose(basis.imag, basis_answer.imag)
+    assert np.allclose(basis_deriv.real, basis_deriv_answer.real)
+    assert np.allclose(basis_deriv.imag, basis_deriv_answer.imag)
 
 
 def test_poles_va_evaluate():
@@ -78,8 +84,10 @@ def test_poles_va_evaluate():
     assert np.allclose(basis[:, :25], basis_answer[:, :25])
     assert np.allclose(basis_deriv[:, :25], basis_deriv_answer[:, :25])
     # check all the basis functions are the same
-    assert np.allclose(basis, basis_answer)
-    assert np.allclose(basis_deriv, basis_deriv_answer)
+    assert np.allclose(basis.real, basis_answer.real)
+    assert np.allclose(basis.imag, basis_answer.imag)
+    assert np.allclose(basis_deriv.real, basis_deriv_answer.real)
+    assert np.allclose(basis_deriv.imag, basis_deriv_answer.imag)
 
 
 if __name__ == "__main__":
