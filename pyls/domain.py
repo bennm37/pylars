@@ -13,8 +13,8 @@ from pyls.numerics import cart, cluster
 
 class Domain:
     """Create a polygonal domain from a list of corners.
-    
-    The corners must be in anticlockwise order. 
+
+    The corners must be in anticlockwise order.
     """
 
     def __init__(

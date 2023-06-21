@@ -3,14 +3,17 @@ from collections.abc import Sequence
 import scipy.linalg as linalg
 import numpy as np
 from scipy.sparse import csr_matrix
+import re
 import pickle as pkl
 
-OPERATIONS = ["+", "-", "*", "/", "^", "(", ")"]
-DEPENDENT = ["psi", "f", "g", "u", "v", "p"]
+OPERATIONS = ["+", "-", "*", "/", "**", "(", ")"]
+DEPENDENT = ["psi", "u", "v", "p"]
 INDEPENDENT = ["x", "y"]
 
 
 class Solver:
+    """Solve lighting stokes problems on a given domain."""
+
     def __init__(self, domain, degree):
         self.domain = domain
         self.check_input()
@@ -55,19 +58,18 @@ class Solver:
                 following = expression[index + len(dependent) :]
                 if not following.startswith("("):
                     raise ValueError(
-                        f"dependent variable {dependent} not evaluated at a side"
+                        f"dependent variable {dependent} not evaluated at a \
+                        side"
                     )
                 following = following[1:]
                 closing = following.index(")")
                 side = following[:closing]
                 if side not in self.domain.sides:
                     raise ValueError(
-                        f"trying to evaluate {dependent} at side {side} but {side} not in domain.sides"
+                        f"trying to evaluate {dependent} at side {side} but \
+                        {side} not in domain.sides"
                     )
                 else:
-                    print(
-                        f"Dependent variable {dependent} is evaluated at side {side}"
-                    )
                     expression = expression.replace(f"{dependent}({side})", "")
 
         for operation in OPERATIONS:
@@ -100,9 +102,29 @@ class Solver:
             )
         return True
 
-    def evaluate(self, expression):
+    def evaluate(self, expression, points):
         """Evaluate the given expression."""
-        pass
+        code_dependent = [
+            "self.stream_fuction",
+            "self.U",
+            "self.V",
+            "self.pressure",
+        ]
+        for identifier, code in zip(DEPENDENT, code_dependent):
+            identifier += "("
+            code += "("
+            expression = expression.replace(identifier, code)
+        for side in self.domain.sides:
+            expression = re.sub(
+                f"\({side}\)", f'[self.domain.indicies["{side}"]]', expression
+            )
+        for identifier, code in zip(
+            INDEPENDENT,
+            ["np.real(points)[:,np.newaxis]", "np.imag(points)[:,np.newaxis]"],
+        ):
+            expression = expression.replace(identifier, code)
+        result = eval(expression)
+        return result
 
     def apply_boundary_conditions(self):
         """Apply the boundary conditions to the linear system."""
@@ -136,7 +158,22 @@ class Solver:
     def check_input(self):
         pass
 
+    def setup(self):
+        """Get basis functions and derivatives and dependent variables."""
+        self.hessenbergs, self.Q = va_orthogonalise(
+            self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles
+        )
+        self.basis, self.basis_derivatives = va_evaluate(
+            self.boundary_points.reshape(-1, 1),
+            self.hessenbergs,
+            self.domain.poles,
+        )
+        self.get_dependents()
+
     def solve(self, pickle=False, filename="solution.pickle"):
+        """Setup the solver and solve the least squares problem.
+
+        Reutrns the functions as a list of functions."""
         self.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points, self.degree, self.domain.poles
@@ -154,23 +191,40 @@ class Solver:
         return self.functions
 
     def construct_linear_system(self):
+        # TODO this could move into solve for conciseness
         """Use the basis functions to construct the linear system.
 
         Uses the boundary condition dictionary to construct the linear system
         with the basis functions from va_evaluate.
         """
-        self.get_physical_quantities()
+        self.get_dependents()
         m = len(self.boundary_points)
         n = self.basis.shape[1]
         A1, A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
         b1, b2 = np.zeros((m)), np.zeros((m))
-        # set the boundary conditions
-
+        self.apply_boundary_conditions()
         self.A = np.vstack((A1, A2))
         self.b = np.vstack((b1, b2))
 
-    def get_physical_quantities(self):
-        """Return the physical quantities of the solution.
+    def constuct_functions(self):
+        """Construct the functions from the coefficients."""
+        m = len(self.boundary_points)
+        f_real = self.coefficients[: m + 1]
+        f_imag = self.coefficients[m + 1 : 2 * m + 1]
+        g_real = self.coefficients[2 * m + 1 : 3 * m + 1]
+        g_imag = self.coefficients[3 * m + 1 :]
+        f_coefficients = f_real + 1j * f_imag
+        g_coefficients = g_real + 1j * g_imag
+        f = self.basis @ f_coefficients
+        g = self.basis @ g_coefficients
+        psi = np.imag(np.conj(self.boundary_points) * (f + 1j * g) + g)
+        uv = self.boundary_points * np.conj(f) - f + np.conj(g)
+        p = np.real(4 * np.conj(self.boundary_points) * f)
+        omega = np.imag(-4 * np.conj(self.boundary_points) * f)
+        return [f, g, psi, uv, p, omega]
+
+    def get_dependents(self):
+        """Create the dependent variable arrays.
 
         Uses the basis to construct the physical quantities needed to
         set boundary conditions.
@@ -201,7 +255,7 @@ class Solver:
 
         p_1 = np.real(4 * basis_deriv)
         p_2 = -np.imag(4 * basis_deriv)
-        p_3 = np.zeros_likes(p_1)
+        p_3 = np.zeros_like(p_1)
         self.pressure = np.hstack((p_1, p_2, p_3, p_3))
 
         s_1 = np.imag(z_conj @ basis)
