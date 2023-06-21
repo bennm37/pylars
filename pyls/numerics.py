@@ -16,6 +16,14 @@ def cluster(num_points, L, sigma):
     return pole_spacing
 
 
+def function_handle(self, name):
+    match name:
+        case "uv":
+            return 1
+        case "p":
+            return 1
+
+
 # @njit
 def va_orthogonalise(Z, n, poles=None):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.
@@ -39,6 +47,21 @@ def va_orthogonalise(Z, n, poles=None):
         H[k + 1, k] = np.linalg.norm(q) / np.sqrt(m)
         Q[:, k + 1] = (q / H[k + 1, k]).reshape(m)
     hessenbergs = [H]
+    if poles is not None:
+        for pole_group in poles:
+            Hp = np.zeros((n + 1, n), dtype=complex)
+            Qp = np.zeros((m, n + 1), dtype=complex)
+            qp = np.ones(len(Z)).reshape(m, 1)
+            Qp[:, 0] = qp.reshape(m)
+            for k in range(n):
+                qp = Qp[:, k].reshape(m, 1) / (Z - pole_group[k])
+                for j in range(k + 1):
+                    Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
+                    qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
+                Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
+                Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
+            hessenbergs += [Hp]
+            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
     return hessenbergs, Q
 
 
@@ -95,5 +118,32 @@ def va_evaluate(Z, hessenbergs, poles=None):
             )
             / hkk
         ).reshape(m)
-
+    if poles is not None:
+        for i, pole_group in enumerate(poles):
+            Hp = hessenbergs[i + 1]
+            Qp = np.zeros((m, n + 1), dtype=complex)
+            Dp = np.zeros((m, n + 1), dtype=complex)
+            Qp[:, 0] = np.ones(m)
+            for k in range(n):
+                hkk = Hp[k + 1, k]
+                Z_pole = 1 / (Z - pole_group[k])
+                Qp[:, k + 1] = (
+                    (
+                        Z_pole * Qp[:, k].reshape(m, 1)
+                        - Qp[:, : k + 1].reshape(m, k + 1)
+                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                    )
+                    / hkk
+                ).reshape(m)
+                Dp[:, k + 1] = (
+                    (
+                        Z_pole * Dp[:, k].reshape(m, 1)
+                        - Dp[:, : k + 1].reshape(m, k + 1)
+                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                        - Z_pole**2 * Qp[:, k].reshape(m, 1)
+                    )
+                    / hkk
+                ).reshape(m)
+            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
+            D = np.concatenate((D, Dp[:, 1:]), axis=1)
     return Q, D

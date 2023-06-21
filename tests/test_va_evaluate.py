@@ -44,7 +44,46 @@ def test_large_va_evaluate():
     assert np.allclose(basis_deriv, basis_deriv_answer)
 
 
+def test_poles_va_evaluate():
+    """Test the va_orthogonalise with poles against the MATLAB code."""
+    from pyls.numerics import va_orthogonalise, va_evaluate
+    from pyls import Domain
+    import numpy as np
+    from scipy.io import loadmat
+
+    Z_answer = loadmat("tests/data/lid_driven_cavity_Z.mat")["Z"]
+    poles_answer = loadmat("tests/data/lid_driven_cavity_Pol.mat")["Pol"]
+    poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
+        4, 24
+    )
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(
+        corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
+    )
+    # check the MATALB domain points and poles are the same
+    # check the polynomial coefficients are the same
+    assert np.allclose(dom.boundary_points, Z_answer)
+    assert np.allclose(dom.boundary_points, Z_answer)
+    assert np.allclose(dom.poles, poles_answer)
+
+    basis_answer = loadmat("tests/data/lid_driven_cavity_R0.mat")["R0"]
+    basis_deriv_answer = loadmat("tests/data/lid_driven_cavity_R1.mat")["R1"]
+    hessenbergs, Q = va_orthogonalise(
+        dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
+    )
+    basis, basis_deriv = va_evaluate(
+        dom.boundary_points, hessenbergs, poles=dom.poles
+    )
+    # check the polynomial basis is the same
+    assert np.allclose(basis[:, :25], basis_answer[:, :25])
+    assert np.allclose(basis_deriv[:, :25], basis_deriv_answer[:, :25])
+    # check all the basis functions are the same
+    assert np.allclose(basis, basis_answer)
+    assert np.allclose(basis_deriv, basis_deriv_answer)
+
+
 if __name__ == "__main__":
     test_import_va_evaluate()
     test_small_va_evaluate()
     test_large_va_evaluate()
+    test_poles_va_evaluate()

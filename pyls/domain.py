@@ -59,7 +59,7 @@ class Domain:
                 + (self.corners[(i + 1) % nc] - self.corners[i]) * spacing
                 for i in range(len(self.corners))
             ]
-        ).flatten()
+        ).reshape(-1, 1)
         self.sides = [str(i) for i in range(len(self.corners))]
         self.indicies = {
             side: [
