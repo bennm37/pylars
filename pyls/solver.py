@@ -116,7 +116,7 @@ class Solver:
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\({side}\)", f'[self.domain.indicies["{side}"]]', expression
+                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression
             )
         for identifier, code in zip(
             INDEPENDENT,
@@ -131,15 +131,15 @@ class Solver:
         self.check_boundary_conditions()
         for side in self.boundary_conditions.keys():
             expression1, value1 = self.boundary_conditions[side][0]
-            self.A1[self.domain.get_indicies(side)] = self.evaluate(
-                expression1
+            self.A1[self.domain.indices[side]] = self.evaluate(
+                expression1, self.boundary_points[int(side)]
             )
-            self.b1 = value1
+            self.b1[self.domain.indices[side]] = value1
             expression2, value2 = self.boundary_conditions[side][1]
-            self.A2[self.domain.get_indicies(side)] = self.evaluate(
-                expression2
+            self.A2[self.domain.indices[side]] = self.evaluate(
+                expression2, self.boundary_points[int(side)]
             )
-            self.b2 = value2
+            self.b2[self.domain.indices[side]] = value2
 
     def check_boundary_conditions(self):
         """Check that the boundary conditions are valid."""
@@ -200,11 +200,11 @@ class Solver:
         self.get_dependents()
         m = len(self.boundary_points)
         n = self.basis.shape[1]
-        A1, A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
-        b1, b2 = np.zeros((m)), np.zeros((m))
+        self.A1, self.A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
+        self.b1, self.b2 = np.zeros((m)), np.zeros((m))
         self.apply_boundary_conditions()
-        self.A = np.vstack((A1, A2))
-        self.b = np.vstack((b1, b2))
+        self.A = np.vstack((self.A1, self.A2))
+        self.b = np.vstack((self.b1.reshape(m, 1), self.b2.reshape(m, 1)))
 
     def constuct_functions(self):
         """Construct the functions from the coefficients."""

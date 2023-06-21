@@ -61,7 +61,7 @@ class Domain:
             ]
         ).reshape(-1, 1)
         self.sides = [str(i) for i in range(len(self.corners))]
-        self.indicies = {
+        self.indices = {
             side: [
                 i
                 for i in range(
@@ -75,7 +75,7 @@ class Domain:
     def name_side(self, old, new):
         """Rename the sides of the polygon."""
         self.sides[self.sides.index(old)] = new
-        self.indicies[new] = self.indicies.pop(old)
+        self.indices[new] = self.indices.pop(old)
 
     def generate_poles(self):
         """Generate exponentially clustered lighting poles.
