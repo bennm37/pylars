@@ -221,6 +221,17 @@ class Solver:
         sparse_row_weights = diags(row_weights.reshape(-1))
         self.A = sparse_row_weights @ self.A
         self.b = sparse_row_weights @ self.b
+        row_weights = np.min(
+            np.abs(
+                self.boundary_points.reshape(-1)[:, np.newaxis]
+                - self.domain.corners[np.newaxis, :]
+            ),
+            axis=1,
+        ).reshape(m, 1)
+        row_weights = np.vstack([row_weights, row_weights])
+        sparse_row_weights = diags(row_weights.reshape(-1))
+        self.A = sparse_row_weights @ self.A
+        self.b = sparse_row_weights @ self.b
 
     def get_dependents(self):
         """Create the dependent variable arrays.

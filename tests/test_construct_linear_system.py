@@ -69,6 +69,33 @@ def test_lid_driven_cavity_linear_system():
     assert np.allclose(A, A_answer)
     assert np.allclose(b, b_answer)
 
+def test_row_weighting():
+    from pyls import Domain, Solver
+    import numpy as np
+    from scipy.io import loadmat
+    
+    n = 24
+    num_poles = 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    A_standard = test_answers["A_standard"]
+    rhs_standard = test_answers["rhs_standard"]
+    A_weighted = test_answers["A_weighted"]
+    rhs_weighted = test_answers["rhs_weighted"]
+    Z = test_answers["Z"]
+    corners = test_answers["w"]
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
+    assert np.allclose(dom.corners, corners, atol=1e-15)
+    assert np.allclose(dom.boundary_points, Z, atol=1e-15)
+    sol = Solver(dom, degree=24)
+    sol.A = A_standard
+    sol.b = rhs_standard
+    sol.weight_rows()
+    assert np.allclose(sol.A, A_weighted)
+    assert np.allclose(sol.b, rhs_weighted)
+
 
 def test_row_weighting():
     from pyls import Domain, Solver

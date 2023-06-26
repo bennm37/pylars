@@ -25,7 +25,11 @@ Z_answer = test_answers["Z"]
 basis = test_answers["R0"]
 basis_deriv = test_answers["R1"]
 hessenbergs = test_answers["Hes"]
+<<<<<<< HEAD
 hessenbergs = [hessenbergs[0, i] for i in range(5)]
+=======
+hessenbergs = [hessenbergs[0,i] for i in range(5)]
+>>>>>>> b48bd9247577410490e3e5df3ee5859868495e29
 sol.basis = basis
 sol.basis_derivatives = basis_deriv
 sol.hessenbergs = hessenbergs
@@ -46,4 +50,8 @@ fig, ax = plt.subplots()
 ax.pcolor(X, Y, np.abs(uv_100_100), cmap="jet")
 ax.contour(X, Y, psi_100_100, colors="k", levels=20)
 ax.set_aspect("equal")
+<<<<<<< HEAD
 plt.show()
+=======
+plt.show()
+>>>>>>> b48bd9247577410490e3e5df3ee5859868495e29
