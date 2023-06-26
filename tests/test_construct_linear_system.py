@@ -3,11 +3,16 @@ def test_lid_driven_cavity_dependents():
     from pyls import Domain, Solver
     import numpy as np
 
-    basis_answer = loadmat("tests/data/lid_driven_cavity_R0.mat")["R0"]
-    basis_deriv_answer = loadmat("tests/data/lid_driven_cavity_R1.mat")["R1"]
-    PSI_answer = loadmat("tests/data/lid_driven_cavity_PSI.mat")["PSI"]
-    U_answer = loadmat("tests/data/lid_driven_cavity_U.mat")["U"]
-    V_answer = loadmat("tests/data/lid_driven_cavity_V.mat")["V"]
+    n = 24
+    num_poles = 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    basis_answer = test_answers["R0"]
+    basis_deriv_answer = test_answers["R1"]
+    PSI_answer = test_answers["PSI"]
+    U_answer = test_answers["U"]
+    V_answer = test_answers["V"]
 
     # set up lid driven cavity problem
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
@@ -24,7 +29,7 @@ def test_lid_driven_cavity_dependents():
     U = sol.U
     V = sol.V
     PSI = sol.stream_fuction
-    # test a block of MATLAB against Python basis 
+    # test a block of MATLAB against Python basis
     assert np.allclose(U[:, 121:242], sol.basis_derivatives.real)
     assert np.allclose(U_answer[:, 121:242], basis_deriv_answer.real)
     assert np.allclose(U[:, 121:242], basis_deriv_answer.real)
@@ -65,6 +70,35 @@ def test_lid_driven_cavity_linear_system():
     assert np.allclose(b, b_answer)
 
 
+def test_row_weighting():
+    from pyls import Domain, Solver
+    import numpy as np
+    from scipy.io import loadmat
+
+    n = 24
+    num_poles = 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    A_standard = test_answers["A_standard"]
+    rhs_standard = test_answers["rhs_standard"]
+    A_weighted = test_answers["A_weighted"]
+    rhs_weighted = test_answers["rhs_weighted"]
+    Z = test_answers["Z"]
+    corners = test_answers["w"]
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
+    assert np.allclose(dom.corners, corners, atol=1e-15)
+    assert np.allclose(dom.boundary_points, Z, atol=1e-15)
+    sol = Solver(dom, degree=24)
+    sol.A = A_standard
+    sol.b = rhs_standard
+    sol.weight_rows()
+    assert np.allclose(sol.A, A_weighted)
+    assert np.allclose(sol.b, rhs_weighted)
+
+
 if __name__ == "__main__":
-    test_lid_driven_cavity_dependents()
-    test_lid_driven_cavity_linear_system()
+    # test_lid_driven_cavity_dependents()
+    test_row_weighting()
+    # test_lid_driven_cavity_linear_system()
