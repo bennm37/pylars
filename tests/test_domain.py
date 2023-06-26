@@ -1,4 +1,5 @@
 """Test the domain module."""
+ATOL, RTOL = 0, 1e-5
 
 
 def test_import_domain():
@@ -16,7 +17,7 @@ def test_domain_spacing_rectangle():
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     dom = Domain(corners, num_boundary_points=100)
-    assert np.allclose(dom.boundary_points[0], 1 + 1j)
+    assert np.allclose(dom.boundary_points[0], 1 + 1j, atol=ATOL, rtol=RTOL)
     # check the points move anticlockwise around the domain
     # using the cross prodcut.
     for i in range(1, len(dom.boundary_points) - 1):
@@ -43,7 +44,7 @@ def test_poles_square():
     poles_answer = np.array(
         [poles_answer[i] for i in range(len(poles_answer))]
     ).reshape(len(poles_answer), poles_answer[0].shape[1])
-    assert np.allclose(poles, poles_answer)
+    assert np.allclose(poles, poles_answer, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":

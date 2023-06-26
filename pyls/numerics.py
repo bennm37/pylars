@@ -31,6 +31,7 @@ def split(coefficients):
     )
     return cf, cg
 
+
 # def split(coefficients):
 #     """Split the coefficients for f and g."""
 #     num_coeff = len(coefficients) // 4

@@ -27,7 +27,9 @@ psi_100_100 = psi(Z.flatten()).reshape(100, 100)
 uv_100_100 = uv(Z.flatten()).reshape(100, 100)
 # plot the velocity magnitude
 fig, ax = plt.subplots()
-ax.pcolor(X, Y, np.abs(uv_100_100), cmap="jet")
+# interpolate using bilinear interpolation
+speed = np.abs(uv_100_100)
+ax.pcolormesh(X, Y, np.abs(uv_100_100), cmap="jet")
 ax.contour(X, Y, psi_100_100, colors="k", levels=20)
 ax.set_aspect("equal")
 plt.show()

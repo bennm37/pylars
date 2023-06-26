@@ -1,3 +1,7 @@
+"""Test solver functions."""
+ATOL, RTOL = 0, 1e-5
+
+
 def test_create_functions():
     from scipy.io import loadmat
     from pyls.numerics import make_function
@@ -16,7 +20,7 @@ def test_create_functions():
     p_100_100_answer = test_answers["p_100_100"]
     uv_100_100_answer = test_answers["uv_100_100"]
     omega_100_100_answer = test_answers["omega_100_100"]
-    
+
     def psi(Z):
         return make_function("psi", Z, c, Hes, Pol)
 
@@ -36,14 +40,30 @@ def test_create_functions():
     p_100_100 = p(Z)
     uv_100_100 = uv(Z)
     omega_100_100 = omega(Z)
-    assert np.allclose(psi_100_100.real, psi_100_100_answer.real)
-    assert np.allclose(psi_100_100.imag, psi_100_100_answer.imag)
-    assert np.allclose(p_100_100.real, p_100_100_answer.real)
-    assert np.allclose(p_100_100.imag, p_100_100_answer.imag)
-    assert np.allclose(uv_100_100.real, uv_100_100_answer.real)
-    assert np.allclose(uv_100_100.imag, uv_100_100_answer.imag)
-    assert np.allclose(omega_100_100.real, omega_100_100_answer.real)
-    assert np.allclose(omega_100_100.imag, omega_100_100_answer.imag)
+    assert np.allclose(
+        psi_100_100.real, psi_100_100_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        psi_100_100.imag, psi_100_100_answer.imag, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        p_100_100.real, p_100_100_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        p_100_100.imag, p_100_100_answer.imag, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        uv_100_100.real, uv_100_100_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        uv_100_100.imag, uv_100_100_answer.imag, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        omega_100_100.real, omega_100_100_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        omega_100_100.imag, omega_100_100_answer.imag, atol=ATOL, rtol=RTOL
+    )
 
 
 def test_solve():
