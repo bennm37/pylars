@@ -19,16 +19,30 @@ def cluster(num_points, L, sigma):
 
 def split(coefficients):
     """Split the coefficients for f and g."""
+    # TODO check this is consitent with the dependent matricies.
     num_coeff = len(coefficients) // 4
     cf = (
-        coefficients[: 2 * num_coeff : 2]
-        + 1j * coefficients[2 * num_coeff :: 2]
+        coefficients[:num_coeff]
+        + 1j * coefficients[2 * num_coeff : 3 * num_coeff]
     )
     cg = (
-        coefficients[1 : 2 * num_coeff + 1 : 2]
-        + 1j * coefficients[2 * num_coeff + 1 :: 2]
+        coefficients[num_coeff : 2 * num_coeff]
+        + 1j * coefficients[3 * num_coeff :]
     )
     return cf, cg
+
+# def split(coefficients):
+#     """Split the coefficients for f and g."""
+#     num_coeff = len(coefficients) // 4
+#     cf = (
+#         coefficients[: 2 * num_coeff : 2]
+#         + 1j * coefficients[2 * num_coeff :: 2]
+#     )
+#     cg = (
+#         coefficients[1 : 2 * num_coeff + 1 : 2]
+#         + 1j * coefficients[2 * num_coeff + 1 :: 2]
+#     )
+#     return cf, cg
 
 
 def make_function(name, z, coefficients, hessenbergs, poles):

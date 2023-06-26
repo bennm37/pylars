@@ -37,7 +37,6 @@ basis, basis_deriv = va_evaluate(
 )
 # see how the error gets worse
 column_error = np.linalg.norm(np.abs(basis - basis_answer), axis=0)
-<<<<<<< HEAD
 column_deriv_error = np.linalg.norm(
     np.abs(basis_deriv - basis_deriv_answer), axis=0
 )
@@ -45,10 +44,3 @@ fig, ax = plt.subplots(1, 2)
 ax[0].semilogy(column_error)
 ax[1].semilogy(column_deriv_error)
 plt.show()
-=======
-column_deriv_error = np.linalg.norm(np.abs(basis_deriv - basis_deriv_answer), axis=0)
-fig, ax = plt.subplots(1, 2)
-ax[0].semilogy(column_error)
-ax[1].semilogy(column_deriv_error)
-plt.show()
->>>>>>> b48bd9247577410490e3e5df3ee5859868495e29

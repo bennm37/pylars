@@ -105,7 +105,7 @@ class Solver:
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
         code_dependent = [
-            "self.stream_fuction",
+            "self.stream_function",
             "self.U",
             "self.V",
             "self.pressure",
@@ -181,7 +181,9 @@ class Solver:
         self.basis, self.basis_derivatives = va_evaluate(
             self.boundary_points, self.hessenbergs, self.domain.poles
         )
+        self.get_dependents()
         self.construct_linear_system()
+        self.weight_rows()
         self.results = linalg.lstsq(self.A, self.b)
         self.coefficients = self.results[0]
         self.residuals = self.results[1]
@@ -197,7 +199,6 @@ class Solver:
         Uses the boundary condition dictionary to construct the linear system
         with the basis functions from va_evaluate.
         """
-        self.get_dependents()
         m = len(self.boundary_points)
         n = self.basis.shape[1]
         self.A1, self.A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
@@ -205,22 +206,10 @@ class Solver:
         self.apply_boundary_conditions()
         self.A = np.vstack((self.A1, self.A2))
         self.b = np.vstack((self.b1.reshape(m, 1), self.b2.reshape(m, 1)))
-        self.weight_rows()
 
     def weight_rows(self):
         # weight the rows by the distance to the nearest corner
         m = len(self.boundary_points)
-        row_weights = np.min(
-            np.abs(
-                self.boundary_points.reshape(-1)[:, np.newaxis]
-                - self.domain.corners[np.newaxis, :]
-            ),
-            axis=1,
-        ).reshape(m, 1)
-        row_weights = np.vstack([row_weights, row_weights])
-        sparse_row_weights = diags(row_weights.reshape(-1))
-        self.A = sparse_row_weights @ self.A
-        self.b = sparse_row_weights @ self.b
         row_weights = np.min(
             np.abs(
                 self.boundary_points.reshape(-1)[:, np.newaxis]
@@ -273,7 +262,7 @@ class Solver:
         s_2 = np.imag(basis)
         s_3 = np.real(z_conj @ basis)
         s_4 = np.real(basis)
-        self.stream_fuction = np.hstack((s_1, s_2, s_3, s_4))
+        self.stream_function = np.hstack((s_1, s_2, s_3, s_4))
 
     def pickle_solutions(self, filename):
         with open(filename, "wb") as f:

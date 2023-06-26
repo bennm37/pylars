@@ -96,17 +96,21 @@ def test_large_poles_va_evaluate():
     import numpy as np
     from scipy.io import loadmat
 
-    test_answers = loadmat("tests/data/lid_driven_cavity.mat")
+    n = 24
+    num_poles = 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
     Z_answer = test_answers["Z"]
     poles_answer = test_answers["Pol"]
     basis_answer = test_answers["R0"]
     basis_deriv_answer = test_answers["R1"]
     poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
-        4, 24
+        4, num_poles
     )
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     dom = Domain(
-        corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
+        corners, num_poles=num_poles, num_boundary_points=300, L=np.sqrt(2) * 1.5
     )
     # check the MATALB domain points and poles are the same
     # check the polynomial coefficients are the same
@@ -115,7 +119,7 @@ def test_large_poles_va_evaluate():
     assert np.allclose(dom.poles, poles_answer)
 
     hessenbergs, Q = va_orthogonalise(
-        dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
+        dom.boundary_points.reshape(1200, 1), n, poles=dom.poles
     )
     basis, basis_deriv = va_evaluate(
         dom.boundary_points, hessenbergs, poles=dom.poles

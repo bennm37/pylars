@@ -3,23 +3,20 @@ def test_create_functions():
     from pyls.numerics import make_function
     import numpy as np
 
-    Z = loadmat("tests/data/lid_driven_cavity_Z.mat")["Z"]
-    Hes = loadmat("tests/data/lid_driven_cavity_Hes.mat")["Hes"]
-    Pol = loadmat("tests/data/lid_driven_cavity_Pol.mat")["Pol"]
-    c = loadmat("tests/data/lid_driven_cavity_c.mat")["c"]
-    psi_100_100_answer = loadmat(
-        "tests/data/lid_driven_cavity_psi_100_100.mat"
-    )["psi_100_100"]
-    p_100_100_answer = loadmat("tests/data/lid_driven_cavity_p_100_100.mat")[
-        "p_100_100"
-    ]
-    uv_100_100_answer = loadmat("tests/data/lid_driven_cavity_uv_100_100.mat")[
-        "uv_100_100"
-    ]
-    omega_100_100_answer = loadmat(
-        "tests/data/lid_driven_cavity_omega_100_100.mat"
-    )["omega_100_100"]
-
+    n = 24
+    num_poles = 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    Z = test_answers["Z"]
+    Hes = test_answers["Hes"]
+    Pol = test_answers["Pol"]
+    c = test_answers["c"]
+    psi_100_100_answer = test_answers["psi_100_100"]
+    p_100_100_answer = test_answers["p_100_100"]
+    uv_100_100_answer = test_answers["uv_100_100"]
+    omega_100_100_answer = test_answers["omega_100_100"]
+    
     def psi(Z):
         return make_function("psi", Z, c, Hes, Pol)
 
