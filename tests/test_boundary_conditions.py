@@ -71,7 +71,7 @@ def test_evaluate_expression():
     sol.validate(expression)
     result = sol.evaluate(expression, 1j * np.linspace(0, 99, 100))
     y = np.linspace(0, 99, 100)
-    expected = sol.U[dom.indicies["0"]] - (y * (1 - y))[:, np.newaxis]
+    expected = sol.U[dom.indices["0"]] - (y * (1 - y))[:, np.newaxis]
     assert np.allclose(result, expected)
 
 

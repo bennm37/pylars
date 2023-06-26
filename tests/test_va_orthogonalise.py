@@ -76,11 +76,15 @@ def test_poles_va_orhtogonalise():
     import numpy as np
     from scipy.io import loadmat
 
-    H_answer = loadmat("tests/data/lid_driven_cavity_Hes.mat")["Hes"]
+    n, num_poles = 24, 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    H_answer = test_answers["Hes"]
     hessenbergs_answer = [H_answer[:, k][0] for k in range(H_answer.shape[1])]
-    Q_answer = loadmat("tests/data/lid_driven_cavity_Q.mat")["Q"]
-    Z_answer = loadmat("tests/data/lid_driven_cavity_Z.mat")["Z"]
-    poles_answer = loadmat("tests/data/lid_driven_cavity_Pol.mat")["Pol"]
+    Q_answer = test_answers["Q"]
+    Z_answer = test_answers["Z"]
+    poles_answer = test_answers["Pol"]
     poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
         4, 24
     )

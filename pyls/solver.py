@@ -1,8 +1,8 @@
-from pyls.numerics import va_orthogonalise, va_evaluate
+from pyls.numerics import va_orthogonalise, va_evaluate, make_function
 from collections.abc import Sequence
 import scipy.linalg as linalg
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import diags
 import re
 import pickle as pkl
 
@@ -182,9 +182,9 @@ class Solver:
             self.boundary_points, self.hessenbergs, self.domain.poles
         )
         self.construct_linear_system()
-        results = linalg.lstsq(self.A, self.b)
-        self.coefficients = results[0]
-        self.residuals = results[1]
+        self.results = linalg.lstsq(self.A, self.b)
+        self.coefficients = self.results[0]
+        self.residuals = self.results[1]
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
@@ -205,23 +205,22 @@ class Solver:
         self.apply_boundary_conditions()
         self.A = np.vstack((self.A1, self.A2))
         self.b = np.vstack((self.b1.reshape(m, 1), self.b2.reshape(m, 1)))
-
-    def constuct_functions(self):
-        """Construct the functions from the coefficients."""
+        self.weight_rows()
+    
+    def weight_rows(self):
+        # weight the rows by the distance to the nearest corner
         m = len(self.boundary_points)
-        f_real = self.coefficients[: m + 1]
-        f_imag = self.coefficients[m + 1 : 2 * m + 1]
-        g_real = self.coefficients[2 * m + 1 : 3 * m + 1]
-        g_imag = self.coefficients[3 * m + 1 :]
-        f_coefficients = f_real + 1j * f_imag
-        g_coefficients = g_real + 1j * g_imag
-        f = self.basis @ f_coefficients
-        g = self.basis @ g_coefficients
-        psi = np.imag(np.conj(self.boundary_points) * (f + 1j * g) + g)
-        uv = self.boundary_points * np.conj(f) - f + np.conj(g)
-        p = np.real(4 * np.conj(self.boundary_points) * f)
-        omega = np.imag(-4 * np.conj(self.boundary_points) * f)
-        return [f, g, psi, uv, p, omega]
+        row_weights = np.min(
+            np.abs(
+                self.boundary_points.reshape(-1)[:, np.newaxis]
+                - self.domain.corners[np.newaxis, :]
+            ),
+            axis=1,
+        ).reshape(m, 1)
+        row_weights = np.vstack([row_weights, row_weights])
+        sparse_row_weights = diags(row_weights.reshape(-1))
+        self.A = sparse_row_weights @ self.A
+        self.b = sparse_row_weights @ self.b
 
     def get_dependents(self):
         """Create the dependent variable arrays.
@@ -269,5 +268,33 @@ class Solver:
         with open(filename, "wb") as f:
             pkl.dump(self.functions, f)
 
-    def construct_functions(self, basis_functions):
-        pass
+    def construct_functions(self):
+        def psi(z):
+            return make_function(
+                "psi",
+                z,
+                self.coefficients,
+                self.hessenbergs,
+                self.domain.poles,
+            )
+
+        def uv(z):
+            return make_function(
+                "uv", z, self.coefficients, self.hessenbergs, self.domain.poles
+            )
+
+        def p(z):
+            return make_function(
+                "p", z, self.coefficients, self.hessenbergs, self.domain.poles
+            )
+
+        def omega(z):
+            return make_function(
+                "omega",
+                z,
+                self.coefficients,
+                self.hessenbergs,
+                self.domain.poles,
+            )
+
+        return psi, uv, p, omega

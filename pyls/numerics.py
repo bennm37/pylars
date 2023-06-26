@@ -1,6 +1,7 @@
 """Numerical methods for solving the linear system."""
 import numpy as np
 from numba import njit
+from numbers import Number
 
 
 def cart(z):
@@ -16,12 +17,42 @@ def cluster(num_points, L, sigma):
     return pole_spacing
 
 
-def function_handle(self, name):
+def split(coefficients):
+    """Split the coefficients for f and g."""
+    num_coeff = len(coefficients) // 4
+    cf = (
+        coefficients[: 2 * num_coeff : 2]
+        + 1j * coefficients[2 * num_coeff :: 2]
+    )
+    cg = (
+        coefficients[1 : 2 * num_coeff + 1 : 2]
+        + 1j * coefficients[2 * num_coeff + 1 :: 2]
+    )
+    return cf, cg
+
+
+def make_function(name, z, coefficients, hessenbergs, poles):
+    """Make a function with the given name."""
+    z = np.array([z]).reshape(-1, 1)
+    basis, basis_deriv = va_evaluate(z, hessenbergs, poles)
+    cf, cg = split(coefficients)
     match name:
+        case "f":
+            return basis @ cf
+        case "g":
+            return basis @ cg
+        case "psi":
+            return np.imag(np.conj(z) * (basis @ cf) + basis @ cg)
         case "uv":
-            return 1
+            return (
+                z * np.conj(basis_deriv @ cf)
+                - basis @ cf
+                + np.conj(basis_deriv @ cg)
+            )
         case "p":
-            return 1
+            return np.real(4 * basis_deriv @ cf)
+        case "omega":
+            return np.imag(-4 * basis_deriv @ cf)
 
 
 # @njit
@@ -35,8 +66,8 @@ def va_orthogonalise(Z, n, poles=None):
     if Z.shape[1] != 1:
         raise ValueError("Z must be a column vector")
     m = len(Z)
-    H = np.zeros((n + 1, n), dtype=complex)
-    Q = np.zeros((m, n + 1), dtype=complex)
+    H = np.zeros((n + 1, n), dtype=np.complex128)
+    Q = np.zeros((m, n + 1), dtype=np.complex128)
     q = np.ones(len(Z)).reshape(m, 1)
     Q[:, 0] = q.reshape(m)
     for k in range(n):
@@ -49,11 +80,12 @@ def va_orthogonalise(Z, n, poles=None):
     hessenbergs = [H]
     if poles is not None:
         for pole_group in poles:
-            Hp = np.zeros((n + 1, n), dtype=complex)
-            Qp = np.zeros((m, n + 1), dtype=complex)
-            qp = np.ones(len(Z)).reshape(m, 1)
+            num_poles = len(pole_group)
+            Hp = np.zeros((num_poles + 1, num_poles), dtype=np.complex128)
+            Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
+            qp = np.ones(m).reshape(m, 1)
             Qp[:, 0] = qp.reshape(m)
-            for k in range(n):
+            for k in range(num_poles):
                 qp = Qp[:, k].reshape(m, 1) / (Z - pole_group[k])
                 for j in range(k + 1):
                     Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
@@ -95,9 +127,18 @@ def va_evaluate(Z, hessenbergs, poles=None):
     """Construct the basis and its derivatives."""
     H = hessenbergs[0]
     n = H.shape[1]
-    m = len(Z)
-    Q = np.zeros((m, n + 1), dtype=complex)
-    D = np.zeros((m, n + 1), dtype=complex)
+    if isinstance(Z, np.ndarray):
+        m = len(Z)
+        if m != Z.shape[0]:
+            raise ValueError("Z must be a column vector")
+        Z = Z.reshape(-1, 1)
+    elif isinstance(Z, Number):
+        m = 1
+        Z = np.array([Z]).reshape(1, 1)
+    else:
+        raise TypeError("Z must be a numpy array or a number")
+    Q = np.zeros((m, n + 1), dtype=np.complex128)
+    D = np.zeros((m, n + 1), dtype=np.complex128)
     Q[:, 0] = np.ones(m)
     for k in range(n):
         hkk = H[k + 1, k]
@@ -120,11 +161,12 @@ def va_evaluate(Z, hessenbergs, poles=None):
         ).reshape(m)
     if poles is not None:
         for i, pole_group in enumerate(poles):
+            num_poles = len(pole_group)
             Hp = hessenbergs[i + 1]
-            Qp = np.zeros((m, n + 1), dtype=complex)
-            Dp = np.zeros((m, n + 1), dtype=complex)
+            Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
+            Dp = np.zeros((m, num_poles + 1), dtype=np.complex128)
             Qp[:, 0] = np.ones(m)
-            for k in range(n):
+            for k in range(num_poles):
                 hkk = Hp[k + 1, k]
                 Z_pole = 1 / (Z - pole_group[k])
                 Qp[:, k + 1] = (
