@@ -1,5 +1,5 @@
 """Test contructing the linear system."""
-ATOL, RTOL = 0, 1e-5
+from test_settings import ATOL, RTOL
 
 
 def test_lid_driven_cavity_get_dependents():
@@ -39,9 +39,12 @@ def test_lid_driven_cavity_get_dependents():
     assert np.allclose(
         U[:, 121:242], basis_deriv_answer.real, atol=ATOL, rtol=RTOL
     )
-    assert np.allclose(U, U_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(V, V_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(U.real, U_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(U.imag, U_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(V.real, V_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(V.imag, V_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(PSI.real, PSI_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(PSI.imag, PSI_answer.imag, atol=ATOL, rtol=RTOL)
 
 
 def test_lid_driven_cavity_construct_linear_system():
@@ -109,16 +112,19 @@ def test_row_weighting():
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
     assert np.allclose(dom.corners, corners, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.boundary_points, Z, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.boundary_points.real, Z.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.boundary_points.imag, Z.imag, atol=ATOL, rtol=RTOL)
     sol = Solver(dom, degree=24)
     sol.A = A_standard
     sol.b = rhs_standard
     sol.weight_rows()
-    assert np.allclose(sol.A, A_weighted, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.b, rhs_weighted, atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.b.real, rhs_weighted.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.b.imag, rhs_weighted.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.A.real, A_weighted.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.A.imag, A_weighted.imag, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":
-    test_lid_driven_cavity_get_dependents()
-    test_lid_driven_cavity_construct_linear_system()
+    # test_lid_driven_cavity_get_dependents()
+    # test_lid_driven_cavity_construct_linear_system()
     test_row_weighting()

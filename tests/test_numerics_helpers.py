@@ -1,5 +1,5 @@
 """Test the helper numerical functions in pyls.numerics."""
-ATOL, RTOL = 0, 1e-5
+from test_settings import ATOL, RTOL
 
 
 def test_cluster():
@@ -10,7 +10,12 @@ def test_cluster():
 
     cluster_10_answer = loadmat("tests/data/cluster_10.mat")["cluster_10"]
     cluster_10 = cluster(10, 1, 4)
-    assert np.allclose(cluster_10, cluster_10_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        cluster_10.real, cluster_10_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        cluster_10.imag, cluster_10_answer.imag, atol=ATOL, rtol=RTOL
+    )
 
 
 def test_split():
@@ -22,8 +27,10 @@ def test_split():
     cf_answer = np.array([0 + 4j, 1 + 5j])
     cg_answer = np.array([2 + 6j, 3 + 7j])
     cf, cg = split(coefficients)
-    assert np.allclose(cf, cf_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(cg, cg_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cf.real, cf_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cf.imag, cf_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cg.real, cg_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cg.imag, cg_answer.imag, atol=ATOL, rtol=RTOL)
 
 
 def test_lid_driven_cavity_split():
@@ -40,8 +47,10 @@ def test_lid_driven_cavity_split():
     cf_answer = test_answers["cf"]
     cg_answer = test_answers["cg"]
     cf, cg = split(c)
-    assert np.allclose(cf, cf_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(cg, cg_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cf.real, cf_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cf.imag, cf_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cg.real, cg_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(cg.imag, cg_answer.imag, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":

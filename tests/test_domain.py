@@ -1,5 +1,5 @@
 """Test the domain module."""
-ATOL, RTOL = 0, 1e-5
+from test_settings import ATOL, RTOL
 
 
 def test_import_domain():

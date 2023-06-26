@@ -70,7 +70,6 @@ def make_function(name, z, coefficients, hessenbergs, poles):
             return np.imag(-4 * basis_deriv @ cf)
 
 
-# @njit
 def va_orthogonalise(Z, n, poles=None):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.
 

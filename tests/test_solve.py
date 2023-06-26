@@ -1,5 +1,5 @@
 """Test solver functions."""
-ATOL, RTOL = 0, 1e-5
+from test_settings import ATOL, RTOL
 
 
 def test_create_functions():
@@ -86,6 +86,7 @@ def test_solve():
     sol.add_boundary_condition("3", "v(3)", 0)
     sol.check_boundary_conditions()
     functions = sol.solve()
+    print(functions)
 
 
 if __name__ == "__main__":

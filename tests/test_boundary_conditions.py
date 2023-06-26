@@ -1,5 +1,5 @@
 """Test boundary conditions."""
-ATOL, RTOL = 0, 1e-5
+from test_settings import ATOL, RTOL
 
 
 def test_validate_expression():
@@ -73,7 +73,7 @@ def test_evaluate_expression():
     result = sol.evaluate(expression, 1j * np.linspace(0, 99, 100))
     y = np.linspace(0, 99, 100)
     expected = sol.U[dom.indices["0"]] - (y * (1 - y))[:, np.newaxis]
-    assert np.allclose(result, expected, atol=0, rtol=1e-5)
+    assert np.allclose(result, expected, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":
