@@ -128,18 +128,23 @@ class Solver:
 
     def apply_boundary_conditions(self):
         """Apply the boundary conditions to the linear system."""
-        self.check_boundary_conditions()
         for side in self.boundary_conditions.keys():
-            expression1, value1 = self.boundary_conditions[side][0]
-            self.A1[self.domain.indices[side]] = self.evaluate(
-                expression1, self.boundary_points[self.domain.indices[side]]
-            )
-            self.b1[self.domain.indices[side]] = value1
-            expression2, value2 = self.boundary_conditions[side][1]
-            self.A2[self.domain.indices[side]] = self.evaluate(
-                expression2, self.boundary_points[self.domain.indices[side]]
-            )
-            self.b2[self.domain.indices[side]] = value2
+            try:
+                try:
+                    expression1, value1 = self.boundary_conditions[side][0]
+                    self.A1[self.domain.indices[side]] = self.evaluate(
+                        expression1, self.boundary_points[self.domain.indices[side]]
+                    )
+                    self.b1[self.domain.indices[side]] = value1
+                    expression2, value2 = self.boundary_conditions[side][1]
+                    self.A2[self.domain.indices[side]] = self.evaluate(
+                        expression2, self.boundary_points[self.domain.indices[side]]
+                    )
+                    self.b2[self.domain.indices[side]] = value2
+                except IndexError:
+                    print("Only One Boundary Condition set for side", side)
+            except TypeError:
+                print("Boundary Condition not set for side", side)
 
     def check_boundary_conditions(self):
         """Check that the boundary conditions are valid."""
@@ -170,11 +175,12 @@ class Solver:
         )
         self.get_dependents()
 
-    def solve(self, pickle=False, filename="solution.pickle"):
+    def solve(self, pickle=False, filename="solution.pickle", check=True):
         """Setup the solver and solve the least squares problem.
 
         Reutrns the functions as a list of functions."""
-        self.check_boundary_conditions()
+        if check:
+            self.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points, self.degree, self.domain.poles
         )

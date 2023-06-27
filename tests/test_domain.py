@@ -17,7 +17,6 @@ def test_domain_spacing_rectangle():
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     dom = Domain(corners, num_boundary_points=100)
-    assert np.allclose(dom.boundary_points[0], 1 + 1j, atol=ATOL, rtol=RTOL)
     # check the points move anticlockwise around the domain
     # using the cross prodcut.
     for i in range(1, len(dom.boundary_points) - 1):

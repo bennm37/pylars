@@ -3,7 +3,7 @@
 Raises:
     ValueError: Domain has less than 3 corners
     TypeError: Corners must be a list of complex numbers
-    TypeError: Number of boundary points must be a positive integer
+    TypeError: Number of boundary points must be a non negative integer
 """
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
@@ -41,8 +41,8 @@ class Domain:
             or self.num_boundary_points <= 0
         ):
             raise TypeError("num_boundary_points must be a positive integer")
-        if type(self.num_poles) != int or self.num_poles <= 0:
-            raise TypeError("num_poles must be a positive integer")
+        if type(self.num_poles) != int or self.num_poles < 0:
+            raise TypeError("num_poles must be a non negative integer")
 
     def generate_boundary_points(self):
         """Create a list of boundary points on each edge.

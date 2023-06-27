@@ -70,9 +70,9 @@ def test_evaluate_expression():
     assert np.all(sol.evaluate("psi(0)-psi(0)", 1) == 0)
     expression = "u(0)-y*(1-y)"
     sol.validate(expression)
-    result = sol.evaluate(expression, 1j * np.linspace(0, 99, 100))
-    y = np.linspace(0, 99, 100)
-    expected = sol.U[dom.indices["0"]] - (y * (1 - y))[:, np.newaxis]
+    y = np.linspace(0, 99, 100).reshape(100, 1)
+    result = sol.evaluate(expression, 1j * y)
+    expected = sol.U[dom.indices["0"]] - (y * (1 - y))
     assert np.allclose(result, expected, atol=ATOL, rtol=RTOL)
 
 
