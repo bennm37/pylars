@@ -120,7 +120,7 @@ class Solver:
             )
         for identifier, code in zip(
             INDEPENDENT,
-            ["np.real(points)[:,np.newaxis]", "np.imag(points)[:,np.newaxis]"],
+            ["np.real(points)", "np.imag(points)"],
         ):
             expression = expression.replace(identifier, code)
         result = eval(expression)
@@ -132,12 +132,12 @@ class Solver:
         for side in self.boundary_conditions.keys():
             expression1, value1 = self.boundary_conditions[side][0]
             self.A1[self.domain.indices[side]] = self.evaluate(
-                expression1, self.boundary_points[int(side)]
+                expression1, self.boundary_points[self.domain.indices[side]]
             )
             self.b1[self.domain.indices[side]] = value1
             expression2, value2 = self.boundary_conditions[side][1]
             self.A2[self.domain.indices[side]] = self.evaluate(
-                expression2, self.boundary_points[int(side)]
+                expression2, self.boundary_points[self.domain.indices[side]]
             )
             self.b2[self.domain.indices[side]] = value2
 
@@ -152,7 +152,7 @@ class Solver:
                 )
             for expression, value in self.boundary_conditions[side]:
                 self.validate(expression)
-                if not isinstance(value, (int, float, np.array)):
+                if not isinstance(value, (int, float, np.ndarray)):
                     raise TypeError("value must be a number")
 
     def check_input(self):

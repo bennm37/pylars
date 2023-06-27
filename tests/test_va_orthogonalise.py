@@ -124,6 +124,39 @@ def test_poles_va_orthogonalise():
     assert np.allclose(Q.imag, Q_answer.imag, atol=ATOL, rtol=RTOL)
 
 
+def test_va_orthogonalise_debug():
+    """Test the va_orthogonalise with poles against the MATLAB code."""
+    from pyls.numerics import va_orthogonalise
+    from pyls import Domain
+    import numpy as np
+    from scipy.io import loadmat
+
+    n, num_poles = 24, 24
+    test_answers = loadmat(
+        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+    )
+    Z_answer = test_answers["Z"]
+    poles_answer = test_answers["Pol"]
+    poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
+        4, 24
+    )
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(
+        corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
+    )
+    assert np.allclose(
+        dom.boundary_points.real, Z_answer.real, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        dom.boundary_points.imag, Z_answer.imag, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(dom.poles.real, poles_answer.real, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.poles.imag, poles_answer.imag, atol=ATOL, rtol=RTOL)
+    hessenbergs, Q = va_orthogonalise_debug(
+        dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
+    )
+
+
 def test_va_orthogonalise_jit():
     """Run the jit test works."""
     from pyls.numerics import va_orthogonalise, va_orthogonalise_jit
@@ -148,10 +181,23 @@ def va_orthogonalise_debug(Z, n, poles=None):
     span the same space as the columns of the Vandermonde matrix.
     """
     import numpy as np
+    from scipy.io import loadmat
 
     if Z.shape[1] != 1:
         raise ValueError("Z must be a column vector")
     m = len(Z)
+    n, num_poles = 24, 24
+    test_answers = loadmat("tests/data/lid_driven_cavity_n_24_np_24.mat")
+    Hes_answer = test_answers["Hes"]
+    H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
+    Q_answer = test_answers["Q"]
+    Q_answers_list = [
+        Q_answer[:, 24 * i + 1 : 24 * (i + 1) + 1] for i in range(5)
+    ]
+    Q_answers_list = [
+        np.append(Q_answer[:, 0].reshape(-1, 1), Q, axis=1)
+        for Q in Q_answers_list
+    ]
     H = np.zeros((n + 1, n), dtype=np.complex128)
     Q = np.zeros((m, n + 1), dtype=np.complex128)
     q = np.ones(len(Z)).reshape(m, 1)
@@ -165,7 +211,7 @@ def va_orthogonalise_debug(Z, n, poles=None):
         Q[:, k + 1] = (q / H[k + 1, k]).reshape(m)
     hessenbergs = [H]
     if poles is not None:
-        for pole_group in poles:
+        for i, pole_group in enumerate(poles):
             num_poles = len(pole_group)
             Hp = np.zeros((num_poles + 1, num_poles), dtype=np.complex128)
             Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
@@ -173,7 +219,21 @@ def va_orthogonalise_debug(Z, n, poles=None):
             Qp[:, 0] = qp.reshape(m)
             for k in range(num_poles):
                 qp = Qp[:, k].reshape(m, 1) / (Z - pole_group[k])
+                pole_answer = loadmat(
+                    f"tests/data/VAorthog_debug/hes_{i+1}/pol_k_{k+1}.mat"
+                )["pol_k"]
+                assert np.isclose(pole_group[k].real, pole_answer.real, atol=ATOL, rtol=RTOL)
+                assert np.isclose(pole_group[k].imag, pole_answer.imag, atol=ATOL, rtol=RTOL)
                 for j in range(k + 1):
+                    qp_answer = loadmat(
+                        f"tests/data/VAorthog_debug/hes_{i+1}/q_k_{k+1}_j_{j+1}.mat"
+                    )["q"]
+                    assert np.allclose(
+                        qp.real, qp_answer.real, atol=1e-8, rtol=1
+                    )
+                    assert np.allclose(
+                        qp.imag, qp_answer.imag, atol=1e-8, rtol=1
+                    )
                     Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
                     qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
                 Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
@@ -187,6 +247,6 @@ if __name__ == "__main__":
     test_import_va_orthogonalise()
     test_simple_va_orthogonalise()
     test_large_va_orthongalise()
-    test_poles_va_orthogonalise()
-    test_va_orthogonalise_jit()
+    # test_poles_va_orthogonalise()
+    # test_va_orthogonalise_jit()
     # test_va_orthogonalise_debug()
