@@ -222,8 +222,12 @@ def va_orthogonalise_debug(Z, n, poles=None):
                 pole_answer = loadmat(
                     f"tests/data/VAorthog_debug/hes_{i+1}/pol_k_{k+1}.mat"
                 )["pol_k"]
-                assert np.isclose(pole_group[k].real, pole_answer.real, atol=ATOL, rtol=RTOL)
-                assert np.isclose(pole_group[k].imag, pole_answer.imag, atol=ATOL, rtol=RTOL)
+                assert np.isclose(
+                    pole_group[k].real, pole_answer.real, atol=ATOL, rtol=RTOL
+                )
+                assert np.isclose(
+                    pole_group[k].imag, pole_answer.imag, atol=ATOL, rtol=RTOL
+                )
                 for j in range(k + 1):
                     qp_answer = loadmat(
                         f"tests/data/VAorthog_debug/hes_{i+1}/q_k_{k+1}_j_{j+1}.mat"

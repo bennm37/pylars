@@ -9,6 +9,7 @@ import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number
 from pyls.numerics import cart, cluster
+from shapely import Point, Polygon
 
 
 class Domain:
@@ -28,6 +29,9 @@ class Domain:
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
+        self.polygon = Polygon(
+            np.array([self.corners.real, self.corners.imag]).T
+        )
 
     def check_input(self):
         """Check that the input is valid."""
@@ -165,3 +169,25 @@ class Domain:
         )
         ax.set_aspect("equal")
         plt.show()
+    
+    def mask_contains(self, Z):
+        mask = np.zeros(Z.shape, dtype=bool)
+        it = np.nditer(Z, flags=['multi_index'])
+        for z in it:
+            mask[it.multi_index] = self.__contains__(z)
+        return mask
+
+    def __contains__(self, point):
+        """Check if a point is in the polygon."""
+        if isinstance(point, complex):
+            point = Point(np.array([point.real, point.imag]))
+            return self.polygon.contains(point)
+        if isinstance(point, np.ndarray):
+            if point.dtype != complex or point.dtype != np.complex128:
+                raise TypeError("Point must be a complex number or array")
+            for p in np.nditer(point):
+                if not self.__contains__(complex(p)):
+                    return False
+            return True
+        else:
+            return NotImplemented

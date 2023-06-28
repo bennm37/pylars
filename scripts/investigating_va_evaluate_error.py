@@ -1,5 +1,9 @@
 """Test the va_orthogonalise with poles against the MATLAB code."""
-from pyls.numerics import va_orthogonalise, va_evaluate
+from pyls.numerics import (
+    va_orthogonalise,
+    va_evaluate,
+    va_orthogonalise_rounded,
+)
 from pyls import Domain
 import numpy as np
 from scipy.io import loadmat
@@ -14,6 +18,7 @@ Z_answer = test_answers["Z"]
 poles_answer = test_answers["Pol"]
 basis_answer = test_answers["R0"]
 basis_deriv_answer = test_answers["R1"]
+Q_answer = test_answers["Q"]
 poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
     4, num_poles
 )
@@ -50,5 +55,19 @@ ax[1].set_xlabel("Column")
 ax[1].set_ylabel("Max Abs Error")
 ax[1].semilogy(column_deriv_error)
 plt.tight_layout()
-plt.savefig("investigating_va_evaluate_error.pdf")
+# plt.savefig("investigating_va_evaluate_error.pdf")
+# plt.show()
+
+
+hessenbergs_rounded, Q_rounded = va_orthogonalise_rounded(
+    dom.boundary_points.reshape(1200, 1), n, poles=dom.poles
+)
+column_error_rounded = np.linalg.norm(np.abs(Q_rounded - Q_answer), axis=0)
+fig, ax = plt.subplots()
+ax.set_title("Q_rounded vs MATLAB")
+ax.set_xlabel("Column")
+ax.set_ylabel("Max Abs Error")
+ax.semilogy(column_error_rounded)
+plt.tight_layout()
+# plt.savefig("investigating_va_evaluate_error.pdf")
 plt.show()

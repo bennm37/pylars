@@ -6,7 +6,7 @@ from scipy.sparse import diags
 import re
 import pickle as pkl
 
-OPERATIONS = ["+", "-", "*", "/", "**", "(", ")"]
+OPERATIONS = ["[::-1]", "+", "-", "*", "/", "**", "(", ")"]
 DEPENDENT = ["psi", "u", "v", "p"]
 INDEPENDENT = ["x", "y"]
 
@@ -74,6 +74,8 @@ class Solver:
 
         for operation in OPERATIONS:
             expression = expression.replace(operation, "")
+        if "[::-1]" in expression:
+            print("[::-1] in expression")
         for quantity in INDEPENDENT:
             expression = expression.replace(quantity, "")
         # check decimals are surrounded by numbers
@@ -104,6 +106,7 @@ class Solver:
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
+        # TODO add flip to evaluate
         code_dependent = [
             "self.stream_function",
             "self.U",
@@ -133,12 +136,14 @@ class Solver:
                 try:
                     expression1, value1 = self.boundary_conditions[side][0]
                     self.A1[self.domain.indices[side]] = self.evaluate(
-                        expression1, self.boundary_points[self.domain.indices[side]]
+                        expression1,
+                        self.boundary_points[self.domain.indices[side]],
                     )
                     self.b1[self.domain.indices[side]] = value1
                     expression2, value2 = self.boundary_conditions[side][1]
                     self.A2[self.domain.indices[side]] = self.evaluate(
-                        expression2, self.boundary_points[self.domain.indices[side]]
+                        expression2,
+                        self.boundary_points[self.domain.indices[side]],
                     )
                     self.b2[self.domain.indices[side]] = value2
                 except IndexError:
@@ -190,6 +195,7 @@ class Solver:
         self.get_dependents()
         self.construct_linear_system()
         self.weight_rows()
+        self.normalize()
         self.results = linalg.lstsq(self.A, self.b)
         self.coefficients = self.results[0]
         self.residuals = self.results[1]
@@ -227,6 +233,19 @@ class Solver:
         sparse_row_weights = diags(row_weights.reshape(-1))
         self.A = sparse_row_weights @ self.A
         self.b = sparse_row_weights @ self.b
+
+    def normalize(self, a=0, b=0):
+        """Normalize f and g so that they are unique."""
+        h, l = self.A.shape
+        self.b = np.vstack([self.b, np.zeros((4, 1))])
+        self.A = np.vstack([self.A, np.zeros((4, l))])
+        r0_a, r1_a = va_evaluate(a, self.hessenbergs, self.domain.poles)
+        zero = np.zeros_like(r0_a, dtype=np.float64)
+        self.A[-4, :] = np.hstack([np.real(r0_a), zero, -np.imag(r0_a), zero])
+        self.A[-3, :] = np.hstack([np.imag(r0_a), zero, np.real(r0_a), zero])
+        self.A[-2, :] = np.hstack([zero, np.real(r0_a), zero, -np.imag(r0_a)])
+        r0_b, r1_b = va_evaluate(b, self.hessenbergs, self.domain.poles)
+        self.A[-1, :] = np.hstack([np.real(r0_b), zero, -np.imag(r0_b), zero])
 
     def get_dependents(self):
         """Create the dependent variable arrays.

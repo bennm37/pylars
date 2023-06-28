@@ -111,6 +111,65 @@ def va_orthogonalise(Z, n, poles=None):
     return hessenbergs, Q
 
 
+def trunc(arr):
+    decimals = 14 - np.floor(np.log10(abs(arr))).astype(np.int32)
+    # round each element to the number of decimals
+    # specified by the corresponding element of decimals
+    return np.round(arr, decimals=decimals)
+
+
+nptrunc = np.vectorize(trunc)
+
+
+def va_orthogonalise_rounded(Z, n, poles=None):
+    """Orthogonalise the series using the Vandermonde with Arnoldi method.
+
+    The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
+    are of order 1. The matrix H is upper Hessenberg and the columns of Q
+    span the same space as the columns of the Vandermonde matrix.
+    """
+    if Z.shape[1] != 1:
+        raise ValueError("Z must be a column vector")
+    m = len(Z)
+    H = np.zeros((n + 1, n), dtype=np.complex128)
+    Q = np.zeros((m, n + 1), dtype=np.complex128)
+    q = np.ones(len(Z)).reshape(m, 1)
+    Q[:, 0] = q.reshape(m)
+    for k in range(n):
+        q = nptrunc(Z * Q[:, k].reshape(m, 1))
+        for j in range(k + 1):
+            H[j, k] = nptrunc(np.dot(Q[:, j].conj(), q)[0] / m)
+            q = nptrunc(q - H[j, k] * Q[:, j].reshape(m, 1))
+        H[k + 1, k] = nptrunc(nptrunc(np.linalg.norm(q)) / nptrunc(np.sqrt(m)))
+        Q[:, k + 1] = (nptrunc(q / H[k + 1, k])).reshape(m)
+    hessenbergs = [H]
+    if poles is not None:
+        for pole_group in poles:
+            num_poles = len(pole_group)
+            Hp = np.zeros((num_poles + 1, num_poles), dtype=np.complex128)
+            Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
+            qp = np.ones(m).reshape(m, 1)
+            Qp[:, 0] = qp.reshape(m)
+            for k in range(num_poles):
+                qp = nptrunc(
+                    Qp[:, k].reshape(m, 1) / (nptrunc(Z - pole_group[k]))
+                )
+                for j in range(k + 1):
+                    Hp[j, k] = nptrunc(
+                        nptrunc(np.dot(Qp[:, j].conj(), qp)[0]) / m
+                    )
+                    qp = nptrunc(
+                        qp - nptrunc(Hp[j, k] * Qp[:, j]).reshape(m, 1)
+                    )
+                Hp[k + 1, k] = nptrunc(np.linalg.norm(qp)) / nptrunc(
+                    np.sqrt(m)
+                )
+                Qp[:, k + 1] = (nptrunc(qp / Hp[k + 1, k])).reshape(m)
+            hessenbergs += [Hp]
+            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
+    return hessenbergs, Q
+
+
 @njit
 def va_orthogonalise_jit(Z, n):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.

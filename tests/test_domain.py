@@ -46,7 +46,35 @@ def test_poles_square():
     assert np.allclose(poles, poles_answer, atol=ATOL, rtol=RTOL)
 
 
+def test_contains():
+    import numpy as np
+    from pyls.domain import Domain
+
+    dom = Domain([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j], num_boundary_points=100)
+    assert 0j in dom
+    assert 2 + 2j not in dom
+    assert 0.99 + 0j in dom
+    assert -1.01 + 0j not in dom
+    assert np.array([0.99 + 0j, -1.01 + 0j]) not in dom
+    assert np.array([0.99 + 0j, -0.99 + 0j]) in dom
+    assert (
+        np.array([[0.5 + 0.5j, -0.5 + 0.5j], [-0.5 + 0.5j, -0.5 - 0.5j]])
+        in dom
+    )
+
+def test_mask_contains():
+    import numpy as np
+    from pyls.domain import Domain
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    Z = np.array([[1.5 + 0.5j, -0.5 + 0.5j], [-0.5 + 0.5j, -0.5 - 0.5j]])
+    mask_answer = np.array([[False, True], [True, True]])
+    dom = Domain(corners, num_boundary_points=100)
+    mask = dom.mask_contains(Z)
+    assert np.allclose(mask, mask_answer)
+
 if __name__ == "__main__":
     test_import_domain()
     test_domain_spacing_rectangle()
     test_poles_square()
+    test_contains()
+    test_mask_contains()
