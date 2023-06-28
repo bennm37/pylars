@@ -12,7 +12,7 @@ sol.add_boundary_condition("2", "u(2)", 0)
 sol.add_boundary_condition("2", "v(2)", 0)
 # inlet
 y = np.linspace(-1, 1, 300)
-sol.add_boundary_condition("1", "u(1)-(1-y**2)", 0)
+sol.add_boundary_condition("1", "u(1)", "1 - y**2")
 sol.add_boundary_condition("1", "v(1)", 0)
 sol.add_boundary_condition("3", "p(3)", 1)
 sol.add_boundary_condition("3", "v(3)", 0)

@@ -18,4 +18,3 @@ class Analysis:
         Z = X + 1j * Y
         mask = self.domain.mask_contains(Z)
         Z[mask] = np.nan
-        

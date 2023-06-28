@@ -139,13 +139,25 @@ class Solver:
                         expression1,
                         self.boundary_points[self.domain.indices[side]],
                     )
-                    self.b1[self.domain.indices[side]] = value1
+                    if isinstance(value1, str):
+                        self.b1[self.domain.indices[side]] = self.evaluate(
+                            value1,
+                            self.boundary_points[self.domain.indices[side]]
+                        ).reshape(-1)
+                    else:
+                        self.b1[self.domain.indices[side]] = value1
                     expression2, value2 = self.boundary_conditions[side][1]
                     self.A2[self.domain.indices[side]] = self.evaluate(
                         expression2,
                         self.boundary_points[self.domain.indices[side]],
                     )
-                    self.b2[self.domain.indices[side]] = value2
+                    if isinstance(value2, str):
+                        self.b2[self.domain.indices[side]] = self.evaluate(
+                            value2,
+                            self.boundary_points[self.domain.indices[side]]
+                        ).reshape(-1)
+                    else:
+                        self.b2[self.domain.indices[side]] = value2
                 except IndexError:
                     print("Only One Boundary Condition set for side", side)
             except TypeError:
@@ -162,8 +174,14 @@ class Solver:
                 )
             for expression, value in self.boundary_conditions[side]:
                 self.validate(expression)
+                if isinstance(value, str):
+                    if not self.validate(value):
+                        raise ValueError(
+                            f"value {value} is not a valid expression."
+                        )
+                    continue
                 if not isinstance(value, (int, float, np.ndarray)):
-                    raise TypeError("value must be a number")
+                    raise TypeError("value must be a numerical or string type")
 
     def check_input(self):
         pass

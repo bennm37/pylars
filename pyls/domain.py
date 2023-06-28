@@ -169,10 +169,10 @@ class Domain:
         )
         ax.set_aspect("equal")
         plt.show()
-    
+
     def mask_contains(self, Z):
         mask = np.zeros(Z.shape, dtype=bool)
-        it = np.nditer(Z, flags=['multi_index'])
+        it = np.nditer(Z, flags=["multi_index"])
         for z in it:
             mask[it.multi_index] = self.__contains__(z)
         return mask

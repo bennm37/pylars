@@ -9,7 +9,7 @@ sol = Solver(dom, 24)
 sol.add_boundary_condition("0", "u(0)", 0)
 sol.add_boundary_condition("0", "psi(0)", 1 / 3)
 sol.add_boundary_condition("2", "u(2)", 0)
-sol.add_boundary_condition("2", "psi(2)+1/3", 0)
+sol.add_boundary_condition("2", "psi(2)", "0*y-1/3")
 # inlet
 y = np.linspace(-1, 1, 300)
 sol.add_boundary_condition("1", "u(1)-u(3)[::-1]", 0)

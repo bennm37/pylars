@@ -62,15 +62,18 @@ def test_contains():
         in dom
     )
 
+
 def test_mask_contains():
     import numpy as np
     from pyls.domain import Domain
+
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     Z = np.array([[1.5 + 0.5j, -0.5 + 0.5j], [-0.5 + 0.5j, -0.5 - 0.5j]])
     mask_answer = np.array([[False, True], [True, True]])
     dom = Domain(corners, num_boundary_points=100)
     mask = dom.mask_contains(Z)
     assert np.allclose(mask, mask_answer)
+
 
 if __name__ == "__main__":
     test_import_domain()
