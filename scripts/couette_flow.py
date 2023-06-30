@@ -1,4 +1,4 @@
-from pyls import Domain, Solver
+from pyls import Domain, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -22,17 +22,20 @@ residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 "flip(u(0))"
 
-x = np.linspace(-1, 1, 100)
-X, Y = np.meshgrid(x, x)
-Z = X + 1j * Y
-psi_100_100 = psi(Z.flatten()).reshape(100, 100)
-uv_100_100 = uv(Z.flatten()).reshape(100, 100)
-# plot the velocity magnitude
-fig, ax = plt.subplots()
-# interpolate using bilinear interpolation
-speed = np.abs(uv_100_100)
-pc = ax.pcolormesh(X, Y, np.abs(uv_100_100), cmap="jet")
-plt.colorbar(pc)
-ax.contour(X, Y, psi_100_100, colors="k", levels=20)
-ax.set_aspect("equal")
+analyse = Analysis(dom, sol)
+analyse.plot()
 plt.show()
+# x = np.linspace(-1, 1, 100)
+# X, Y = np.meshgrid(x, x)
+# Z = X + 1j * Y
+# psi_100_100 = psi(Z.flatten()).reshape(100, 100)
+# uv_100_100 = uv(Z.flatten()).reshape(100, 100)
+# # plot the velocity magnitude
+# fig, ax = plt.subplots()
+# # interpolate using bilinear interpolation
+# speed = np.abs(uv_100_100)
+# pc = ax.pcolormesh(X, Y, np.abs(uv_100_100), cmap="jet")
+# plt.colorbar(pc)
+# ax.contour(X, Y, psi_100_100, colors="k", levels=20)
+# ax.set_aspect("equal")
+# plt.show()
