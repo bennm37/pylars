@@ -1,7 +1,7 @@
 from pyls.numerics import va_orthogonalise, va_evaluate, make_function
 from collections.abc import Sequence
-import scipy.linalg as linalg
 import numpy as np
+import scipy.linalg as linalg
 from scipy.sparse import diags
 import re
 import pickle as pkl
@@ -14,8 +14,9 @@ INDEPENDENT = ["x", "y"]
 class Solver:
     """Solve lighting stokes problems on a given domain."""
 
-    def __init__(self, domain, degree):
+    def __init__(self, domain, degree, least_squares="iterative"):
         self.domain = domain
+        self.least_squares = least_squares
         self.check_input()
         self.num_boundary_points = self.domain.num_boundary_points
         self.boundary_points = self.domain.boundary_points
@@ -214,9 +215,16 @@ class Solver:
         self.construct_linear_system()
         self.weight_rows()
         self.normalize()
-        self.results = linalg.lstsq(self.A, self.b)
-        self.coefficients = self.results[0]
-        self.residuals = self.results[1]
+        
+        if self.least_squares == "iterative":
+            x1 = linalg.lstsq(self.A, self.b)[0]
+            # solve least squares again
+            b2 = self.b - self.A @ x1
+            x2 = linalg.lstsq(self.A, b2)[0]
+            self.coefficients = x1 + x2
+        if self.least_squares == "pinv":
+            self.coefficients = linalg.pinv(self.A) @ self.b
+        # self.residuals = self.results[1]
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
@@ -253,7 +261,7 @@ class Solver:
         self.b = sparse_row_weights @ self.b
         return row_weights
 
-    def normalize(self, a=0, b=0):
+    def normalize(self, a=0, b=1):
         """Normalize f and g so that they are unique."""
         h, l = self.A.shape
         self.b = np.vstack([self.b, np.zeros((4, 1))])

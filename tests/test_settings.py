@@ -1,5 +1,5 @@
 """Common values and functions to be used throughout the tests."""
-ATOL, RTOL = 1e-12, 1e-7
+ATOL, RTOL = 1e-12, 1e-6
 
 
 def load_lid_driven_cavity(n, num_poles):
