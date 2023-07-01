@@ -1,3 +1,17 @@
+"""Solve lighting stokes problems using the Solver class.
+
+Raises
+------
+ValueError: Side must be in domain sides
+ValueError: 2 boundary conditions already set for side {side}
+ValueError: Expression must be a string
+ValueError: Expression contains mismatched parentheses
+ValueError: Dependent variable not evaluated at a side
+ValueError: Tried to evaluate {dependent} at side {side} but
+            {side} not in domain.sides
+ValueError: Independent variable must be x or y
+ValueError: Expression contains invalid characters
+"""
 from pyls.numerics import va_orthogonalise, va_evaluate, make_function
 from collections.abc import Sequence
 import numpy as np
@@ -12,23 +26,75 @@ INDEPENDENT = ["x", "y"]
 
 
 class Solver:
-    """Solve lighting stokes problems on a given domain."""
+    """Solve lighting stokes problems on a given domain.
 
-    def __init__(self, domain, degree, least_squares="iterative"):
+    Attributes
+    ----------
+    domain: Domain
+        The domain on which to solve the problem.
+    degree: int
+        The degree of the polynomial approximation.
+    boundary_points: (M, 1) array_like
+        The boundary points of the domain.
+    num_poles: int
+        The number of poles to use in the rational approximation.
+    boundary_conditions: dictionary of lists of tuples
+        The boundary conditions for each side of the domain.
+    hessenbergs: list of (n, n+1) array_like
+        The upper Hessenberg matrices that define the orthogonal basis.
+    basis: (M, N) array_like
+        The orthogonal basis.
+    basis_derivatives: (M, N) array_like
+        The derivatives of the orthogonal basis.
+    A: (2*M, 4*N) array_like
+        The matrix that defines the least squares problem.
+    b: (2*M, 1) array_like
+        The vector that defines the least squares problem.
+    coefficients: (4*N, 1) array_like
+        The coefficients of the Goursat functions.
+
+    Methods
+    -------
+    add_boundary_condition(side, expression, value):
+        Add a boundary condition to the solver.
+    apply_boundary_conditions():
+        Apply the boundary conditions to the linear system.
+    check_boundary_conditions():
+        Check that the boundary conditions are valid.
+    validate(expression):
+        Checks the syntax of the expression.
+    evaluate(expression, points):
+        Evaluates the expression at the given points.
+    setup():
+        Get the orthogonal basis and dependent variables.
+    solve():
+        Solve the linear system.
+    construct_linear_system():
+        Construct the linear system from the boundary conditions.
+    weight_rows():
+        Weight the rows of the linear system by distance from corners.
+    normalize():
+        Remove the 4 extra degrees of freedom.
+    get_dependents():
+        Get the dependent matrices from the basis.
+    construct_functions():
+        Construct the functions from the coefficients.
+    """
+
+    def __init__(self, domain, degree):
         self.domain = domain
-        self.least_squares = least_squares
-        self.check_input()
         self.num_boundary_points = self.domain.num_boundary_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
-        self.domain.poles = self.domain.poles
         self.degree = degree
         self.boundary_conditions = {side: None for side in self.domain.sides}
 
+    # BOUNDARY CONDITIONS
     def add_boundary_condition(self, side, expression, value):
         """Add an expression and value for a side to boundary conditions.
 
         The expression is stripped and added to the dictionary.
+        Value can be number, array_like or expression.
         """
         expression = expression.strip().replace(" ", "")
         self.validate(expression)
@@ -43,92 +109,6 @@ class Solver:
                 self.boundary_conditions[side].append((expression, value))
         else:
             self.boundary_conditions[side] = [(expression, value)]
-
-    def validate(self, expression):
-        """Check if the given expression has the correct syntax."""
-        expression = expression.strip().replace(" ", "")
-        if not isinstance(expression, str):
-            raise TypeError("expression must be a string")
-        if expression.count("(") != expression.count(")"):
-            raise ValueError("expression contains mismatched parentheses")
-        # demand every dependent variable in the expression is followed by
-        # (side)
-        for dependent in DEPENDENT:
-            while dependent in expression:
-                index = expression.index(dependent)
-                following = expression[index + len(dependent) :]
-                if not following.startswith("("):
-                    raise ValueError(
-                        f"dependent variable {dependent} not evaluated at a \
-                        side"
-                    )
-                following = following[1:]
-                closing = following.index(")")
-                side = following[:closing]
-                if side not in self.domain.sides:
-                    raise ValueError(
-                        f"trying to evaluate {dependent} at side {side} but \
-                        {side} not in domain.sides"
-                    )
-                else:
-                    expression = expression.replace(f"{dependent}({side})", "")
-
-        for operation in OPERATIONS:
-            expression = expression.replace(operation, "")
-        if "[::-1]" in expression:
-            print("[::-1] in expression")
-        for quantity in INDEPENDENT:
-            expression = expression.replace(quantity, "")
-        # check decimals are surrounded by numbers
-        while "." in expression:
-            index = expression.index(".")
-            if index == 0 or index == len(expression) - 1:
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
-            if (
-                not expression[index - 1].isnumeric()
-                or not expression[index + 1].isnumeric()
-            ):
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
-            expression = expression.replace(".", "")
-        for side in self.domain.sides:
-            expression = expression.replace(side, "")
-        for number in range(10):
-            expression = expression.replace(str(number), "")
-        # check if only numbers remain
-        if expression != "":
-            raise ValueError(
-                f"expression contains invalid characters: {expression}"
-            )
-        return True
-
-    def evaluate(self, expression, points):
-        """Evaluate the given expression."""
-        # TODO add flip to evaluate
-        code_dependent = [
-            "self.stream_function",
-            "self.U",
-            "self.V",
-            "self.pressure",
-        ]
-        for identifier, code in zip(DEPENDENT, code_dependent):
-            identifier += "("
-            code += "("
-            expression = expression.replace(identifier, code)
-        for side in self.domain.sides:
-            expression = re.sub(
-                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression
-            )
-        for identifier, code in zip(
-            INDEPENDENT,
-            ["np.real(points)", "np.imag(points)"],
-        ):
-            expression = expression.replace(identifier, code)
-        result = eval(expression)
-        return result
 
     def apply_boundary_conditions(self):
         """Apply the boundary conditions to the linear system."""
@@ -184,11 +164,96 @@ class Solver:
                 if not isinstance(value, (int, float, np.ndarray)):
                     raise TypeError("value must be a numerical or string type")
 
-    def check_input(self):
-        pass
+    # EXPRESSIONS
+    def validate(self, expression):
+        """Check if the given expression has the correct syntax."""
+        expression = expression.strip().replace(" ", "")
+        if not isinstance(expression, str):
+            raise TypeError("expression must be a string")
+        if expression.count("(") != expression.count(")"):
+            raise ValueError("expression contains mismatched parentheses")
+        # demand every dependent variable in the expression is followed by
+        # (side)
+        for dependent in DEPENDENT:
+            while dependent in expression:
+                index = expression.index(dependent)
+                following = expression[index + len(dependent) :]
+                if not following.startswith("("):
+                    raise ValueError(
+                        f"dependent variable {dependent} not evaluated at a \
+                        side"
+                    )
+                following = following[1:]
+                closing = following.index(")")
+                side = following[:closing]
+                if side not in self.domain.sides:
+                    raise ValueError(
+                        f"trying to evaluate {dependent} at side {side} but \
+                        {side} not in domain.sides"
+                    )
+                else:
+                    expression = expression.replace(f"{dependent}({side})", "")
 
+        for operation in OPERATIONS:
+            expression = expression.replace(operation, "")
+        if "[::-1]" in expression:
+            print("[::-1] in expression")
+        for quantity in INDEPENDENT:
+            expression = expression.replace(quantity, "")
+        # check decimals are surrounded by numbers
+        while "." in expression:
+            index = expression.index(".")
+            if index == 0 or index == len(expression) - 1:
+                raise ValueError(
+                    f"expression contains invalid decimal: {expression}"
+                )
+            if (
+                not expression[index - 1].isnumeric()
+                or not expression[index + 1].isnumeric()
+            ):
+                raise ValueError(
+                    f"expression contains invalid decimal: {expression}"
+                )
+            expression = expression.replace(".", "")
+        for side in self.domain.sides:
+            expression = expression.replace(side, "")
+        for number in range(10):
+            expression = expression.replace(str(number), "")
+        if expression != "":
+            raise ValueError(
+                f"expression contains invalid characters: {expression}"
+            )
+        return True
+
+    def evaluate(self, expression, points):
+        """Evaluate the given expression."""
+        code_dependent = [
+            "self.stream_function",
+            "self.U",
+            "self.V",
+            "self.pressure",
+        ]
+        for identifier, code in zip(DEPENDENT, code_dependent):
+            identifier += "("
+            code += "("
+            expression = expression.replace(identifier, code)
+        for side in self.domain.sides:
+            expression = re.sub(
+                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression
+            )
+        for identifier, code in zip(
+            INDEPENDENT,
+            ["np.real(points)", "np.imag(points)"],
+        ):
+            expression = expression.replace(identifier, code)
+        result = eval(expression)
+        return result
+
+    # SOLVER
     def setup(self):
-        """Get basis functions and derivatives and dependent variables."""
+        """Get basis functions and derivatives and dependent variables.
+        
+        Allows the user to more manually set up the solver."""
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles
         )
@@ -200,9 +265,10 @@ class Solver:
         self.get_dependents()
 
     def solve(self, pickle=False, filename="solution.pickle", check=True):
-        """Setup the solver and solve the least squares problem.
+        """Set up the solver and solve the least squares problem.
 
-        Reutrns the functions as a list of functions."""
+        Reutrns the functions as a list of functions.
+        """
         if check:
             self.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
@@ -215,23 +281,15 @@ class Solver:
         self.construct_linear_system()
         self.weight_rows()
         self.normalize()
-
-        if self.least_squares == "iterative":
-            x1 = linalg.lstsq(self.A, self.b)[0]
-            # solve least squares again
-            b2 = self.b - self.A @ x1
-            x2 = linalg.lstsq(self.A, b2)[0]
-            self.coefficients = x1 + x2
-        if self.least_squares == "pinv":
-            self.coefficients = linalg.pinv(self.A) @ self.b
-        # self.residuals = self.results[1]
+        self.results = linalg.lstsq(self.A, self.b)
+        self.coefficients = self.results[0]
+        self.residuals = self.results[1]
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
         return self.functions
 
     def construct_linear_system(self):
-        # TODO this could move into solve for conciseness
         """Use the basis functions to construct the linear system.
 
         Uses the boundary condition dictionary to construct the linear system
@@ -246,7 +304,7 @@ class Solver:
         self.b = np.vstack((self.b1.reshape(m, 1), self.b2.reshape(m, 1)))
 
     def weight_rows(self):
-        # weight the rows by the distance to the nearest corner
+        """Weight the rows by the distance to the nearest corner."""
         m = len(self.boundary_points)
         row_weights = np.min(
             np.abs(
@@ -262,10 +320,13 @@ class Solver:
         return row_weights
 
     def normalize(self, a=0, b=1):
-        """Normalize f and g so that they are unique."""
-        h, l = self.A.shape
+        """Normalize f and g so that they are unique.
+
+        Normalized so that
+        Re(f(a)) = Im(f(a)) = Re(g(a)) = Re(f(b)) = 0
+        """
         self.b = np.vstack([self.b, np.zeros((4, 1))])
-        self.A = np.vstack([self.A, np.zeros((4, l))])
+        self.A = np.vstack([self.A, np.zeros((4, self.A.shape[1]))])
         r0_a, r1_a = va_evaluate(a, self.hessenbergs, self.domain.poles)
         zero = np.zeros_like(r0_a, dtype=np.float64)
         self.A[-4, :] = np.hstack([np.real(r0_a), zero, -np.imag(r0_a), zero])
@@ -279,18 +340,19 @@ class Solver:
 
         Uses the basis to construct the physical quantities needed to
         set boundary conditions.
+
+        Notes
+        -----
+        The paper notation and MATLAB code are different.
+        In paper x is stacked (f_r, f_i, g_r, g_i) but in MATLAB
+        stacked (f_r, g_r, f_i, g_i). This is convenient as then
+        splitting the coefficient vector into real and imaginary
+        parts is slightly easier. Changed to MATLAB notation.
         """
-        # NOTE paper notation and MATLAB code are different.
-        # In paper x is stacked (f_r,f_i, g_r, g_i) but in MATLAB
-        # stacked (f_r, g_r, f_i, g_i). This is convenient as then
-        # splitting the coefficient vector into real and imaginary
-        # parts is slightly easier. Changed to MATLAB notation.
-        # TODO verbose but I guess clear. Could be more concise?
-        # TODO is copying large arrays like this expensive?
-        Z = self.boundary_points
-        m = len(Z)
+        z = self.boundary_points
+        m = len(z)
         basis, basis_deriv = self.basis, self.basis_derivatives
-        z_conj = diags(Z.conj().reshape(m))
+        z_conj = diags(z.conj().reshape(m))
 
         u_1 = np.real(z_conj @ basis_deriv - basis)
         u_2 = np.real(basis_deriv)
@@ -316,37 +378,39 @@ class Solver:
         s_4 = np.real(basis)
         self.stream_function = np.hstack((s_1, s_2, s_3, s_4))
 
-    def pickle_solutions(self, filename):
-        with open(filename, "wb") as f:
-            pkl.dump(self.functions, f)
-
     def construct_functions(self):
+        """Use the coefficients to construct the functions."""
+        coeff = self.coefficients.copy()
+        hes = self.hessenbergs.copy()
+        poles = self.domain.poles.copy()
+
         def psi(z):
             return make_function(
                 "psi",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
+                coeff,
+                hes,
+                poles,
             )
 
         def uv(z):
-            return make_function(
-                "uv", z, self.coefficients, self.hessenbergs, self.domain.poles
-            )
+            return make_function("uv", z, coeff, hes, poles)
 
         def p(z):
-            return make_function(
-                "p", z, self.coefficients, self.hessenbergs, self.domain.poles
-            )
+            return make_function("p", z, coeff, hes, poles)
 
         def omega(z):
             return make_function(
                 "omega",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
+                coeff,
+                hes,
+                poles,
             )
 
         return psi, uv, p, omega
+
+    def pickle_solutions(self, filename):
+        """Pickle the functions to a file."""
+        with open(filename, "wb") as f:
+            pkl.dump(self.functions, f)

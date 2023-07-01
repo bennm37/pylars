@@ -1,15 +1,31 @@
+"""Analysis module for the pyls package.
+
+Supports plotting of the contours and velocity magnitude of the solution.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
-import shapely
 
 
 class Analysis:
+    """Class for analyzing the solution of a lighting stokes problem.
+
+    Attributes
+    ----------
+    domain: Domain
+    solver: Solver
+
+    Methods
+    -------
+    plot():
+        Plot the contours and velocity magnitude of the solution.
+    """
+
     def __init__(self, domain, solver):
         self.domain = domain
         self.solver = solver
 
     def plot(self):
-        # get bounding box of domain
+        """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
@@ -20,9 +36,7 @@ class Analysis:
         Z[np.logical_not(self.domain.mask_contains(Z))] = np.nan
         psi_100_100 = psi(Z.flatten()).reshape(100, 100)
         uv_100_100 = uv(Z.flatten()).reshape(100, 100)
-        # plot the velocity magnitude
         fig, ax = plt.subplots()
-        # interpolate using bilinear interpolation
         speed = np.abs(uv_100_100)
         pc = ax.pcolormesh(X, Y, speed, cmap="jet")
         plt.colorbar(pc)

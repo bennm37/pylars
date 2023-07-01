@@ -1,9 +1,13 @@
-"""Create a polygonal domain from a list of corners.
+"""Create a polygonal domain using the Domain class.
 
-Raises:
-    ValueError: Domain has less than 3 corners
-    TypeError: Corners must be a list of complex numbers
-    TypeError: Number of boundary points must be a non negative integer
+Raises
+------
+ValueError: Domain has less than 3 corners
+TypeError: Corners must be a list of complex numbers
+TypeError: Number of boundary points must be a non negative integer
+TypeError: Number of poles must be a non negative integer
+TypeError: Spacing must be clustered or linear
+TypeError: Point must be a complex number
 """
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
@@ -15,17 +19,62 @@ from shapely import Point, Polygon
 class Domain:
     """Create a polygonal domain from a list of corners.
 
+    Attributes
+    ----------
+    corners : (K, 1) array_like
+        The corners of the domain.
+    num_boundary_points : int
+        The number of boundary points to use on each edge.
+    num_poles : int
+        The number of poles to use in each pole group.
+    sigma : float
+        The clustering parameter.
+    L : float
+        The characteristic length of the domain.
+    boundary_points : (M, 1) array_like
+        The boundary points of the domain.
+    sides : list of strings
+        The side labels of the domain.
+    indices : dictionary of lists of ints
+        The indices of the boundary points for each side label.
+    poles : list of lists of complex numbers
+        The poles of the rational basis.
+    polygon : shapely.geometry.Polygon
+        The polygon representing the domain.
+
+    Methods
+    -------
+    check_input():
+        Check that the input is valid.
+    generate_boundary_points():
+        Generate the boundary points.
+    generate_poles():
+        Generate the poles.
+    show():
+        Show the labelled domain.
+    name_side():
+        Name the sides of the domain.
+
+    Notes
+    -----
     The corners must be in anticlockwise order.
     """
 
     def __init__(
-        self, corners, num_boundary_points=100, num_poles=24, sigma=4, L=1
+        self,
+        corners,
+        num_boundary_points=100,
+        num_poles=24,
+        sigma=4,
+        L=1,
+        spacing="clustered",
     ):
         self.corners = np.array(corners)
         self.num_boundary_points = num_boundary_points
         self.num_poles = num_poles
         self.sigma = sigma
         self.L = L
+        self.spacing = spacing
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
@@ -47,15 +96,17 @@ class Domain:
             raise TypeError("num_boundary_points must be a positive integer")
         if type(self.num_poles) != int or self.num_poles < 0:
             raise TypeError("num_poles must be a non negative integer")
+        if self.spacing not in ["clustered", "linear"]:
+            raise ValueError("spacing must be clustered or linear")
 
     def generate_boundary_points(self):
-        """Create a list of boundary points on each edge.
-
-        Points are clustered towards the corners.
-        """
-        spacing = (
-            np.tanh(np.linspace(-10, 10, self.num_boundary_points)) + 1
-        ) / 2
+        """Create a list of boundary points on each edge."""
+        if self.spacing == "clustered":
+            spacing = (
+                np.tanh(np.linspace(-10, 10, self.num_boundary_points)) + 1
+            ) / 2
+        elif self.spacing == "linear":
+            spacing = np.linspace(0, 1, self.num_boundary_points)
         nc = len(self.corners)
         self.boundary_points = np.array(
             [
@@ -81,10 +132,15 @@ class Domain:
         self.sides[self.sides.index(old)] = new
         self.indices[new] = self.indices.pop(old)
 
-    def generate_poles(self):
-        """Generate exponentially clustered lighting poles.
+    def group_sides(self, old_sides, new):
+        """Rename a list of side labels as a single side label."""
+        for side in old_sides:
+            self.sides.remove(side)
+            self.indices[str(new)] += self.indices.pop(side)
+        self.sides.append(str(new))
 
-        Poles are clustered exponentially."""
+    def generate_poles(self):
+        """Generate exponentially clustered lighting poles."""
         pole_spacing = cluster(self.num_poles, self.L, self.sigma)
         # find the exterior angle bisector at each corner
         bisectors = np.array(
@@ -136,7 +192,6 @@ class Domain:
         cartesian_corners = np.array([self.corners.real, self.corners.imag]).T
         polygon = plt.Polygon(cartesian_corners, fill=True, alpha=0.5)
         ax.add_patch(polygon)
-        # label each edge of the polygon in order
         nc = len(self.corners)
         for i in range(nc):
             x = (self.corners[(i + 1) % nc].real + self.corners[i].real) / 2
@@ -170,11 +225,12 @@ class Domain:
         ax.set_aspect("equal")
         plt.show()
 
-    def mask_contains(self, Z):
-        mask = np.zeros(Z.shape, dtype=bool)
-        it = np.nditer(Z, flags=["multi_index"])
-        for z in it:
-            mask[it.multi_index] = self.__contains__(z)
+    def mask_contains(self, z):
+        """Return a mask of points in z that are in the polygon."""
+        mask = np.zeros(z.shape, dtype=bool)
+        it = np.nditer(z, flags=["multi_index"])
+        for point in it:
+            mask[it.multi_index] = self.__contains__(point)
         return mask
 
     def __contains__(self, point):
