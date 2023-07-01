@@ -215,7 +215,7 @@ class Solver:
         self.construct_linear_system()
         self.weight_rows()
         self.normalize()
-        
+
         if self.least_squares == "iterative":
             x1 = linalg.lstsq(self.A, self.b)[0]
             # solve least squares again

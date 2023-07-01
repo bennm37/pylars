@@ -130,7 +130,9 @@ def test_lid_driven_cavity_construct_linear_system_2():
         sol.boundary_points, sol.hessenbergs, sol.domain.poles
     )
     assert np.allclose(sol.basis, basis_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.basis_derivatives, basis_deriv_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        sol.basis_derivatives, basis_deriv_answer, atol=ATOL, rtol=RTOL
+    )
     sol.get_dependents()
     RTOL = 1e-6
     assert np.allclose(sol.U, U_answer, atol=ATOL, rtol=RTOL)
@@ -147,7 +149,11 @@ def test_lid_driven_cavity_construct_linear_system_2():
     sol.normalize()
     assert np.allclose(sol.A, A_normalized_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(sol.b, b_normalized_answer, atol=ATOL, rtol=RTOL)
-    savemat("tests/data/lid_driven_cavity_matrix_python.mat", {"A": sol.A, "b": sol.b})
+    savemat(
+        "tests/data/lid_driven_cavity_matrix_python.mat",
+        {"A": sol.A, "b": sol.b},
+    )
+
 
 def test_row_weighting():
     """Test weighting rows of the linear system."""
@@ -182,9 +188,6 @@ def test_row_weighting():
 
 def test_normalize():
     pass
-
-
-
 
 
 if __name__ == "__main__":
