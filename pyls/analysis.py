@@ -29,4 +29,3 @@ class Analysis:
         ax.contour(X, Y, psi_100_100, colors="k", levels=20)
         ax.set_aspect("equal")
         return fig, ax
-        

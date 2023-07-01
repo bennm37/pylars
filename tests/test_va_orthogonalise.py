@@ -98,46 +98,42 @@ def test_poles_va_orthogonalise():
         corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
     )
     # check the MATALB domain points and poles are the same
-    assert np.allclose(
-        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise(
         dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
     )
     for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
-        assert np.allclose(
-            hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL
-        )
+        assert np.allclose(hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
 
 
-def test_va_orthogonalise_debug():
-    """Test the va_orthogonalise with poles against the MATLAB code."""
-    from pyls import Domain
-    import numpy as np
-    from scipy.io import loadmat
+# def test_va_orthogonalise_debug():
+#     """Test the va_orthogonalise with poles against the MATLAB code."""
+#     from pyls import Domain
+#     import numpy as np
+#     from scipy.io import loadmat
 
-    n, num_poles = 24, 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
-    Z_answer = test_answers["Z"]
-    poles_answer = test_answers["Pol"]
-    poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
-        4, 24
-    )
-    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(
-        corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
-    )
-    assert np.allclose(
-        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
-    hessenbergs, Q = va_orthogonalise_debug(
-        dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
-    )
+#     n, num_poles = 24, 24
+#     test_answers = loadmat(
+#         f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+#     )
+#     Z_answer = test_answers["Z"]
+#     poles_answer = test_answers["Pol"]
+#     poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
+#         4, 24
+#     )
+#     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+#     dom = Domain(
+#         corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
+#     )
+#     assert np.allclose(
+#         dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
+#     )
+#     assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
+#     hessenbergs, Q = va_orthogonalise_debug(
+#         dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
+#     )
 
 
 def test_va_orthogonalise_jit():
@@ -149,84 +145,82 @@ def test_va_orthogonalise_jit():
     hessenbergs_jit, Q_jit = va_orthogonalise_jit(Z, 10)
     hessenbergs, Q = va_orthogonalise(Z, 10)
     for hessenberg_jit, hessenberg in zip(hessenbergs_jit, hessenbergs):
-        assert np.allclose(
-            hessenberg_jit, hessenberg, atol=ATOL, rtol=RTOL
-        )
+        assert np.allclose(hessenberg_jit, hessenberg, atol=ATOL, rtol=RTOL)
     assert np.allclose(Q_jit, Q, atol=ATOL, rtol=RTOL)
 
 
-def va_orthogonalise_debug(Z, n, poles=None):
-    """Orthogonalise the series using the Vandermonde with Arnoldi method.
+# def va_orthogonalise_debug(Z, n, poles=None):
+#     """Orthogonalise the series using the Vandermonde with Arnoldi method.
 
-    The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
-    are of order 1. The matrix H is upper Hessenberg and the columns of Q
-    span the same space as the columns of the Vandermonde matrix.
-    """
-    import numpy as np
-    from scipy.io import loadmat
+#     The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
+#     are of order 1. The matrix H is upper Hessenberg and the columns of Q
+#     span the same space as the columns of the Vandermonde matrix.
+#     """
+#     import numpy as np
+#     from scipy.io import loadmat
 
-    if Z.shape[1] != 1:
-        raise ValueError("Z must be a column vector")
-    m = len(Z)
-    n, num_poles = 24, 24
-    test_answers = loadmat("tests/data/lid_driven_cavity_n_24_np_24.mat")
-    # Hes_answer = test_answers["Hes"]
-    # H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
-    Q_answer = test_answers["Q"]
-    Q_answers_list = [
-        Q_answer[:, 24 * i + 1 : 24 * (i + 1) + 1] for i in range(5)
-    ]
-    Q_answers_list = [
-        np.append(Q_answer[:, 0].reshape(-1, 1), Q, axis=1)
-        for Q in Q_answers_list
-    ]
-    H = np.zeros((n + 1, n), dtype=np.complex128)
-    Q = np.zeros((m, n + 1), dtype=np.complex128)
-    q = np.ones(len(Z)).reshape(m, 1)
-    Q[:, 0] = q.reshape(m)
-    for k in range(n):
-        q = Z * Q[:, k].reshape(m, 1)
-        for j in range(k + 1):
-            H[j, k] = np.dot(Q[:, j].conj(), q)[0] / m
-            q = q - H[j, k] * Q[:, j].reshape(m, 1)
-        H[k + 1, k] = np.linalg.norm(q) / np.sqrt(m)
-        Q[:, k + 1] = (q / H[k + 1, k]).reshape(m)
-    hessenbergs = [H]
-    if poles is not None:
-        for i, pole_group in enumerate(poles):
-            num_poles = len(pole_group)
-            Hp = np.zeros((num_poles + 1, num_poles), dtype=np.complex128)
-            Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
-            qp = np.ones(m).reshape(m, 1)
-            Qp[:, 0] = qp.reshape(m)
-            for k in range(num_poles):
-                qp = Qp[:, k].reshape(m, 1) / (Z - pole_group[k])
-                pole_answer = loadmat(
-                    f"tests/data/VAorthog_debug/hes_{i+1}/pol_k_{k+1}.mat"
-                )["pol_k"]
-                assert np.isclose(
-                    pole_group[k], pole_answer, atol=ATOL, rtol=RTOL
-                )
-                for j in range(k + 1):
-                    qp_answer = loadmat(
-                        f"tests/data/VAorthog_debug/hes_{i+1}/q_k_{k+1}_j_{j+1}.mat"
-                    )["q"]
-                    assert np.allclose(
-                        qp, qp_answer, atol=1e-8, rtol=1
-                    )
-                    Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
-                    qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
-                Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
-                Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
-            hessenbergs += [Hp]
-            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
-    return hessenbergs, Q
+#     if Z.shape[1] != 1:
+#         raise ValueError("Z must be a column vector")
+#     m = len(Z)
+#     n, num_poles = 24, 24
+#     test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
+#     # Hes_answer = test_answers["Hes"]
+#     # H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
+#     Q_answer = test_answers["Q"]
+#     Q_answers_list = [
+#         Q_answer[:, 24 * i + 1 : 24 * (i + 1) + 1] for i in range(5)
+#     ]
+#     Q_answers_list = [
+#         np.append(Q_answer[:, 0].reshape(-1, 1), Q, axis=1)
+#         for Q in Q_answers_list
+#     ]
+#     H = np.zeros((n + 1, n), dtype=np.complex128)
+#     Q = np.zeros((m, n + 1), dtype=np.complex128)
+#     q = np.ones(len(Z)).reshape(m, 1)
+#     Q[:, 0] = q.reshape(m)
+#     for k in range(n):
+#         q = Z * Q[:, k].reshape(m, 1)
+#         for j in range(k + 1):
+#             H[j, k] = np.dot(Q[:, j].conj(), q)[0] / m
+#             q = q - H[j, k] * Q[:, j].reshape(m, 1)
+#         H[k + 1, k] = np.linalg.norm(q) / np.sqrt(m)
+#         Q[:, k + 1] = (q / H[k + 1, k]).reshape(m)
+#     hessenbergs = [H]
+#     if poles is not None:
+#         for i, pole_group in enumerate(poles):
+#             num_poles = len(pole_group)
+#             Hp = np.zeros((num_poles + 1, num_poles), dtype=np.complex128)
+#             Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
+#             qp = np.ones(m).reshape(m, 1)
+#             Qp[:, 0] = qp.reshape(m)
+#             for k in range(num_poles):
+#                 qp = Qp[:, k].reshape(m, 1) / (Z - pole_group[k])
+#                 pole_answer = loadmat(
+#                     f"tests/data/VAorthog_debug/hes_{i+1}/pol_k_{k+1}.mat"
+#                 )["pol_k"]
+#                 assert np.isclose(
+#                     pole_group[k], pole_answer, atol=ATOL, rtol=RTOL
+#                 )
+#                 for j in range(k + 1):
+#                     qp_answer = loadmat(
+#                         f"tests/data/VAorthog_debug/hes_{i+1}/q_k_{k+1}_j_{j+1}.mat"
+#                     )["q"]
+#                     assert np.allclose(
+#                         qp, qp_answer, atol=1e-8, rtol=1
+#                     )
+#                     Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
+#                     qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
+#                 Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
+#                 Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
+#             hessenbergs += [Hp]
+#             Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
+#     return hessenbergs, Q
 
 
 if __name__ == "__main__":
     test_import_va_orthogonalise()
     test_simple_va_orthogonalise()
     test_large_va_orthongalise()
-    # test_poles_va_orthogonalise()
+    test_poles_va_orthogonalise()
     # test_va_orthogonalise_jit()
-    test_va_orthogonalise_debug()
+    # test_va_orthogonalise_debug()

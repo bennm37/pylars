@@ -32,4 +32,3 @@ print(f"Residual: {residual:.15e}")
 a = Analysis(dom, sol)
 fig, ax = a.plot()
 plt.show()
-

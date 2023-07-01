@@ -54,7 +54,7 @@ class Domain:
         Points are clustered towards the corners.
         """
         spacing = (
-            np.tanh(np.linspace(-16, 16, self.num_boundary_points)) + 1
+            np.tanh(np.linspace(-10, 10, self.num_boundary_points)) + 1
         ) / 2
         nc = len(self.corners)
         self.boundary_points = np.array(

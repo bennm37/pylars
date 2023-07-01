@@ -142,7 +142,7 @@ class Solver:
                     if isinstance(value1, str):
                         self.b1[self.domain.indices[side]] = self.evaluate(
                             value1,
-                            self.boundary_points[self.domain.indices[side]]
+                            self.boundary_points[self.domain.indices[side]],
                         ).reshape(-1)
                     else:
                         self.b1[self.domain.indices[side]] = value1
@@ -154,7 +154,7 @@ class Solver:
                     if isinstance(value2, str):
                         self.b2[self.domain.indices[side]] = self.evaluate(
                             value2,
-                            self.boundary_points[self.domain.indices[side]]
+                            self.boundary_points[self.domain.indices[side]],
                         ).reshape(-1)
                     else:
                         self.b2[self.domain.indices[side]] = value2
@@ -247,7 +247,7 @@ class Solver:
             ),
             axis=1,
         ).reshape(m, 1)
-        row_weights = np.vstack([row_weights, row_weights])**(1/2)
+        row_weights = np.vstack([row_weights, row_weights])
         sparse_row_weights = diags(row_weights.reshape(-1))
         self.A = sparse_row_weights @ self.A
         self.b = sparse_row_weights @ self.b

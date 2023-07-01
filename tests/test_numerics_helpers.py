@@ -10,9 +10,7 @@ def test_cluster():
 
     cluster_10_answer = loadmat("tests/data/cluster_10.mat")["cluster_10"]
     cluster_10 = cluster(10, 1, 4)
-    assert np.allclose(
-        cluster_10, cluster_10_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(cluster_10, cluster_10_answer, atol=ATOL, rtol=RTOL)
 
 
 def test_split():
