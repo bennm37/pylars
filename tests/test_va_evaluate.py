@@ -26,19 +26,12 @@ def test_small_va_evaluate():
     basis_deriv_answer = np.array(
         [[0, 0, 0], [1 / H[1, 0], 1 / H[1, 0], 1 / H[1, 0]]]
     ).T
-    assert np.allclose(basis.real, Q.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, Q.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, Q, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
     assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 
@@ -53,13 +46,9 @@ def test_large_va_evaluate():
     basis, basis_deriv = va_evaluate(Z, hessenbergs)
     basis_answer = loadmat("tests/data/VAorthog_circle_R0.mat")["R0"]
     basis_deriv_answer = loadmat("tests/data/VAorthog_circle_R1.mat")["R1"]
-    assert np.allclose(basis.real, basis_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, basis_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 
@@ -73,13 +62,9 @@ def test_small_poles_va_evaluate_1():
     basis, basis_deriv = va_evaluate(Z, hessenbergs, poles)
     basis_answer = np.array([[1, -1, -1], [1, 1, 1]])
     basis_deriv_answer = np.array([[0, 1 / 4, -1 / 4], [0, 1 / 4, -1 / 4]])
-    assert np.allclose(basis.real, basis_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, basis_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 
@@ -100,13 +85,9 @@ def test_small_poles_va_evaluate_2():
     basis_deriv_answer = loadmat("tests/data/small_poles.mat")["R1"]
     hessenbergs, Q = va_orthogonalise(Z, 0, poles)
     basis, basis_deriv = va_evaluate(Z, hessenbergs, poles)
-    assert np.allclose(basis.real, basis_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, basis_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 
@@ -139,13 +120,9 @@ def test_large_poles_va_evaluate():
     # check the MATALB domain points and poles are the same
     # check the polynomial coefficients are the same
     assert np.allclose(
-        dom.boundary_points.real, Z_answer.real, atol=ATOL, rtol=RTOL
+        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
     )
-    assert np.allclose(
-        dom.boundary_points.imag, Z_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(dom.poles.real, poles_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.poles.imag, poles_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
 
     hessenbergs, Q = va_orthogonalise(
         dom.boundary_points.reshape(1200, 1), n, poles=dom.poles
@@ -155,31 +132,18 @@ def test_large_poles_va_evaluate():
     )
     # check the polynomial basis is the same
     assert np.allclose(
-        basis[:, :25].real, basis_answer[:, :25].real, atol=ATOL, rtol=RTOL
+        basis[:, :25], basis_answer[:, :25], atol=ATOL, rtol=RTOL
     )
     assert np.allclose(
-        basis[:, :25].imag, basis_answer[:, :25].imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv[:, :25].real,
-        basis_deriv_answer[:, :25].real,
-        atol=ATOL,
-        rtol=RTOL,
-    )
-    assert np.allclose(
-        basis_deriv[:, :25].imag,
-        basis_deriv_answer[:, :25].imag,
+        basis_deriv[:, :25],
+        basis_deriv_answer[:, :25],
         atol=ATOL,
         rtol=RTOL,
     )
     # check all the basis functions are the same
-    assert np.allclose(basis.real, basis_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, basis_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 
@@ -212,13 +176,9 @@ def test_large_poles_va_evaluate_hypothesis():
     # check the MATALB domain points and poles are the same
     # check the polynomial coefficients are the same
     assert np.allclose(
-        dom.boundary_points.real, Z_answer.real, atol=ATOL, rtol=RTOL
+        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
     )
-    assert np.allclose(
-        dom.boundary_points.imag, Z_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(dom.poles.real, poles_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.poles.imag, poles_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
 
     hessenbergs, Q = va_orthogonalise(
         dom.boundary_points.reshape(1200, 1), 0, poles=dom.poles
@@ -234,13 +194,9 @@ def test_large_poles_va_evaluate_hypothesis():
         basis_deriv[:, :25], basis_deriv_answer[:, :25], atol=ATOL, rtol=RTOL
     )
     # check all the basis functions are the same
-    assert np.allclose(basis.real, basis_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis.imag, basis_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        basis_deriv.real, basis_deriv_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        basis_deriv.imag, basis_deriv_answer.imag, atol=ATOL, rtol=RTOL
+        basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
 
 

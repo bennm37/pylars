@@ -14,7 +14,11 @@ def test_create_functions():
     )
     Z = test_answers["Z"]
     Hes = test_answers["Hes"]
+    hessenbergs = [Hes[0, i] for i in range(Hes.shape[1])]
     Pol = test_answers["Pol"]
+    poles = np.array([Pol[0, i] for i in range(4)]).reshape(
+        4, 24
+    )
     c = test_answers["c"]
     psi_100_100_answer = test_answers["psi_100_100"]
     p_100_100_answer = test_answers["p_100_100"]
@@ -22,47 +26,35 @@ def test_create_functions():
     omega_100_100_answer = test_answers["omega_100_100"]
 
     def psi(Z):
-        return make_function("psi", Z, c, Hes, Pol)
+        return make_function("psi", Z, c, hessenbergs, poles)
 
     def p(Z):
-        return make_function("p", Z, c, Hes, Pol)
+        return make_function("p", Z, c, hessenbergs, poles)
 
     def uv(Z):
-        return make_function("uv", Z, c, Hes, Pol)
+        return make_function("uv", Z, c, hessenbergs, poles)
 
     def omega(Z):
-        return make_function("omega", Z, c, Hes, Pol)
+        return make_function("omega", Z, c, hessenbergs, poles)
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
     Z = X + 1j * Y
-    psi_100_100 = psi(Z)
-    p_100_100 = p(Z)
-    uv_100_100 = uv(Z)
-    omega_100_100 = omega(Z)
+    psi_100_100 = psi(Z).reshape(100, 100)
+    p_100_100 = p(Z).reshape(100, 100)
+    uv_100_100 = uv(Z).reshape(100, 100)
+    omega_100_100 = omega(Z).reshape(100, 100)
     assert np.allclose(
-        psi_100_100.real, psi_100_100_answer.real, atol=ATOL, rtol=RTOL
+        psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL
     )
     assert np.allclose(
-        psi_100_100.imag, psi_100_100_answer.imag, atol=ATOL, rtol=RTOL
+        p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL
     )
     assert np.allclose(
-        p_100_100.real, p_100_100_answer.real, atol=ATOL, rtol=RTOL
+        uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL
     )
     assert np.allclose(
-        p_100_100.imag, p_100_100_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        uv_100_100.real, uv_100_100_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        uv_100_100.imag, uv_100_100_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        omega_100_100.real, omega_100_100_answer.real, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        omega_100_100.imag, omega_100_100_answer.imag, atol=ATOL, rtol=RTOL
+        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
     )
 
 

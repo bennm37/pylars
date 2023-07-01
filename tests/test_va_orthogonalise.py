@@ -38,12 +38,9 @@ def test_simple_va_orthogonalise():
     ).T
     hessenbergs, Q = va_orthogonalise(Z, n)
     H = hessenbergs[0]
-    assert np.allclose(H.real, H_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(H.imag, H_answer.imag, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q.real, Q_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q.imag, Q_answer.imag, atol=ATOL, rtol=RTOL)
-    assert np.allclose((Q @ H).real, Z.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose((Q @ H).imag, Z.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(H, H_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose((Q @ H), Z, atol=ATOL, rtol=RTOL)
 
 
 def test_large_va_orthongalise():
@@ -59,20 +56,16 @@ def test_large_va_orthongalise():
     for k in range(1, 10):
         left = np.diag(Z.flatten()) @ Q_answer[:, :k]
         right = Q_answer[:, : k + 1] @ H_answer[: k + 1, :k]
-        assert np.allclose(left.real, right.real, atol=ATOL, rtol=RTOL)
-        assert np.allclose(left.imag, right.imag, atol=ATOL, rtol=RTOL)
+        assert np.allclose(left, right, atol=ATOL, rtol=RTOL)
     Z = np.exp(1j * np.linspace(0, 2 * np.pi, 100)).reshape(100, 1)
     hessenbergs, Q = va_orthogonalise(Z, 10)
     H = hessenbergs[0]
-    assert np.allclose(H.real, H_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(H.imag, H_answer.imag, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q.real, Q_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q.imag, Q_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(H, H_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
     for k in range(1, 10):
         left = np.diag(Z.flatten()) @ Q[:, :k]
         right = Q[:, : k + 1] @ H[: k + 1, :k]
-        assert np.allclose(left.real, right.real, atol=ATOL, rtol=RTOL)
-        assert np.allclose(left.imag, right.imag, atol=ATOL, rtol=RTOL)
+        assert np.allclose(left, right, atol=ATOL, rtol=RTOL)
     # check Q has orthogonal columns with norm M
     # an exception for ATOL is made here as Q will only be
     # approximately orthogonal
@@ -106,27 +99,21 @@ def test_poles_va_orthogonalise():
     )
     # check the MATALB domain points and poles are the same
     assert np.allclose(
-        dom.boundary_points.real, Z_answer.real, atol=ATOL, rtol=RTOL
+        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
     )
-    assert np.allclose(
-        dom.boundary_points.imag, Z_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(dom.poles.real, poles_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.poles.imag, poles_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise(
         dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
     )
     for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
         assert np.allclose(
-            hessenberg.real, hessenberg_answer.real, atol=ATOL, rtol=RTOL
+            hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL
         )
-    assert np.allclose(Q.real, Q_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q.imag, Q_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
 
 
 def test_va_orthogonalise_debug():
     """Test the va_orthogonalise with poles against the MATLAB code."""
-    from pyls.numerics import va_orthogonalise
     from pyls import Domain
     import numpy as np
     from scipy.io import loadmat
@@ -145,13 +132,9 @@ def test_va_orthogonalise_debug():
         corners, num_poles=24, num_boundary_points=300, L=np.sqrt(2) * 1.5
     )
     assert np.allclose(
-        dom.boundary_points.real, Z_answer.real, atol=ATOL, rtol=RTOL
+        dom.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
     )
-    assert np.allclose(
-        dom.boundary_points.imag, Z_answer.imag, atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(dom.poles.real, poles_answer.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.poles.imag, poles_answer.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(dom.poles, poles_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise_debug(
         dom.boundary_points.reshape(1200, 1), 24, poles=dom.poles
     )
@@ -167,10 +150,9 @@ def test_va_orthogonalise_jit():
     hessenbergs, Q = va_orthogonalise(Z, 10)
     for hessenberg_jit, hessenberg in zip(hessenbergs_jit, hessenbergs):
         assert np.allclose(
-            hessenberg_jit.real, hessenberg.real, atol=ATOL, rtol=RTOL
+            hessenberg_jit, hessenberg, atol=ATOL, rtol=RTOL
         )
-    assert np.allclose(Q_jit.real, Q.real, atol=ATOL, rtol=RTOL)
-    assert np.allclose(Q_jit.imag, Q.imag, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q_jit, Q, atol=ATOL, rtol=RTOL)
 
 
 def va_orthogonalise_debug(Z, n, poles=None):
@@ -188,8 +170,8 @@ def va_orthogonalise_debug(Z, n, poles=None):
     m = len(Z)
     n, num_poles = 24, 24
     test_answers = loadmat("tests/data/lid_driven_cavity_n_24_np_24.mat")
-    Hes_answer = test_answers["Hes"]
-    H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
+    # Hes_answer = test_answers["Hes"]
+    # H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
     Q_answer = test_answers["Q"]
     Q_answers_list = [
         Q_answer[:, 24 * i + 1 : 24 * (i + 1) + 1] for i in range(5)
@@ -223,20 +205,14 @@ def va_orthogonalise_debug(Z, n, poles=None):
                     f"tests/data/VAorthog_debug/hes_{i+1}/pol_k_{k+1}.mat"
                 )["pol_k"]
                 assert np.isclose(
-                    pole_group[k].real, pole_answer.real, atol=ATOL, rtol=RTOL
-                )
-                assert np.isclose(
-                    pole_group[k].imag, pole_answer.imag, atol=ATOL, rtol=RTOL
+                    pole_group[k], pole_answer, atol=ATOL, rtol=RTOL
                 )
                 for j in range(k + 1):
                     qp_answer = loadmat(
                         f"tests/data/VAorthog_debug/hes_{i+1}/q_k_{k+1}_j_{j+1}.mat"
                     )["q"]
                     assert np.allclose(
-                        qp.real, qp_answer.real, atol=1e-8, rtol=1
-                    )
-                    assert np.allclose(
-                        qp.imag, qp_answer.imag, atol=1e-8, rtol=1
+                        qp, qp_answer, atol=1e-8, rtol=1
                     )
                     Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
                     qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
@@ -253,4 +229,4 @@ if __name__ == "__main__":
     test_large_va_orthongalise()
     # test_poles_va_orthogonalise()
     # test_va_orthogonalise_jit()
-    # test_va_orthogonalise_debug()
+    test_va_orthogonalise_debug()

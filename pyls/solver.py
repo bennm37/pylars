@@ -247,10 +247,11 @@ class Solver:
             ),
             axis=1,
         ).reshape(m, 1)
-        row_weights = np.vstack([row_weights, row_weights])
+        row_weights = np.vstack([row_weights, row_weights])**(1/2)
         sparse_row_weights = diags(row_weights.reshape(-1))
         self.A = sparse_row_weights @ self.A
         self.b = sparse_row_weights @ self.b
+        return row_weights
 
     def normalize(self, a=0, b=0):
         """Normalize f and g so that they are unique."""
