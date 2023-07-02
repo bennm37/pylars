@@ -3,6 +3,7 @@ from test_settings import ATOL, RTOL
 
 
 def test_create_functions():
+    """Test the creation of functions from MATLAB hessenbergs and poles."""
     from scipy.io import loadmat
     from pyls.numerics import make_function
     import numpy as np
@@ -23,17 +24,17 @@ def test_create_functions():
     uv_100_100_answer = test_answers["uv_100_100"]
     omega_100_100_answer = test_answers["omega_100_100"]
 
-    def psi(Z):
-        return make_function("psi", Z, c, hessenbergs, poles)
+    def psi(z):
+        return make_function("psi", z, c, hessenbergs, poles)
 
-    def p(Z):
-        return make_function("p", Z, c, hessenbergs, poles)
+    def p(z):
+        return make_function("p", z, c, hessenbergs, poles)
 
-    def uv(Z):
-        return make_function("uv", Z, c, hessenbergs, poles)
+    def uv(z):
+        return make_function("uv", z, c, hessenbergs, poles)
 
-    def omega(Z):
-        return make_function("omega", Z, c, hessenbergs, poles)
+    def omega(z):
+        return make_function("omega", z, c, hessenbergs, poles)
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
@@ -42,8 +43,6 @@ def test_create_functions():
     p_100_100 = p(Z).reshape(100, 100)
     uv_100_100 = uv(Z).reshape(100, 100)
     omega_100_100 = omega(Z).reshape(100, 100)
-    ATOL = 1e-12  # small velocity elements are not
-    # accurate for floating point reasons
     assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
@@ -54,7 +53,7 @@ def test_create_functions():
 
 def test_lid_driven_cavity_solve():
     """Tests the solver from BCs to solution."""
-    from pyls import Domain, Solver, Analysis
+    from pyls import Domain, Solver
     from scipy.io import loadmat
     import numpy as np
     import matplotlib.pyplot as plt
@@ -65,7 +64,6 @@ def test_lid_driven_cavity_solve():
         f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
     )
     Z_answer = test_answers["Z"]
-    c_answer = test_answers["c"]
     psi_100_100_answer = test_answers["psi_100_100"]
     p_100_100_answer = test_answers["p_100_100"]
     uv_100_100_answer = test_answers["uv_100_100"]
@@ -100,10 +98,6 @@ def test_lid_driven_cavity_solve():
     p_100_100 = p(Z).reshape(100, 100)
     uv_100_100 = uv(Z).reshape(100, 100)
     omega_100_100 = omega(Z).reshape(100, 100)
-    # a = Analysis(dom, sol)
-    # a.plot()
-    # plt.show()
-
     # assert np.allclose(sol.coefficients, c_answer, atol=ATOL, rtol=RTOL)
     # ill conditioning of A means some disagreement towards the edges
     # and only agreement to 1e-3 in the interior

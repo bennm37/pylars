@@ -21,11 +21,14 @@ a = Analysis(dom, sol)
 fig, ax = a.plot(resolution=300)
 values = a.psi_values[~np.isnan(a.psi_values)].flatten()
 max = values.max()
+min = values.min()
 moffat_levels = max + np.linspace(-6e-5, 0, 10)
 ax.contour(
     a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5
 )
+# moffat_levels_2 = max + np.linspace(-1e-10, 0, 10)
+moffat_levels_2 = min + np.linspace(0, 1e-4, 10)
+ax.contour(
+    a.X, a.Y, a.psi_values, levels=moffat_levels_2, colors="w", linewidths=0.5
+)
 plt.show()
-# fig.clear()
-# values = a.psi_values[~np.isnan(a.psi_values)].flatten()
-# plt.hist(values , bins=100)

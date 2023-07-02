@@ -241,7 +241,7 @@ class Solver:
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression
+                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression  # noqa W605
             )
         for identifier, code in zip(
             INDEPENDENT,
@@ -255,7 +255,8 @@ class Solver:
     def setup(self):
         """Get basis functions and derivatives and dependent variables.
 
-        Allows the user to more manually set up the solver."""
+        Allows the user to more manually set up the solver.
+        """
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles
         )

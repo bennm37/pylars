@@ -129,11 +129,14 @@ class Domain:
 
     def name_side(self, old, new):
         """Rename the sides of the polygon."""
+        old, new = str(old), str(new)
         self.sides[self.sides.index(old)] = new
         self.indices[new] = self.indices.pop(old)
 
     def group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
+        old_sides = [str(side) for side in old_sides]
+        self.indices[str(new)] = []
         for side in old_sides:
             self.sides.remove(side)
             self.indices[str(new)] += self.indices.pop(side)
@@ -183,7 +186,7 @@ class Domain:
         """Display the labelled polygon."""
         fig, ax = plt.subplots()
         flat_poles = self.poles.flatten()
-        if self.poles:
+        if len(self.poles[0]):
             x_min = min(flat_poles.real)
             x_max = max(flat_poles.real)
             y_min = min(flat_poles.imag)

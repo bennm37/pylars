@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 corners = [1 + 1j, -1 + 1j, -1, 0, -1j, 1 - 1j]
 dom = Domain(corners, num_boundary_points=500, num_poles=30)
 # dom.show()
-sol = Solver(dom, 24)
+sol = Solver(dom, 50)
 # 1 is the inlet, 4 is the outlet, 0,2,3,5 are the walls
 # inlet
 sol.add_boundary_condition("1", "u(1)", "4*y*(1-y)")

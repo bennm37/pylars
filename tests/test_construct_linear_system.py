@@ -187,6 +187,7 @@ def test_row_weighting():
 
 
 def test_normalize():
+    """Test normalize method of Solver."""
     pass
 
 
@@ -195,3 +196,4 @@ if __name__ == "__main__":
     test_lid_driven_cavity_construct_linear_system_1()
     test_lid_driven_cavity_construct_linear_system_2()
     test_row_weighting()
+    test_normalize()
