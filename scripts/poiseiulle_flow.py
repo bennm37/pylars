@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(corners, num_boundary_points=300, num_poles=0, spacing="linear")
 dom.show()
-sol = Solver(dom, 4, weight_flag=False)
+sol = Solver(dom, 24, weight_flag=False, normalize_flag=False)
 sol.add_boundary_condition("0", "u(0)", 0)
 sol.add_boundary_condition("0", "v(0)", 0)
 sol.add_boundary_condition("2", "u(2)", 0)
