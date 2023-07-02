@@ -13,6 +13,7 @@ import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number
 from pyls.numerics import cart, cluster
+import shapely
 from shapely import Point, Polygon
 
 
@@ -76,11 +77,12 @@ class Domain:
         self.L = L
         self.spacing = spacing
         self.check_input()
-        self.generate_boundary_points()
-        self.generate_poles()
         self.polygon = Polygon(
             np.array([self.corners.real, self.corners.imag]).T
         )
+        self.orient()
+        self.generate_boundary_points()
+        self.generate_poles()
 
     def check_input(self):
         """Check that the input is valid."""
@@ -98,6 +100,12 @@ class Domain:
             raise TypeError("num_poles must be a non negative integer")
         if self.spacing not in ["clustered", "linear"]:
             raise ValueError("spacing must be clustered or linear")
+
+    def orient(self):
+        """Reorient the polygon so that it is anticlockwise."""
+        self.polygon = shapely.geometry.polygon.orient(self.polygon, 1)
+        corners = np.array(self.polygon.exterior.coords[:-1])
+        self.corners = corners[:, 0] + 1j * corners[:, 1]
 
     def generate_boundary_points(self):
         """Create a list of boundary points on each edge."""

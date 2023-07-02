@@ -81,10 +81,8 @@ class Solver:
         Construct the functions from the coefficients.
     """
 
-    def __init__(self, domain, degree, weight_flag=True, normalize_flag=True):
+    def __init__(self, domain, degree):
         self.domain = domain
-        self.weight_flag = weight_flag
-        self.normalize_flag = normalize_flag
         self.num_boundary_points = self.domain.num_boundary_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
@@ -241,7 +239,9 @@ class Solver:
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression  # noqa W605
+                f"\({side}\)",
+                f'[self.domain.indices["{side}"]]',
+                expression,  # noqa W605
             )
         for identifier, code in zip(
             INDEPENDENT,
@@ -267,7 +267,14 @@ class Solver:
         )
         self.get_dependents()
 
-    def solve(self, pickle=False, filename="solution.pickle", check=True):
+    def solve(
+        self,
+        pickle=False,
+        filename="solution.pickle",
+        check=True,
+        weight=True,
+        normalize=True,
+    ):
         """Set up the solver and solve the least squares problem.
 
         Reutrns the functions as a list of functions.
@@ -282,9 +289,9 @@ class Solver:
         )
         self.get_dependents()
         self.construct_linear_system()
-        if self.weight_flag:
+        if weight:
             self.weight_rows()
-        if self.normalize_flag:
+        if normalize:
             self.normalize()
         self.results = linalg.lstsq(self.A, self.b)
         self.coefficients = self.results[0]

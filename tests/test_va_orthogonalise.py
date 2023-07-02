@@ -163,9 +163,11 @@ def test_va_orthogonalise_jit():
 #         raise ValueError("Z must be a column vector")
 #     m = len(Z)
 #     n, num_poles = 24, 24
-#     test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
+#     test_answers = loadmat(
+#           f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
+#     )
 #     # Hes_answer = test_answers["Hes"]
-#     # H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
+#     H_answers_list = [Hes_answer[:, k][0] for k in range(Hes_answer.shape[1])]
 #     Q_answer = test_answers["Q"]
 #     Q_answers_list = [
 #         Q_answer[:, 24 * i + 1 : 24 * (i + 1) + 1] for i in range(5)
