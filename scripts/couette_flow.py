@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-dom = Domain(corners, num_boundary_points=300, num_poles=0)
-sol = Solver(dom, 24)
+dom = Domain(corners, num_boundary_points=300, num_poles=0, spacing="linear")
+sol = Solver(dom, 24, weight_flag=False)
 # periodic Couette flow with no-slip boundary conditions
 sol.add_boundary_condition("0", "u(0)", 1)
 sol.add_boundary_condition("0", "v(0)", 0)

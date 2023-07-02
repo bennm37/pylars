@@ -81,8 +81,10 @@ class Solver:
         Construct the functions from the coefficients.
     """
 
-    def __init__(self, domain, degree):
+    def __init__(self, domain, degree, weight_flag=True, normalize_flag=True):
         self.domain = domain
+        self.weight_flag = weight_flag
+        self.normalize_flag = normalize_flag
         self.num_boundary_points = self.domain.num_boundary_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
@@ -279,8 +281,10 @@ class Solver:
         )
         self.get_dependents()
         self.construct_linear_system()
-        self.weight_rows()
-        self.normalize()
+        if self.weight_flag:
+            self.weight_rows()
+        if self.normalize_flag:
+            self.normalize()
         self.results = linalg.lstsq(self.A, self.b)
         self.coefficients = self.results[0]
         self.residuals = self.results[1]
