@@ -3,13 +3,7 @@
 Modules
 -------
 numerics:
-    Contains functions implementing the numerical methods.
-    va_orthogonalise:
-        create an orthogonal basis using the vandermonde
-        with arnoldi method.
-    va_evaluate:
-        evaluate the orthogonal basis at a new set of points.
-
+    Contains functions implementing orthogonalisation.
 
 domain:
     Contains the Domain class.

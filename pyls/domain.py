@@ -183,10 +183,16 @@ class Domain:
         """Display the labelled polygon."""
         fig, ax = plt.subplots()
         flat_poles = self.poles.flatten()
-        x_min = min(flat_poles.real)
-        x_max = max(flat_poles.real)
-        y_min = min(flat_poles.imag)
-        y_max = max(flat_poles.imag)
+        if self.poles:
+            x_min = min(flat_poles.real)
+            x_max = max(flat_poles.real)
+            y_min = min(flat_poles.imag)
+            y_max = max(flat_poles.imag)
+        else:
+            x_min = min(self.corners.real)
+            x_max = max(self.corners.real)
+            y_min = min(self.corners.imag)
+            y_max = max(self.corners.imag)
         ax.set_xlim(x_min - 0.1, x_max + 0.1)
         ax.set_ylim(y_min - 0.1, y_max + 0.1)
         cartesian_corners = np.array([self.corners.real, self.corners.imag]).T

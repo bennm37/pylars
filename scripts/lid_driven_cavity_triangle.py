@@ -1,4 +1,4 @@
-from pyls import Domain, Solver
+from pyls import Domain, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,24 +10,22 @@ sol.add_boundary_condition("0", "psi(0)", 0)
 sol.add_boundary_condition("0", "u(0)", 1)
 sol.add_boundary_condition("2", "psi(2)", 0)
 sol.add_boundary_condition("2", "u(2)", 0)
+sol.add_boundary_condition("1", "psi(1)", 0)
 sol.add_boundary_condition("1", "u(1)", 0)
-sol.add_boundary_condition("1", "v(1)", 0)
 psi, uv, p, omega = sol.solve()
 
 residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 
-a = a
-# x = np.linspace(-1, 1, 100)
-# X, Y = np.meshgrid(x, x)
-# Z = X + 1j * Y
-# psi_100_100 = psi(Z.flatten()).reshape(100, 100)
-# uv_100_100 = uv(Z.flatten()).reshape(100, 100)
-# # plot the velocity magnitude
-# fig, ax = plt.subplots()
-# # interpolate using bilinear interpolation
-# speed = np.abs(uv_100_100)
-# ax.pcolormesh(X, Y, np.abs(uv_100_100), cmap="jet")
-# ax.contour(X, Y, psi_100_100, colors="k", levels=20)
-# ax.set_aspect("equal")
-# plt.show()
+a = Analysis(dom, sol)
+fig, ax = a.plot(resolution=300)
+values = a.psi_values[~np.isnan(a.psi_values)].flatten()
+max = values.max()
+moffat_levels = max + np.linspace(-6e-5, 0, 10)
+ax.contour(
+    a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5
+)
+plt.show()
+# fig.clear()
+# values = a.psi_values[~np.isnan(a.psi_values)].flatten()
+# plt.hist(values , bins=100)

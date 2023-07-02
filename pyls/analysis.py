@@ -4,6 +4,7 @@ Supports plotting of the contours and velocity magnitude of the solution.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from pyls.colormaps import parula
 
 
 class Analysis:
@@ -24,22 +25,26 @@ class Analysis:
         self.domain = domain
         self.solver = solver
 
-    def plot(self):
+    def plot(self, resolution=100):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
-        x, y = np.linspace(xmin, xmax, 100), np.linspace(ymin, ymax, 100)
-        X, Y = np.meshgrid(x, y)
-        Z = X + 1j * Y
+        x, y = np.linspace(xmin, xmax, resolution), np.linspace(
+            ymin, ymax, resolution
+        )
+        self.X, self.Y = np.meshgrid(x, y)
+        self.Z = self.X + 1j * self.Y
         psi, uv, p, omega = self.solver.functions
-        Z[np.logical_not(self.domain.mask_contains(Z))] = np.nan
-        psi_100_100 = psi(Z.flatten()).reshape(100, 100)
-        uv_100_100 = uv(Z.flatten()).reshape(100, 100)
+        self.Z[~self.domain.mask_contains(self.Z)] = np.nan
+        self.psi_values = psi(self.Z.flatten()).reshape(resolution, resolution)
+        self.uv_values = uv(self.Z.flatten()).reshape(resolution, resolution)
         fig, ax = plt.subplots()
-        speed = np.abs(uv_100_100)
-        pc = ax.pcolormesh(X, Y, speed, cmap="jet")
+        speed = np.abs(self.uv_values)
+        pc = ax.pcolormesh(
+            self.X, self.Y, speed, cmap=parula, shading="gouraud"
+        )
         plt.colorbar(pc)
-        ax.contour(X, Y, psi_100_100, colors="k", levels=20)
+        ax.contour(self.X, self.Y, self.psi_values, colors="k", levels=20)
         ax.set_aspect("equal")
         return fig, ax

@@ -252,7 +252,7 @@ class Solver:
     # SOLVER
     def setup(self):
         """Get basis functions and derivatives and dependent variables.
-        
+
         Allows the user to more manually set up the solver."""
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles

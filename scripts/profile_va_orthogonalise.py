@@ -1,3 +1,4 @@
+"""Profile the performance of the va_orthogonalise function with JIT."""
 import cProfile
 import pstats
 from pyls.numerics import va_orthogonalise, va_orthogonalise_jit
@@ -5,6 +6,7 @@ import numpy as np
 
 
 def profile():
+    """Profile the performance of the va_orthogonalise function with JIT."""
     n_points = 12000
     degree = 100
     Z = np.exp(1j * np.linspace(0, 2 * np.pi, n_points)).reshape(n_points, 1)

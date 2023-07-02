@@ -1,3 +1,4 @@
+"""Create labelled polygonal domains."""
 from pyls.domain import Domain
 import numpy as np
 
