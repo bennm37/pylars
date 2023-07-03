@@ -254,7 +254,7 @@ class Domain:
         """Check if a point is in the polygon."""
         if isinstance(point, complex):
             point = Point(np.array([point.real, point.imag]))
-            return self.polygon.contains(point)
+            return self.polygon.buffer(1e-14).contains(point)
         if isinstance(point, np.ndarray):
             if point.dtype != complex or point.dtype != np.complex128:
                 raise TypeError("Point must be a complex number or array")

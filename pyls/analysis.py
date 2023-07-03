@@ -45,6 +45,14 @@ class Analysis:
             self.X, self.Y, speed, cmap=parula, shading="gouraud"
         )
         plt.colorbar(pc)
-        ax.contour(self.X, self.Y, self.psi_values, colors="k", levels=20)
+        ax.contour(
+            self.X,
+            self.Y,
+            self.psi_values,
+            colors="k",
+            levels=10,
+            linestyles="solid",
+            linewidths=0.5,
+        )
         ax.set_aspect("equal")
         return fig, ax

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -1, 0, -1j, 1 - 1j]
-dom = Domain(corners, num_boundary_points=500, num_poles=30)
+dom = Domain(corners, num_boundary_points=300, num_poles=40)
 # dom.show()
 sol = Solver(dom, 50)
 # 1 is the inlet, 4 is the outlet, 0,2,3,5 are the walls
@@ -24,7 +24,7 @@ sol.add_boundary_condition("3", "u(3)", 0)
 sol.add_boundary_condition("3", "v(3)", 0)
 sol.add_boundary_condition("5", "u(5)", 0)
 sol.add_boundary_condition("5", "v(5)", 0)
-psi, uv, p, omega = sol.solve(check=False)
+psi, uv, p, omega = sol.solve(check=False, normalize=False)
 residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 a = Analysis(dom, sol)
@@ -34,4 +34,5 @@ moffat_levels = max + np.linspace(-1.6e-5, 0, 10)
 ax.contour(
     a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5
 )
+ax.axis("off")
 plt.show()

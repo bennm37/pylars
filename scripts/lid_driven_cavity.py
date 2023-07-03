@@ -26,10 +26,13 @@ residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 
 a = Analysis(dom, sol)
-fig, ax = a.plot()
+fig, ax = a.plot(resolution=300)
 max = a.psi_values[~np.isnan(a.psi_values)].max()
-levels_moffat = max + np.linspace(-4e-6, 0, 10)
+levels_moffat = max + np.linspace(-6e-6, 0, 10)
 ax.contour(
-    a.X, a.Y, a.psi_values, colors="y", levels=levels_moffat, linewidths=0.5
+    a.X, a.Y, a.psi_values, colors="y", levels=levels_moffat, linewidths=0.3
 )
+ax.axis("off")
+ax.scatter(dom.poles[:, -18:].real, dom.poles[:, -18:].imag, s=1, c="r")
+plt.savefig("media/lid_driven_cavity.pdf")
 plt.show()

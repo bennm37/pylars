@@ -133,6 +133,82 @@ def test_lid_driven_cavity_solve():
     )
 
 
+def test_pouseuille_solve():
+    """Test the solver against the analytical solution to pouseuille flow."""
+    from pyls import Domain, Solver
+    import numpy as np
+
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(
+        corners, num_boundary_points=300, num_poles=0, spacing="linear"
+    )
+    sol = Solver(dom, 24)
+    sol.add_boundary_condition("0", "u(0)", 0)
+    sol.add_boundary_condition("0", "v(0)", 0)
+    sol.add_boundary_condition("2", "u(2)", 0)
+    sol.add_boundary_condition("2", "v(2)", 0)
+    # parabolic inlet
+    sol.add_boundary_condition("1", "p(1)", 2)
+    sol.add_boundary_condition("1", "v(1)", 0)
+    # outlet
+    sol.add_boundary_condition("3", "p(3)", -2)
+    sol.add_boundary_condition("3", "v(3)", 0)
+    psi, uv, p, omega = sol.solve(weight=False, normalize=False)
+
+    def pouseuille_uv(z):
+        y = np.imag(z)
+        return (y + 1) * (1 - y)
+
+    x = np.linspace(-1, 1, 100)
+    X, Y = np.meshgrid(x, x)
+    Z = X + 1j * Y
+    uv_100_100 = uv(Z).reshape(100, 100)
+    puv_100_100 = pouseuille_uv(Z).reshape(100, 100)
+    ATOL = 1e-13
+    RTOL = 1e-13
+    assert np.allclose(puv_100_100, uv_100_100, atol=ATOL, rtol=RTOL)
+    print("Max Abs Error for Pouseuille Flow")
+    print(np.max(np.abs(puv_100_100 - uv_100_100)))
+
+
+def test_couette_solve():
+    """Test the solver against the analytical solution to couette flow."""
+    from pyls import Domain, Solver
+    import numpy as np
+
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    dom = Domain(
+        corners, num_boundary_points=300, num_poles=0, spacing="linear"
+    )
+    sol = Solver(dom, 24)
+    sol.add_boundary_condition("0", "u(0)", 1)
+    sol.add_boundary_condition("0", "v(0)", 0)
+    sol.add_boundary_condition("2", "u(2)", 0)
+    sol.add_boundary_condition("2", "v(2)", 0)
+    sol.add_boundary_condition("1", "p(1)", 0)
+    sol.add_boundary_condition("1", "v(1)", 0)
+    sol.add_boundary_condition("3", "p(3)", 0)
+    sol.add_boundary_condition("3", "v(3)", 0)
+    psi, uv, p, omega = sol.solve(weight=False, normalize=False)
+
+    def couette_uv(z):
+        y = np.imag(z)
+        return (y + 1) / 2
+
+    x = np.linspace(-1, 1, 100)
+    X, Y = np.meshgrid(x, x)
+    Z = X + 1j * Y
+    uv_100_100 = uv(Z).reshape(100, 100)
+    cuv_100_100 = couette_uv(Z).reshape(100, 100)
+    ATOL = 1e-13
+    RTOL = 1e-13
+    assert np.allclose(cuv_100_100, uv_100_100, atol=ATOL, rtol=RTOL)
+    print("Max Abs Error for Couette Flow")
+    print(np.max(np.abs(cuv_100_100 - uv_100_100)))
+
+
 if __name__ == "__main__":
-    test_create_functions()
-    test_lid_driven_cavity_solve()
+    # test_create_functions()
+    # test_lid_driven_cavity_solve()
+    test_pouseuille_solve()
+    test_couette_solve()
