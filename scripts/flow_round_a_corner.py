@@ -10,10 +10,11 @@ dom = Domain(corners, num_boundary_points=300, num_poles=40)
 sol = Solver(dom, 50)
 # 1 is the inlet, 4 is the outlet, 0,2,3,5 are the walls
 # inlet
-sol.add_boundary_condition("1", "u(1)", "4*y*(1-y)")
+# sol.add_boundary_condition("1", "u(1)", "4*y*(1-y)")
+sol.add_boundary_condition("1", "p(1)", 11)
 sol.add_boundary_condition("1", "v(1)", 0)
 # outlet
-sol.add_boundary_condition("4", "p(4)", 0)
+sol.add_boundary_condition("4", "p(4)", -11)
 sol.add_boundary_condition("4", "u(4)", 0)
 # walls no slip no penetration
 sol.add_boundary_condition("0", "u(0)", 0)
@@ -32,7 +33,14 @@ fig, ax = a.plot(resolution=300)
 max = a.psi_values[~np.isnan(a.psi_values)].max()
 moffat_levels = max + np.linspace(-1.6e-5, 0, 10)
 ax.contour(
-    a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5
+    a.X,
+    a.Y,
+    a.psi_values,
+    levels=moffat_levels,
+    colors="y",
+    linewidths=0.5,
+    linestyles="solid",
 )
 ax.axis("off")
+plt.savefig("media/flow_round_a_corner.pdf", bbox_inches="tight")
 plt.show()
