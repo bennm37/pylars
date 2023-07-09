@@ -60,7 +60,15 @@ class Analysis:
         return fig, ax
 
     def plot_periodic(
-        self, a, b, resolution=100, n_tile=3, figax=None, colorbar=True
+        self,
+        a,
+        b,
+        gapa=2,
+        gapb=2,
+        resolution=100,
+        n_tile=3,
+        figax=None,
+        colorbar=True,
     ):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
@@ -89,6 +97,10 @@ class Analysis:
         self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled)
         self.Z = self.Y + 1j * self.X
         psi, uv, p, omega = self.solver.functions
+        if gapa is None:
+            gapa = np.around(psi(ymax) - psi(ymin), 15)
+        if gapb is None:
+            gapb = np.around(psi(xmax) - psi(xmin), 15)
         self.psi_values = psi(self.Z.flatten()).reshape(
             n_tile * resolution, n_tile * resolution
         )
@@ -100,7 +112,7 @@ class Analysis:
                     resolution * i : resolution * (i + 1),
                     resolution * j : resolution * (j + 1),
                 ] = (
-                    -2 * b * i + 2 * a * j
+                    -gapb * b * i + gapa * a * j
                 )
         self.psi_values += psi_correction
         self.uv_values = uv(self.Z.flatten()).reshape(
@@ -122,7 +134,7 @@ class Analysis:
             self.Y_tiled,
             self.psi_values,
             colors="k",
-            levels=100,
+            levels=30,
             linestyles="solid",
             linewidths=0.5,
         )
@@ -144,14 +156,59 @@ class Analysis:
             linewidths=1,
         )
         ax.set_aspect("equal")
+        # add text to the corners of the figure
+        padx = 0.5
+        pady = 1.5
+        ax.text(
+            xmin * padx,
+            ymin * pady,
+            f"$\psi = {psi(xmin+1j*ymin)[0][0]:.1e}$",
+            color="black",
+            fontsize=15,
+            horizontalalignment="right",
+            verticalalignment="top",
+        )
+        ax.text(
+            xmax * padx + (n_tile - 1) * length,
+            ymin * pady,
+            f"$\psi = {psi(xmax+1j*ymin)[0][0]:.1e}$",
+            color="black",
+            fontsize=15,
+            horizontalalignment="left",
+            verticalalignment="top",
+        )
+        ax.text(
+            xmax * padx + (n_tile - 1) * length,
+            ymax * pady + (n_tile - 1) * height,
+            f"$\psi = {psi(xmax+1j*ymax)[0][0]:.1e}$",
+            color="black",
+            fontsize=15,
+            horizontalalignment="left",
+            verticalalignment="bottom",
+        )
+        ax.text(
+            xmin * padx,
+            ymax * pady + (n_tile - 1) * height,
+            f"$\psi = {psi(xmin+1j*ymax)[0][0]:.1e}$",
+            color="black",
+            fontsize=15,
+            horizontalalignment="right",
+            verticalalignment="bottom",
+        )
+        ax.set(title=f"${a:.2}\psi_A+{b:.2}\psi_B$")
+        # plt.tight_layout()
         return fig, ax
 
-    def animate_combination(self, sol_2, a_values, b_values, n_tile=3):
+    def animate_combination(
+        self, sol_2, a_values, b_values, gapa=2, gapb=2, n_tile=3
+    ):
         """Animate a linear combination of the solutions."""
         a, b = a_values[0], b_values[0]
         sol_combined = a * self.solver + b * sol_2
         an = Analysis(self.domain, sol_combined)
-        fig, ax = an.plot_periodic(a=a, b=b, n_tile=n_tile)
+        fig, ax = an.plot_periodic(
+            a=a, b=b, gapa=gapa, gapb=gapb, n_tile=n_tile, colorbar=False
+        )
 
         def update(i):
             if i % 10 == 0:
@@ -163,6 +220,8 @@ class Analysis:
             fig1, ax1 = an.plot_periodic(
                 a=a,
                 b=b,
+                gapa=gapa,
+                gapb=gapb,
                 n_tile=n_tile,
                 resolution=30,
                 figax=(fig, ax),

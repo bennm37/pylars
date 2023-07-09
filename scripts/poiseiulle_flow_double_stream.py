@@ -1,14 +1,43 @@
 """Solve Poiseiulle flow with stream function boundary conditions."""
 from pyls import Domain, Solver, Analysis
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-# create a square domain
+
+def check_flow(sol):
+    """Checks if the flow is doubly periodic."""
+    dom = sol.domain
+    psi, uv, p, omega = sol.functions
+    boundary_top = dom.boundary_points[dom.indices["0"]]
+    boundary_bottom = dom.boundary_points[dom.indices["2"]]
+    boundary_left = dom.boundary_points[dom.indices["1"]]
+    boundary_right = dom.boundary_points[dom.indices["3"]]
+    assert np.allclose(uv(boundary_top), uv(boundary_bottom[::-1]))
+    assert np.allclose(uv(boundary_left), uv(boundary_right[::-1]))
+    print("Flow is doubly periodic")
+    #  print psi, u and v at the corners
+    print("U at corners: ", uv(corners).real)
+    print("V at corners: ", uv(corners).imag)
+    print("Psi at corners: ", psi(corners))
+
+
+def animate_circle(sol_1, sol_2):
+    """Animate a linear combination of the solutions."""
+    theta = np.linspace(0, np.pi, 100)
+    a_values = np.cos(theta)
+    b_values = np.sin(theta)
+    an = Analysis(dom, sol_left)
+    fig, ax, anim = an.animate_combination(
+        sol_top, a_values, b_values, gapa=1, gapb=0, n_tile=3
+    )
+    anim.save("media/linear_1100.mp4", fps=20)
+
+
+# solve the tb and lr problems
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(corners, num_boundary_points=300, num_poles=0, spacing="linear")
 sol_left = Solver(dom, 24)
-a1, a2, a3, a4 = 1, -1, 1, -1
+a1, a2, a3, a4 = 1, 0, 0, 0
 sol_left.add_boundary_condition("0", "u(0)", 0)
 sol_left.add_boundary_condition("0", "psi(0)", a1)
 sol_left.add_boundary_condition("2", "u(2)", 0)
@@ -29,31 +58,28 @@ sol_top.add_boundary_condition("0", "u(0)-u(2)[::-1]", 0)
 sol_top.add_boundary_condition("0", "v(0)-v(2)[::-1]", 0)
 psi_top, uv_top, p_top, omega_top = sol_top.solve(check=False, weight=False)
 
-
 # combine the solutions
-# a, b = 1, 1
-# sol_combined = a * sol_left + b * sol_top
-# psi_combined, uv_combined, p_combined, omega_combined = sol_combined.functions
+a, b = 1, 1
+sol_combined = a * sol_left + b * sol_top
+# check_flow(sol_combined)
+# animate_circle(sol_left, sol_top)
 
-# # check the flow
-# boundary_top = dom.boundary_points[dom.indices["0"]]
-# boundary_bottom = dom.boundary_points[dom.indices["2"]]
-# boundary_left = dom.boundary_points[dom.indices["1"]]
-# boundary_right = dom.boundary_points[dom.indices["3"]]
-# assert np.allclose(
-#     uv_combined(boundary_top), uv_combined(boundary_bottom[::-1])
-# )
-# assert np.allclose(
-#     uv_combined(boundary_left), uv_combined(boundary_right[::-1])
-# )
-# print("Flow is doubly periodic")
-# #  print psi, u and v at the corners
-# print("U at corners: ", uv_combined(corners).real)
-# print("V at corners: ", uv_combined(corners).imag)
-# print("Psi at corners: ", psi_combined(corners))
-theta = np.linspace(0, np.pi, 100)
-a_values = np.cos(theta)
-b_values = np.sin(theta)
+# ANIMATE CHANGIN a AND b
+theta = np.linspace(0, 1, 100)
+a_values = np.ones_like(theta)
+b_values = theta
 an = Analysis(dom, sol_left)
-fig, ax, anim = an.animate_combination(sol_top, a_values, b_values, n_tile=3)
-anim.save("media/double_stream_circle.mp4", fps=20)
+# fig, ax, anim = an.animate_combination(
+#     sol_top, a_values, b_values, gapa=1, gapb=0, n_tile=3
+# )
+# anim.save("media/linear_1100.mp4", fps=20)
+
+# SAVE SNAPSHOTS
+a_snap = [1.0, 1.0, 1.0]
+b_snap = [0.0, 0.5, 1.0]
+for a, b in zip(a_snap, b_snap):
+    sol_combined = a * sol_left + b * sol_top
+    an = Analysis(dom, sol_combined)
+    fig, ax = an.plot_periodic(a, b, gapa=1, gapb=0, n_tile=3)
+    plt.tight_layout()
+    plt.savefig(f"media/linear_{a:.1f}_{b:.1f}.pdf")
