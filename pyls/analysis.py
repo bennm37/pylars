@@ -94,7 +94,7 @@ class Analysis:
             [np.linspace(ymin, ymax, resolution) for i in range(n_tile)]
         ).flatten()
         self.X, self.Y = np.meshgrid(x, y)
-        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled)
+        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled, indexing="ij")
         self.Z = self.Y + 1j * self.X
         psi, uv, p, omega = self.solver.functions
         if gapa is None:
@@ -230,3 +230,22 @@ class Analysis:
 
         anim = FuncAnimation(fig, update, frames=len(a_values), interval=200)
         return fig, ax, anim
+
+    def plot_error(self):
+        """Plot the error along the boundary."""
+        A, b, coeff = self.solver.A, self.solver.b, self.solver.coefficients
+        err = np.abs(A @ coeff - b)
+        fig, ax = plt.subplots()
+        ax.plot(err)
+        return fig, ax
+
+    def plot_stream_boundary(self):
+        """Plot the stream function along the boundary."""
+        points = self.domain.boundary_points
+        psi, uv, p, omega = self.solver.functions
+        fig, ax = plt.subplots()
+        ax.plot(psi(points))
+        ax.plot(uv(points).real)
+        ax.plot(uv(points).imag)
+        ax.legend(["psi", "u", "v"])
+        return fig, ax
