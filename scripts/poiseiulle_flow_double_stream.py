@@ -20,7 +20,7 @@ def check_flow(sol):
     print("V at corners: ", uv(corners).imag)
     print("Psi at corners: ", psi(corners))
     left_flux = np.mean(uv(boundary_left)) * 2
-    right_flux = np.mean(uv(boundary_right))  * 2
+    right_flux = np.mean(uv(boundary_right)) * 2
     top_flux = np.mean(uv(boundary_top)) * 2
     bottom_flux = np.mean(uv(boundary_bottom)) * 2
     print(f"Left flux is {left_flux}")

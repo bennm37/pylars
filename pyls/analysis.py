@@ -94,14 +94,17 @@ class Analysis:
             [np.linspace(ymin, ymax, resolution) for i in range(n_tile)]
         ).flatten()
         self.X, self.Y = np.meshgrid(x, y)
-        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled, indexing="ij")
+        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled)
+        # self.X_tiled, self.Y_tiled = np.meshgrid(
+        #     x_tiled, y_tiled, indexing="ij"
+        # )
         self.Z = self.Y + 1j * self.X
         psi, uv, p, omega = self.solver.functions
         if gapa is None:
             gapa = np.around(psi(ymax) - psi(ymin), 15)
         if gapb is None:
             gapb = np.around(psi(xmax) - psi(xmin), 15)
-        self.psi_values = psi(self.Z.flatten()).reshape(
+        self.psi_values = psi(self.Z).reshape(
             n_tile * resolution, n_tile * resolution
         )
         # need to add a for every x and y for every b
@@ -115,7 +118,7 @@ class Analysis:
                     -gapb * b * i + gapa * a * j
                 )
         self.psi_values += psi_correction
-        self.uv_values = uv(self.Z.flatten()).reshape(
+        self.uv_values = uv(self.Z).reshape(
             n_tile * resolution, n_tile * resolution
         )
         if figax is None:

@@ -4,6 +4,15 @@ import numpy as np
 from poiseiulle_flow_double_stream import check_flow
 import matplotlib.pyplot as plt
 
+
+def plot_psi_magnitude(an):
+    fig, ax = plt.subplots()
+    pc = ax.pcolor(an.X, an.Y, an.psi_values)
+    plt.colorbar(pc)
+    ax.set_aspect("equal")
+    plt.show()
+
+
 # solve the tb and lr problems
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(corners, num_boundary_points=300, num_poles=0, spacing="linear")
@@ -47,12 +56,15 @@ check_flow(sol_combined)
 # anim.save("media/linear_1100.mp4", fps=20)
 
 # SAVE SNAPSHOTS
-a_snap = [1.0, 1.0, 1.0]
-b_snap = [0.0, 0.5, 1.0]
+a_snap = [1.0]
+b_snap = [1.0]
+# a_snap = [1.0, 1.0, 1.0]
+# b_snap = [0.0, 0.5, 1.0]
 for a, b in zip(a_snap, b_snap):
     sol_combined = a * sol_left + b * sol_top
     an = Analysis(dom, sol_combined)
-    fig, ax = an.plot_periodic(a, b, gapa=1, gapb=1, n_tile=3)
+    fig, ax = an.plot_periodic(a, b, gapa=1, gapb=1, n_tile=1)
     plt.tight_layout()
+    plot_psi_magnitude(an)
     plt.show()
     # plt.savefig(f"media/linear_{a:.1f}_{b:.1f}.pdf")
