@@ -84,9 +84,9 @@ def test_evaluate_expression_names():
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
     prob.add_exterior_polygon(corners)
-    prob.domain.name_side("0", "inlet")
-    prob.domain.name_side("2", "outlet")
-    prob.domain.group_sides(["1", "3"], "walls")
+    prob.name_side("0", "inlet")
+    prob.name_side("2", "outlet")
+    prob.group_sides(["1", "3"], "walls")
     solver = Solver(prob)
     solver.setup()
     periodic = solver.evaluate("u[inlet]-u[outlet][::-1]", 0)

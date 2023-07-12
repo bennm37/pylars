@@ -26,6 +26,7 @@ class Domain:
         sigma=4,
         length_scale=1,
         deg_poly=10,
+        spacing="clustered",
     ):
         self.corners = np.array(corners)
         self.num_edge_points = num_edge_points
@@ -33,6 +34,7 @@ class Domain:
         self.sigma = sigma
         self.length_scale = length_scale
         self.deg_poly = deg_poly
+        self.spacing = spacing
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
@@ -51,13 +53,15 @@ class Domain:
             raise TypeError("num_edge_points must be a positive integer")
         if type(self.num_poles) != int or self.num_poles < 0:
             raise TypeError("num_poles must be a non negative integer")
+        if self.spacing != "linear" and self.spacing != "clustered":
+            raise ValueError("spacing must be 'linear' or 'clustered'")
 
     def generate_boundary_points(self):
-        """Create a list of boundary points on each edge.
-
-        Points are clustered towards the corners.
-        """
-        spacing = (np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1) / 2
+        """Create a list of boundary points on each edge."""
+        if self.spacing == "linear":
+            spacing = np.linspace(0, 1, self.num_edge_points)
+        else:
+            spacing = (np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1) / 2
         nc = len(self.corners)
         self.boundary_points = np.array(
             [
