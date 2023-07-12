@@ -22,8 +22,9 @@ class Analysis:
         Plot the contours and velocity magnitude of the solution.
     """
 
-    def __init__(self, domain, solver):
-        self.domain = domain
+    def __init__(self, problem, solver):
+        self.problem = problem
+        self.domain = problem.domain
         self.solver = solver
 
     def plot(self, resolution=100):

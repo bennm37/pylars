@@ -94,7 +94,13 @@ class Solver:
         )
         self.get_dependents()
 
-    def solve(self, pickle=False, filename="solution.pickle", check=True):
+    def solve(
+        self,
+        pickle=False,
+        filename="solution.pickle",
+        check=True,
+        normalize=True,
+    ):
         """Set up the solver and solve the least squares problem.
 
         Reutrns the functions as a list of functions.
@@ -110,7 +116,8 @@ class Solver:
         self.get_dependents()
         self.construct_linear_system()
         self.weight_rows()
-        self.normalize()
+        if normalize:
+            self.normalize()
 
         if self.least_squares == "iterative":
             x1 = linalg.lstsq(self.A, self.b)[0]

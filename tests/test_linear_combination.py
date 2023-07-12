@@ -76,6 +76,7 @@ def test_negate():
     """Test negation of solver objects."""
     from pylars import Solution
     import numpy as np
+
     sol1 = Solution(lambda x: x, lambda x: -x, lambda x: x, lambda x: -x)
     sol2 = -sol1
     negation = [
