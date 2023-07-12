@@ -31,9 +31,8 @@ class Analysis:
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
-        x, y = np.linspace(xmin, xmax, resolution), np.linspace(
-            ymin, ymax, resolution
-        )
+        x = np.linspace(xmin, xmax, resolution)
+        y = np.linspace(ymin, ymax, resolution)
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")
         self.Z = self.X + 1j * self.Y
         psi, uv, p, omega = self.solver.functions
@@ -94,11 +93,10 @@ class Analysis:
             [np.linspace(ymin, ymax, resolution) for i in range(n_tile)]
         ).flatten()
         self.X, self.Y = np.meshgrid(x, y)
-        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled)
-        # self.X_tiled, self.Y_tiled = np.meshgrid(
-        #     x_tiled, y_tiled, indexing="ij"
-        # )
-        self.Z = self.Y + 1j * self.X
+        self.X_tiled, self.Y_tiled = np.meshgrid(
+            x_tiled, y_tiled, indexing="ij"
+        )
+        self.Z = self.X + 1j * self.Y
         psi, uv, p, omega = self.solver.functions
         if gapa is None:
             gapa = np.around(psi(ymax) - psi(ymin), 15)
