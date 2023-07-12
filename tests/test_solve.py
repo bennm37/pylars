@@ -1,8 +1,9 @@
 """Test solver functions."""
-from test_settings import ATOL, RTOL
+from test_settings import RTOL
 
 
 def test_create_functions():
+    """Test using make_function to create functions."""
     from scipy.io import loadmat
     from pylars.numerics import make_function
     import numpy as np
@@ -65,7 +66,6 @@ def test_lid_driven_cavity_solve():
         f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
     )
     Z_answer = test_answers["Z"]
-    c_answer = test_answers["c"]
     psi_100_100_answer = test_answers["psi_100_100"]
     p_100_100_answer = test_answers["p_100_100"]
     uv_100_100_answer = test_answers["uv_100_100"]
@@ -102,11 +102,6 @@ def test_lid_driven_cavity_solve():
     p_100_100 = sol.p(Z).reshape(100, 100)
     uv_100_100 = sol.uv(Z).reshape(100, 100)
     omega_100_100 = sol.omega(Z).reshape(100, 100)
-    # a = Analysis(prob.domain, sol)
-    # a.plot()
-    # plt.show()
-
-    # assert np.allclose(sol.coefficients, c_answer, atol=ATOL, rtol=RTOL)
     # ill conditioning of A means some disagreement towards the edges
     # and only agreement to 1e-3 in the interior
     ATOL = 1e-15

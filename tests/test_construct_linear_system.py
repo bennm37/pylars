@@ -30,13 +30,13 @@ def test_lid_driven_cavity_get_dependents():
         num_poles=num_poles,
     )
     # prob.show()
-    sol = Solver(prob)
-    sol.basis = basis_answer
-    sol.basis_derivatives = basis_deriv_answer
-    sol.get_dependents()
-    U = sol.U
-    V = sol.V
-    PSI = sol.PSI
+    solver = Solver(prob)
+    solver.basis = basis_answer
+    solver.basis_derivatives = basis_deriv_answer
+    solver.get_dependents()
+    U = solver.U
+    V = solver.V
+    PSI = solver.PSI
     assert np.allclose(U, U_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(V, V_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
@@ -202,17 +202,13 @@ def test_row_weighting():
     )
     assert np.allclose(prob.corners, corners, atol=ATOL, rtol=RTOL)
     assert np.allclose(prob.boundary_points, Z, atol=ATOL, rtol=RTOL)
-    sol = Solver(prob, degree=24)
-    sol.A = A_standard_answer
-    sol.b = rhs_standard_answer
-    row_weights = sol.weight_rows()
+    solver = Solver(prob, degree=24)
+    solver.A = A_standard_answer
+    solver.b = rhs_standard_answer
+    row_weights = solver.weight_rows()
     assert np.allclose(row_weights, row_weights_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.b, rhs_weighted_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.A, A_weighted_answer, atol=ATOL, rtol=RTOL)
-
-
-def test_normalize():
-    pass
+    assert np.allclose(solver.b, rhs_weighted_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(solver.A, A_weighted_answer, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":
