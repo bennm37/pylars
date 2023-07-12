@@ -113,7 +113,7 @@ class Analysis:
                     resolution * i : resolution * (i + 1),
                     resolution * j : resolution * (j + 1),
                 ] = (
-                    -gapb * b * i + gapa * a * j
+                    gapb * b * i + gapa * a * j
                 )
         self.psi_values += psi_correction
         self.uv_values = uv(self.Z).reshape(
