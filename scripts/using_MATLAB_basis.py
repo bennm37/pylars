@@ -32,7 +32,7 @@ sol.hessenbergs = hessenbergs
 sol.get_dependents()
 assert np.allclose(sol.U, test_answers["U"])
 assert np.allclose(sol.V, test_answers["V"])
-assert np.allclose(sol.stream_function, test_answers["PSI"])
+assert np.allclose(sol.PSI, test_answers["PSI"])
 sol.construct_linear_system()
 sol.coefficients = lstsq(sol.A, sol.b)[0]
 psi, uv, p, omega = sol.construct_functions()

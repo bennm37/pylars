@@ -3,32 +3,31 @@ from test_settings import ATOL, RTOL
 
 
 def test_validate_expression():
-    """Test the syntax validator."""
-    from pyls import Domain, Solver
+    """Test the syntax validator of the Problem class."""
+    from pyls import Problem
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners)
-    sol = Solver(dom, 10)
-    sol.validate("v(0)")
-    sol.validate("p(0)+psi(3)")
-    sol.validate("psi(0)+psi(1)")
-    sol.validate("u(0)-y*(1-y)**2.0")
+    prob = Problem(corners)
+    prob.validate("v(0)")
+    prob.validate("p(0)+psi(3)")
+    prob.validate("psi(0)+psi(1)")
+    prob.validate("u(0)-y*(1-y)**2.0")
     # check validate throws a ValueError if the expression is invalid
     try:
-        sol.validate("v(0")
+        prob.validate("v(0")
         assert False
     except ValueError:
         pass
     # check validate throws a ValueError if the expression contains invalid
     # characters
     try:
-        sol.validate("%")
+        prob.validate("%")
         assert False
     except ValueError:
         pass
     # check validate throws a ValueError for mismatched parentheses
     try:
-        sol.validate("v(0))")
+        prob.validate("v(0))")
         assert False
     except ValueError:
         pass
@@ -36,44 +35,67 @@ def test_validate_expression():
 
 def test_add_boundary_conditions():
     """Test adding boundary conditions."""
-    from pyls import Domain, Solver
+    from pyls import Problem
 
     # typical BCs
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=100)
-    sol = Solver(dom, 10)
+    prob = Problem(corners, num_boundary_points=100)
     # parabolic inlet flow
-    sol.add_boundary_condition("0", "u(0)-y*(1-y)", 0)
-    sol.add_boundary_condition("0", "v(0)", 0)
+    prob.add_boundary_condition("0", "u(0)-y*(1-y)", 0)
+    prob.add_boundary_condition("0", "v(0)", 0)
     # 0 pressure and normal velocity
-    sol.add_boundary_condition("2", "p(2)", 0)
-    sol.add_boundary_condition("2", "v(2)", 0)
+    prob.add_boundary_condition("2", "p(2)", 0)
+    prob.add_boundary_condition("2", "v(2)", 0)
     # no slip no penetration on the walls
-    sol.add_boundary_condition("1", "u(1)", 0)
-    sol.add_boundary_condition("1", "v(1)", 0)
-    sol.add_boundary_condition("3", "u(3)", 0)
-    sol.add_boundary_condition("3", "v(3)", 0)
-    sol.check_boundary_conditions()
-    print(sol.boundary_conditions)
+    prob.add_boundary_condition("1", "u(1)", 0)
+    prob.add_boundary_condition("1", "v(1)", 0)
+    prob.add_boundary_condition("3", "u(3)", 0)
+    prob.add_boundary_condition("3", "v(3)", 0)
+    prob.check_boundary_conditions()
 
 
 def test_evaluate_expression():
     """Test evaluating an expression."""
-    from pyls import Domain, Solver
+    from pyls import Problem, Solver
     import numpy as np
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=100)
-    sol = Solver(dom, 10)
-    sol.setup()
-    assert np.all(sol.evaluate("u(0)-u(0)", 0) == 0)
-    assert np.all(sol.evaluate("psi(0)-psi(0)", 1) == 0)
-    expression = "u(0)-y*(1-y)"
-    sol.validate(expression)
+    prob = Problem()
+    prob.add_exterior_polygon(corners)
+    solver = Solver(prob)
+    solver.setup()
+    assert np.all(solver.evaluate("u[0]-u[0]", 0) == 0)
+    assert np.all(solver.evaluate("psi[0]-psi[0]", 1) == 0)
+    expression = "u[0]-y*(1-y)"
+    solver.validate(expression)
     y = np.linspace(0, 99, 100).reshape(100, 1)
-    result = sol.evaluate(expression, 1j * y)
-    expected = sol.U[dom.indices["0"]] - (y * (1 - y))
+    result = solver.evaluate(expression, 1j * y)
+    expected = solver.U[prob.indices["0"]] - (y * (1 - y))
     assert np.allclose(result, expected, atol=ATOL, rtol=RTOL)
+
+
+def test_evaluate_expression_names():
+    """Test evaluating an expression."""
+    from pyls import Problem, Solver
+    import numpy as np
+
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    prob = Problem()
+    prob.add_exterior_polygon(corners)
+    prob.name_side("0", "inlet")
+    prob.name_side("2", "outlet")
+    prob.group_sides(["1", "3"], "walls")
+    solver = Solver(prob)
+    solver.setup()
+    periodic = solver.evaluate("u[inlet]-u[outlet][::-1]", 0)
+    stream = solver.evaluate("psi[walls]")
+    periodic_answer = (
+        solver.U[prob.domain.indices["inlet"]]
+        - solver.U[prob.domain.indices["outlet"]][::-1]
+    )
+    stream_answer = solver.PSI[prob.domain.indices["walls"]]
+    assert np.allclose(periodic, periodic_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(stream, stream_answer, atol=ATOL, rtol=RTOL)
 
 
 if __name__ == "__main__":

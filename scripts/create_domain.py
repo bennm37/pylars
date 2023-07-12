@@ -1,9 +1,9 @@
-from pyls.domain import Domain
+from pylars.domain import Domain
 import numpy as np
 
 # Create a square domain
 corners = [0, 1, 1 + 1j, 1j]
-domain = Domain(corners, num_boundary_points=100, L=np.sqrt(2))
+domain = Domain(corners, num_boundary_points=100, length_scale=np.sqrt(2))
 domain.show()
 
 # Create a regular hexagonal domain

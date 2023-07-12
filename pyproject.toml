@@ -3,5 +3,5 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pyls"
+name = "pylars"
 version = "0.1"

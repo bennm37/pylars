@@ -1,10 +1,10 @@
 """Test the va_orthogonalise with poles against the MATLAB code."""
-from pyls.numerics import (
+from pylars.numerics import (
     va_orthogonalise,
     va_evaluate,
     va_orthogonalise_rounded,
 )
-from pyls import Domain
+from pylars import Domain
 import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
@@ -27,7 +27,7 @@ dom = Domain(
     corners,
     num_poles=num_poles,
     num_boundary_points=300,
-    L=np.sqrt(2) * 1.5,
+    length_scale=np.sqrt(2) * 1.5,
 )
 # check the MATALB domain points and poles are the same
 # check the polynomial coefficients are the same

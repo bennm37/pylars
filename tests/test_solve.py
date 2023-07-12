@@ -4,7 +4,7 @@ from test_settings import ATOL, RTOL
 
 def test_create_functions():
     from scipy.io import loadmat
-    from pyls.numerics import make_function
+    from pylars.numerics import make_function
     import numpy as np
 
     n = 24
@@ -23,17 +23,17 @@ def test_create_functions():
     uv_100_100_answer = test_answers["uv_100_100"]
     omega_100_100_answer = test_answers["omega_100_100"]
 
-    def psi(Z):
-        return make_function("psi", Z, c, hessenbergs, poles)
+    def psi(z):
+        return make_function("psi", z, c, hessenbergs, poles)
 
-    def p(Z):
-        return make_function("p", Z, c, hessenbergs, poles)
+    def p(z):
+        return make_function("p", z, c, hessenbergs, poles)
 
-    def uv(Z):
-        return make_function("uv", Z, c, hessenbergs, poles)
+    def uv(z):
+        return make_function("uv", z, c, hessenbergs, poles)
 
-    def omega(Z):
-        return make_function("omega", Z, c, hessenbergs, poles)
+    def omega(z):
+        return make_function("omega", z, c, hessenbergs, poles)
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
@@ -54,7 +54,7 @@ def test_create_functions():
 
 def test_lid_driven_cavity_solve():
     """Tests the solver from BCs to solution."""
-    from pyls import Domain, Solver, Analysis
+    from pylars import Problem, Solver
     from scipy.io import loadmat
     import numpy as np
     import matplotlib.pyplot as plt
@@ -73,34 +73,36 @@ def test_lid_driven_cavity_solve():
 
     # lid driven cavity BCS
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(
+    prob = Problem()
+    prob.add_exterior_polygon(
         corners,
-        num_boundary_points=300,
-        L=1.5 * np.sqrt(2),
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        deg_poly=24,
         num_poles=num_poles,
     )
-    assert np.allclose(dom.corners, corners)
-    assert np.allclose(dom.boundary_points, Z_answer)
-    sol = Solver(dom, 24)
-    sol.add_boundary_condition("0", "psi(0)", 0)
-    sol.add_boundary_condition("0", "u(0)", 1)
+    assert np.allclose(prob.domain.corners, corners)
+    assert np.allclose(prob.domain.boundary_points, Z_answer)
+    prob.add_boundary_condition("0", "psi(0)", 0)
+    prob.add_boundary_condition("0", "u(0)", 1)
     # wall boundary conditions
-    sol.add_boundary_condition("2", "psi(2)", 0)
-    sol.add_boundary_condition("2", "u(2)", 0)
-    sol.add_boundary_condition("1", "psi(1)", 0)
-    sol.add_boundary_condition("1", "v(1)", 0)
-    sol.add_boundary_condition("3", "psi(3)", 0)
-    sol.add_boundary_condition("3", "v(3)", 0)
-    sol.check_boundary_conditions()
-    psi, uv, p, omega = sol.solve()
+    prob.add_boundary_condition("2", "psi(2)", 0)
+    prob.add_boundary_condition("2", "u(2)", 0)
+    prob.add_boundary_condition("1", "psi(1)", 0)
+    prob.add_boundary_condition("1", "v(1)", 0)
+    prob.add_boundary_condition("3", "psi(3)", 0)
+    prob.add_boundary_condition("3", "v(3)", 0)
+    prob.check_boundary_conditions()
+    solver = Solver(prob)
+    sol = solver.solve()
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
     Z = X + 1j * Y
-    psi_100_100 = psi(Z).reshape(100, 100)
-    p_100_100 = p(Z).reshape(100, 100)
-    uv_100_100 = uv(Z).reshape(100, 100)
-    omega_100_100 = omega(Z).reshape(100, 100)
-    # a = Analysis(dom, sol)
+    psi_100_100 = sol.psi(Z).reshape(100, 100)
+    p_100_100 = sol.p(Z).reshape(100, 100)
+    uv_100_100 = sol.uv(Z).reshape(100, 100)
+    omega_100_100 = sol.omega(Z).reshape(100, 100)
+    # a = Analysis(prob.domain, sol)
     # a.plot()
     # plt.show()
 

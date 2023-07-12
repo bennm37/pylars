@@ -5,7 +5,7 @@ from test_settings import ATOL, RTOL
 def test_lid_driven_cavity_get_dependents():
     """Test constructing dependents from the correct basis."""
     from scipy.io import loadmat
-    from pyls import Domain, Solver
+    from pylars import Problem, Solver
     import numpy as np
 
     n = 24
@@ -21,15 +21,22 @@ def test_lid_driven_cavity_get_dependents():
 
     # set up lid driven cavity problem
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
-    # dom.show()
-    sol = Solver(dom, degree=24)
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        deg_poly=24,
+        num_poles=num_poles,
+    )
+    # prob.show()
+    sol = Solver(prob)
     sol.basis = basis_answer
     sol.basis_derivatives = basis_deriv_answer
     sol.get_dependents()
     U = sol.U
     V = sol.V
-    PSI = sol.stream_function
+    PSI = sol.PSI
     assert np.allclose(U, U_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(V, V_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
@@ -38,7 +45,7 @@ def test_lid_driven_cavity_get_dependents():
 def test_lid_driven_cavity_construct_linear_system_1():
     """Test constructing the linear system from the MATLAB basis."""
     from scipy.io import loadmat
-    from pyls import Domain, Solver
+    from pylars import Problem, Solver
     import numpy as np
     from test_settings import ATOL, RTOL
 
@@ -57,28 +64,35 @@ def test_lid_driven_cavity_construct_linear_system_1():
 
     # set up lid driven cavity problem
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
-    # dom.show()
-    sol = Solver(dom, degree=24)
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        deg_poly=24,
+        num_poles=num_poles,
+    )
     # moving lid
-    sol.add_boundary_condition("0", "psi(0)", 0)
-    sol.add_boundary_condition("0", "u(0)", 1)
+    prob.add_boundary_condition("0", "psi(0)", 0)
+    prob.add_boundary_condition("0", "u(0)", 1)
     # wall boundary conditions
-    sol.add_boundary_condition("2", "psi(2)", 0)
-    sol.add_boundary_condition("2", "u(2)", 0)
-    sol.add_boundary_condition("1", "psi(1)", 0)
-    sol.add_boundary_condition("1", "v(1)", 0)
-    sol.add_boundary_condition("3", "psi(3)", 0)
-    sol.add_boundary_condition("3", "v(3)", 0)
+    prob.add_boundary_condition("2", "psi(2)", 0)
+    prob.add_boundary_condition("2", "u(2)", 0)
+    prob.add_boundary_condition("1", "psi(1)", 0)
+    prob.add_boundary_condition("1", "v(1)", 0)
+    prob.add_boundary_condition("3", "psi(3)", 0)
+    prob.add_boundary_condition("3", "v(3)", 0)
 
-    sol.U = U_answer
-    sol.V = V_answer
-    sol.stream_function = PSI_answer
-    sol.basis = basis_answer
-    sol.basis_derivatives = basis_deriv_answer
-    sol.construct_linear_system()
-    A = sol.A
-    b = sol.b
+    solver = Solver(prob)
+
+    solver.U = U_answer
+    solver.V = V_answer
+    solver.PSI = PSI_answer
+    solver.basis = basis_answer
+    solver.basis_derivatives = basis_deriv_answer
+    solver.construct_linear_system()
+    A = solver.A
+    b = solver.b
     assert np.allclose(b, b_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(A, A_answer, atol=ATOL, rtol=RTOL)
 
@@ -86,8 +100,8 @@ def test_lid_driven_cavity_construct_linear_system_1():
 def test_lid_driven_cavity_construct_linear_system_2():
     """Test constructing the linear system from scratch."""
     from scipy.io import loadmat, savemat
-    from pyls import Domain, Solver
-    from pyls.numerics import va_orthogonalise, va_evaluate
+    from pylars import Problem, Solver
+    from pylars.numerics import va_orthogonalise, va_evaluate
     import numpy as np
     from test_settings import ATOL, RTOL
 
@@ -110,54 +124,58 @@ def test_lid_driven_cavity_construct_linear_system_2():
 
     # set up lid driven cavity problem
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
-    # dom.show()
-    sol = Solver(dom, degree=24)
-    # moving lid
-    sol.add_boundary_condition("0", "psi(0)", 0)
-    sol.add_boundary_condition("0", "u(0)", 1)
-    # wall boundary conditions
-    sol.add_boundary_condition("2", "psi(2)", 0)
-    sol.add_boundary_condition("2", "u(2)", 0)
-    sol.add_boundary_condition("1", "psi(1)", 0)
-    sol.add_boundary_condition("1", "v(1)", 0)
-    sol.add_boundary_condition("3", "psi(3)", 0)
-    sol.add_boundary_condition("3", "v(3)", 0)
-    sol.hessenbergs, sol.Q = va_orthogonalise(
-        sol.boundary_points, sol.degree, sol.domain.poles
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        deg_poly=24,
+        num_poles=num_poles,
     )
-    sol.basis, sol.basis_derivatives = va_evaluate(
-        sol.boundary_points, sol.hessenbergs, sol.domain.poles
+    prob.add_boundary_condition("0", "psi(0)", 0)
+    prob.add_boundary_condition("0", "u(0)", 1)
+    prob.add_boundary_condition("2", "psi(2)", 0)
+    prob.add_boundary_condition("2", "u(2)", 0)
+    prob.add_boundary_condition("1", "psi(1)", 0)
+    prob.add_boundary_condition("1", "v(1)", 0)
+    prob.add_boundary_condition("3", "psi(3)", 0)
+    prob.add_boundary_condition("3", "v(3)", 0)
+    solver = Solver(prob)
+    solver.hessenbergs, solver.Q = va_orthogonalise(
+        solver.boundary_points, solver.degree, solver.probain.poles
     )
-    assert np.allclose(sol.basis, basis_answer, atol=ATOL, rtol=RTOL)
+    solver.basis, solver.basis_derivatives = va_evaluate(
+        solver.boundary_points, solver.hessenbergs, solver.probain.poles
+    )
+    assert np.allclose(solver.basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
-        sol.basis_derivatives, basis_deriv_answer, atol=ATOL, rtol=RTOL
+        solver.basis_derivatives, basis_deriv_answer, atol=ATOL, rtol=RTOL
     )
-    sol.get_dependents()
+    solver.get_dependents()
     RTOL = 1e-6
-    assert np.allclose(sol.U, U_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.V, V_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.stream_function, PSI_answer, atol=ATOL, rtol=RTOL)
-    sol.construct_linear_system()
-    A = sol.A
-    b = sol.b
+    assert np.allclose(solver.U, U_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(solver.V, V_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(solver.PSI, PSI_answer, atol=ATOL, rtol=RTOL)
+    solver.construct_linear_system()
+    A = solver.A
+    b = solver.b
     assert np.allclose(b, b_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(A, A_answer, atol=ATOL, rtol=RTOL)
-    sol.weight_rows()
-    assert np.allclose(sol.A, A_weighted_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.b, b_weighted_answer, atol=ATOL, rtol=RTOL)
-    sol.normalize()
-    assert np.allclose(sol.A, A_normalized_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(sol.b, b_normalized_answer, atol=ATOL, rtol=RTOL)
+    solver.weight_rows()
+    assert np.allclose(solver.A, A_weighted_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(solver.b, b_weighted_answer, atol=ATOL, rtol=RTOL)
+    solver.normalize()
+    assert np.allclose(solver.A, A_normalized_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(solver.b, b_normalized_answer, atol=ATOL, rtol=RTOL)
     savemat(
         "tests/data/lid_driven_cavity_matrix_python.mat",
-        {"A": sol.A, "b": sol.b},
+        {"A": solver.A, "b": solver.b},
     )
 
 
 def test_row_weighting():
     """Test weighting rows of the linear system."""
-    from pyls import Domain, Solver
+    from pylars import Problem, Solver
     import numpy as np
     from scipy.io import loadmat
 
@@ -174,10 +192,17 @@ def test_row_weighting():
     Z = test_answers["Z"]
     corners = test_answers["w"]
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    dom = Domain(corners, num_boundary_points=300, L=np.sqrt(2) * 1.5)
-    assert np.allclose(dom.corners, corners, atol=ATOL, rtol=RTOL)
-    assert np.allclose(dom.boundary_points, Z, atol=ATOL, rtol=RTOL)
-    sol = Solver(dom, degree=24)
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        deg_poly=24,
+        num_poles=num_poles,
+    )
+    assert np.allclose(prob.corners, corners, atol=ATOL, rtol=RTOL)
+    assert np.allclose(prob.boundary_points, Z, atol=ATOL, rtol=RTOL)
+    sol = Solver(prob, degree=24)
     sol.A = A_standard_answer
     sol.b = rhs_standard_answer
     row_weights = sol.weight_rows()

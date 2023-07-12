@@ -1,16 +1,19 @@
-from pyls import Domain, Solver
+from pylars import Domain, Solver
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 from scipy.io import loadmat, savemat
-from pyls.numerics import va_orthogonalise
+from pylars.numerics import va_orthogonalise
 
 
 # create a square domain
 start = time.perf_counter()
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(
-    corners, num_boundary_points=300, num_poles=24, L=1.5 * np.sqrt(2)
+    corners,
+    num_boundary_points=300,
+    num_poles=24,
+    length_scale=1.5 * np.sqrt(2),
 )
 sol = Solver(dom, 24, least_squares="pinv")
 # sol.add_boundary_condition("0", "psi(0)", 0)
