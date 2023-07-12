@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pylars import Domain, Solver, Analysis
+from pylars import Domain, Solver
 from pylars.numerics import va_orthogonalise, va_evaluate
 
 # set up lid driven cavity problem
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-dom = Domain(corners, num_boundary_points=300, length_scale=np.sqrt(2) * 1.5)
+dom = Domain(corners, num_edge_points=300, length_scale=np.sqrt(2) * 1.5)
 # dom.show()
 sol = Solver(dom, degree=24)
 # moving lid

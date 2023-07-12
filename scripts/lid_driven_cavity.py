@@ -11,7 +11,7 @@ start = time.perf_counter()
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(
     corners,
-    num_boundary_points=300,
+    num_edge_points=300,
     num_poles=24,
     length_scale=1.5 * np.sqrt(2),
 )

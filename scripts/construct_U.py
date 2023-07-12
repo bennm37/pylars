@@ -1,4 +1,4 @@
-from pyls.numerics import va_orthogonalise, va_evaluate
+from pylars.numerics import va_orthogonalise, va_evaluate
 import numpy as np
 from scipy.sparse import csr_matrix
 

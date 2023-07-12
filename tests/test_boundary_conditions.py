@@ -4,7 +4,7 @@ from test_settings import ATOL, RTOL
 
 def test_validate_expression():
     """Test the syntax validator of the Problem class."""
-    from pyls import Problem
+    from pylars import Problem
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem(corners)
@@ -35,11 +35,11 @@ def test_validate_expression():
 
 def test_add_boundary_conditions():
     """Test adding boundary conditions."""
-    from pyls import Problem
+    from pylars import Problem
 
     # typical BCs
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-    prob = Problem(corners, num_boundary_points=100)
+    prob = Problem(corners, num_edge_points=100)
     # parabolic inlet flow
     prob.add_boundary_condition("0", "u(0)-y*(1-y)", 0)
     prob.add_boundary_condition("0", "v(0)", 0)
@@ -56,7 +56,7 @@ def test_add_boundary_conditions():
 
 def test_evaluate_expression():
     """Test evaluating an expression."""
-    from pyls import Problem, Solver
+    from pylars import Problem, Solver
     import numpy as np
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
@@ -70,21 +70,21 @@ def test_evaluate_expression():
     solver.validate(expression)
     y = np.linspace(0, 99, 100).reshape(100, 1)
     result = solver.evaluate(expression, 1j * y)
-    expected = solver.U[prob.indices["0"]] - (y * (1 - y))
+    expected = solver.U[prob.domain.indices["0"]] - (y * (1 - y))
     assert np.allclose(result, expected, atol=ATOL, rtol=RTOL)
 
 
 def test_evaluate_expression_names():
     """Test evaluating an expression."""
-    from pyls import Problem, Solver
+    from pylars import Problem, Solver
     import numpy as np
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
     prob.add_exterior_polygon(corners)
-    prob.name_side("0", "inlet")
-    prob.name_side("2", "outlet")
-    prob.group_sides(["1", "3"], "walls")
+    prob.domain.name_side("0", "inlet")
+    prob.domain.name_side("2", "outlet")
+    prob.domain.group_sides(["1", "3"], "walls")
     solver = Solver(prob)
     solver.setup()
     periodic = solver.evaluate("u[inlet]-u[outlet][::-1]", 0)

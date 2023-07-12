@@ -1,6 +1,6 @@
 import cProfile
 import pstats
-from pyls.numerics import va_orthogonalise, va_orthogonalise_jit
+from pylars.numerics import va_orthogonalise, va_orthogonalise_jit
 import numpy as np
 
 

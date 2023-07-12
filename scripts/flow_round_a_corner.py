@@ -1,10 +1,10 @@
-from pyls import Domain, Solver, Analysis
+from pylars import Domain, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
 
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -1, 0, -1j, 1 - 1j]
-dom = Domain(corners, num_boundary_points=500, num_poles=30)
+dom = Domain(corners, num_edge_points=500, num_poles=30)
 dom.show()
 sol = Solver(dom, 24)
 # 1 is the inlet, 4 is the outlet, 0,2,3,5 are the walls

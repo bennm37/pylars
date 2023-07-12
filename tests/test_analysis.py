@@ -3,6 +3,6 @@
 
 def test_import_analysis():
     """Test importing analysis."""
-    from pyls import Analysis
+    from pylars import Analysis
 
     assert Analysis is not None

@@ -1,4 +1,4 @@
-"""Analysis module for the pyls package.
+"""Analysis module for the pylars package.
 
 Supports plotting of the contours and velocity magnitude of the solution.
 """

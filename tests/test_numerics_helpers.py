@@ -1,11 +1,11 @@
-"""Test the helper numerical functions in pyls.numerics."""
+"""Test the helper numerical functions in pylars.numerics."""
 from test_settings import ATOL, RTOL
 
 
 def test_cluster():
     """Test the lighting poles clustering function."""
     import numpy as np
-    from pyls.numerics import cluster
+    from pylars.numerics import cluster
     from scipy.io import loadmat
 
     cluster_10_answer = loadmat("tests/data/cluster_10.mat")["cluster_10"]
@@ -16,7 +16,7 @@ def test_cluster():
 def test_split():
     """Test the splitting of coefficients."""
     import numpy as np
-    from pyls.numerics import split
+    from pylars.numerics import split
 
     coefficients = np.array([0, 1, 2, 3, 4, 5, 6, 7])
     cf_answer = np.array([0 + 4j, 1 + 5j])
@@ -28,7 +28,7 @@ def test_split():
 
 def test_lid_driven_cavity_split():
     import numpy as np
-    from pyls.numerics import split
+    from pylars.numerics import split
     from scipy.io import loadmat
 
     n = 24

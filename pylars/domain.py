@@ -21,16 +21,18 @@ class Domain:
     def __init__(
         self,
         corners,
-        num_boundary_points=100,
+        num_edge_points=100,
         num_poles=24,
         sigma=4,
         length_scale=1,
+        deg_poly=10
     ):
         self.corners = np.array(corners)
-        self.num_boundary_points = num_boundary_points
+        self.num_edge_points = num_edge_points
         self.num_poles = num_poles
         self.sigma = sigma
         self.length_scale = length_scale
+        self.deg_poly = 10
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
@@ -45,11 +47,8 @@ class Domain:
         for corner in self.corners:
             if not isinstance(corner, Number):
                 raise TypeError("Corners must be a list of complex numbers")
-        if (
-            type(self.num_boundary_points) != int
-            or self.num_boundary_points <= 0
-        ):
-            raise TypeError("num_boundary_points must be a positive integer")
+        if type(self.num_edge_points) != int or self.num_edge_points <= 0:
+            raise TypeError("num_edge_points must be a positive integer")
         if type(self.num_poles) != int or self.num_poles < 0:
             raise TypeError("num_poles must be a non negative integer")
 
@@ -58,9 +57,7 @@ class Domain:
 
         Points are clustered towards the corners.
         """
-        spacing = (
-            np.tanh(np.linspace(-10, 10, self.num_boundary_points)) + 1
-        ) / 2
+        spacing = (np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1) / 2
         nc = len(self.corners)
         self.boundary_points = np.array(
             [
@@ -74,8 +71,8 @@ class Domain:
             side: [
                 i
                 for i in range(
-                    j * self.num_boundary_points,
-                    (j + 1) * self.num_boundary_points,
+                    j * self.num_edge_points,
+                    (j + 1) * self.num_edge_points,
                 )
             ]
             for j, side in enumerate(self.sides)
@@ -155,7 +152,7 @@ class Domain:
                 ha="center",
                 va="center",
             )
-        total_points = self.num_boundary_points * nc
+        total_points = self.num_edge_points * nc
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
         print(f"Shape of boundary_points: {self.boundary_points.shape}")

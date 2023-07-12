@@ -26,7 +26,7 @@ corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(
     corners,
     num_poles=num_poles,
-    num_boundary_points=300,
+    num_edge_points=300,
     length_scale=np.sqrt(2) * 1.5,
 )
 # check the MATALB domain points and poles are the same

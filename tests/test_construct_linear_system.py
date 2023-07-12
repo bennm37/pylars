@@ -200,9 +200,9 @@ def test_row_weighting():
         deg_poly=24,
         num_poles=num_poles,
     )
-    assert np.allclose(prob.corners, corners, atol=ATOL, rtol=RTOL)
-    assert np.allclose(prob.boundary_points, Z, atol=ATOL, rtol=RTOL)
-    solver = Solver(prob, degree=24)
+    assert np.allclose(prob.domain.corners, corners, atol=ATOL, rtol=RTOL)
+    assert np.allclose(prob.domain.boundary_points, Z, atol=ATOL, rtol=RTOL)
+    solver = Solver(prob)
     solver.A = A_standard_answer
     solver.b = rhs_standard_answer
     row_weights = solver.weight_rows()

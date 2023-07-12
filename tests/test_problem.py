@@ -27,11 +27,17 @@ def test_domain_spacing_rectangle():
     )
     # check the points move anticlockwise around the domain
     # using the cross prodcut.
-    for i in range(1, len(prob.boundary_points) - 1):
+    for i in range(1, len(prob.domain.boundary_points) - 1):
         assert (
             np.cross(
-                cart(prob.boundary_points[i + 1] - prob.boundary_points[i]),
-                cart(prob.boundary_points[i] - prob.boundary_points[i - 1]),
+                cart(
+                    prob.domain.boundary_points[i + 1]
+                    - prob.domain.boundary_points[i]
+                ),
+                cart(
+                    prob.domain.boundary_points[i]
+                    - prob.domain.boundary_points[i - 1]
+                ),
             )
             >= -1e-10
         )
@@ -53,7 +59,7 @@ def test_poles_square():
         deg_poly=24,
         num_poles=num_poles,
     )
-    poles = prob.poles
+    poles = prob.domain.poles
 
     poles_answer = loadmat("tests/data/square_domain_poles.mat")["Pol"][0]
     poles_answer = np.array(

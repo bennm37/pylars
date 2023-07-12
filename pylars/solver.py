@@ -1,110 +1,27 @@
 """The Solver class."""
 from pylars.numerics import va_orthogonalise, va_evaluate, make_function
-from collections.abc import Sequence
+from pylars.problem import DEPENDENT, INDEPENDENT
 import numpy as np
 import scipy.linalg as linalg
 from scipy.sparse import diags
 import re
 import pickle as pkl
 
-OPERATIONS = ["[::-1]", "+", "-", "*", "/", "**", "(", ")"]
-DEPENDENT = ["psi", "u", "v", "p"]
-INDEPENDENT = ["x", "y"]
-
 
 class Solver:
     """Solve lighting stokes problems on a given domain."""
 
-    def __init__(self, domain, degree, least_squares="iterative"):
-        self.domain = domain
+    def __init__(self, problem, least_squares="iterative"):
+        self.domain = problem.domain
+        self.boundary_conditions = problem.boundary_conditions
         self.least_squares = least_squares
         self.check_input()
-        self.num_boundary_points = self.domain.num_boundary_points
+        self.num_edge_points = self.domain.num_edge_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
         self.domain.poles = self.domain.poles
-        self.degree = degree
+        self.degree = self.domain.deg_poly
         self.boundary_conditions = {side: None for side in self.domain.sides}
-
-    def add_boundary_condition(self, side, expression, value):
-        """Add an expression and value for a side to boundary conditions.
-
-        The expression is stripped and added to the dictionary.
-        """
-        expression = expression.strip().replace(" ", "")
-        self.validate(expression)
-        if side not in self.domain.sides:
-            raise ValueError("side must be in domain.sides")
-        if isinstance(self.boundary_conditions[side], Sequence):
-            if len(self.boundary_conditions[side]) == 2:
-                raise ValueError(
-                    f"2 boundary conditions already set for side {side}"
-                )
-            if len(self.boundary_conditions[side]) == 1:
-                self.boundary_conditions[side].append((expression, value))
-        else:
-            self.boundary_conditions[side] = [(expression, value)]
-
-    def validate(self, expression):
-        """Check if the given expression has the correct syntax."""
-        expression = expression.strip().replace(" ", "")
-        if not isinstance(expression, str):
-            raise TypeError("expression must be a string")
-        if expression.count("(") != expression.count(")"):
-            raise ValueError("expression contains mismatched parentheses")
-        # demand every dependent variable in the expression is followed by
-        # (side)
-        for dependent in DEPENDENT:
-            while dependent in expression:
-                index = expression.index(dependent)
-                following = expression[index + len(dependent) :]
-                if not following.startswith("("):
-                    raise ValueError(
-                        f"dependent variable {dependent} not evaluated at a \
-                        side"
-                    )
-                following = following[1:]
-                closing = following.index(")")
-                side = following[:closing]
-                if side not in self.domain.sides:
-                    raise ValueError(
-                        f"trying to evaluate {dependent} at side {side} but \
-                        {side} not in domain.sides"
-                    )
-                else:
-                    expression = expression.replace(f"{dependent}({side})", "")
-
-        for operation in OPERATIONS:
-            expression = expression.replace(operation, "")
-        if "[::-1]" in expression:
-            print("[::-1] in expression")
-        for quantity in INDEPENDENT:
-            expression = expression.replace(quantity, "")
-        # check decimals are surrounded by numbers
-        while "." in expression:
-            index = expression.index(".")
-            if index == 0 or index == len(expression) - 1:
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
-            if (
-                not expression[index - 1].isnumeric()
-                or not expression[index + 1].isnumeric()
-            ):
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
-            expression = expression.replace(".", "")
-        for side in self.domain.sides:
-            expression = expression.replace(side, "")
-        for number in range(10):
-            expression = expression.replace(str(number), "")
-        # check if only numbers remain
-        if expression != "":
-            raise ValueError(
-                f"expression contains invalid characters: {expression}"
-            )
-        return True
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
@@ -164,29 +81,6 @@ class Solver:
                     print("Only One Boundary Condition set for side", side)
             except TypeError:
                 print("Boundary Condition not set for side", side)
-
-    def check_boundary_conditions(self):
-        """Check that the boundary conditions are valid."""
-        for side in self.boundary_conditions.keys():
-            if self.boundary_conditions[side] is None:
-                raise ValueError(f"boundary condition not set for side {side}")
-            if len(self.boundary_conditions[side]) != 2:
-                raise ValueError(
-                    f"2 boundary conditions not set for side {side}"
-                )
-            for expression, value in self.boundary_conditions[side]:
-                self.validate(expression)
-                if isinstance(value, str):
-                    if not self.validate(value):
-                        raise ValueError(
-                            f"value {value} is not a valid expression."
-                        )
-                    continue
-                if not isinstance(value, (int, float, np.ndarray)):
-                    raise TypeError("value must be a numerical or string type")
-
-    def check_input(self):
-        pass
 
     def setup(self):
         """Get basis functions and derivatives and dependent variables."""

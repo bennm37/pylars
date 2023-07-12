@@ -1,10 +1,10 @@
-from pyls import Domain, Solver
+from pylars import Domain, Solver
 import numpy as np
 import matplotlib.pyplot as plt
 
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -1j]
-dom = Domain(corners, num_boundary_points=300, num_poles=24)
+dom = Domain(corners, num_edge_points=300, num_poles=24)
 sol = Solver(dom, 24)
 sol.add_boundary_condition("0", "psi(0)", 0)
 sol.add_boundary_condition("0", "u(0)", 1)
