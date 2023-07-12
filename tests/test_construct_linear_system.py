@@ -170,12 +170,7 @@ def test_lid_driven_cavity_construct_linear_system_2():
     solver.normalize()
     assert np.allclose(solver.A, A_normalized_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(solver.b, b_normalized_answer, atol=ATOL, rtol=RTOL)
-    savemat(
-        "tests/data/lid_driven_cavity_matrix_python.mat",
-        {"A": solver.A, "b": solver.b},
-    )
-
-
+    
 def test_row_weighting():
     """Test weighting rows of the linear system."""
     from pylars import Problem, Solver

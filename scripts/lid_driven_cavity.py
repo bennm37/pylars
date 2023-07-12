@@ -39,23 +39,6 @@ print("Time taken: ", end - start, "s")
 residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 
-# just solving A x = b using backslash rather than scipy.linalg.lstsq
-savemat(
-    "tests/data/lid_driven_cavity_matrix_python.mat", {"A": sol.A, "b": sol.b}
-)
-# overwrite the coefficients with the ones from MATLAB
-coeff = loadmat("tests/data/lid_driven_cavity_coefficients_python.mat")["c"]
-sol_backslash = Solver(dom, 24)
-sol_backslash.hessenbergs, sol_backslash.Q = va_orthogonalise(
-    sol.boundary_points, sol.degree, sol.domain.poles
-)
-sol_backslash.coefficients = coeff
-(
-    psi_backslash,
-    uv_backslash,
-    p_backslash,
-    omega_backslash,
-) = sol.construct_functions()
 
 
 x = np.linspace(-1, 1, 100)
