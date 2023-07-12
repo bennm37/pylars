@@ -27,12 +27,12 @@ prob.add_exterior_polygon(
 # prob.add_boundary_condition("5", "v[5]", 0)
 # TODO fix the dependent in side issue
 prob.name_side("1", "inlet")
-prob.name_side("4", "otlet")
+prob.name_side("4", "outlet")
 prob.group_sides(["0", "2", "3", "5"], "walls")
 prob.add_boundary_condition("inlet", "p[inlet]", 11)
 prob.add_boundary_condition("inlet", "v[inlet]", 0)
-prob.add_boundary_condition("otlet", "p[otlet]", -11)
-prob.add_boundary_condition("otlet", "u[otlet]", 0)
+prob.add_boundary_condition("outlet", "p[outlet]", -11)
+prob.add_boundary_condition("outlet", "u[outlet]", 0)
 prob.add_boundary_condition("walls", "u[walls]", 0)
 prob.add_boundary_condition("walls", "v[walls]", 0)
 

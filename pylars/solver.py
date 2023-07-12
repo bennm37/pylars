@@ -100,6 +100,7 @@ class Solver:
         filename="solution.pickle",
         check=True,
         normalize=True,
+        weight=True,
     ):
         """Set up the solver and solve the least squares problem.
 
@@ -115,7 +116,8 @@ class Solver:
         )
         self.get_dependents()
         self.construct_linear_system()
-        self.weight_rows()
+        if weight:
+            self.weight_rows()
         if normalize:
             self.normalize()
 

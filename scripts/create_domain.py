@@ -1,5 +1,5 @@
 """Create labelled polygonal domains."""
-from pyls import Domain
+from pylars import Domain
 import numpy as np
 
 # Create a square domain
@@ -14,5 +14,5 @@ domain.show()
 
 # Create a non-convex domain
 corners = [0, 1, 1 + 1j, 0.5 + 0.5j, 0.5j]
-domain = Domain(corners, num_boundary_points=300, num_poles=30)
+domain = Domain(corners, num_edge_points=300, num_poles=0)
 domain.show()

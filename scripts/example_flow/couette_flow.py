@@ -10,14 +10,14 @@ prob.add_exterior_polygon(
     corners, num_edge_points=300, num_poles=0, spacing="linear"
 )
 # periodic Couette flow with no-slip boundary conditions
-prob.add_boundary_condition("0", "u(0)", 1)
-prob.add_boundary_condition("0", "v(0)", 0)
-prob.add_boundary_condition("2", "u(2)", 0)
-prob.add_boundary_condition("2", "v(2)", 0)
-prob.add_boundary_condition("1", "p(1)", 0)
-prob.add_boundary_condition("1", "v(1)", 0)
-prob.add_boundary_condition("3", "p(3)", 0)
-prob.add_boundary_condition("3", "v(3)", 0)
+prob.add_boundary_condition("0", "u[0]", 1)
+prob.add_boundary_condition("0", "v[0]", 0)
+prob.add_boundary_condition("2", "u[2]", 0)
+prob.add_boundary_condition("2", "v[2]", 0)
+prob.add_boundary_condition("1", "p[1]", 0)
+prob.add_boundary_condition("1", "v[1]", 0)
+prob.add_boundary_condition("3", "p[3]", 0)
+prob.add_boundary_condition("3", "v[3]", 0)
 
 solver = Solver(prob)
 sol = solver.solve(check=False, weight=False)

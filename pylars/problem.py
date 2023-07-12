@@ -79,7 +79,6 @@ class Problem:
                 side: None for side in self.domain.sides
             }
         expression = expression.strip().replace(" ", "")
-        self.validate(expression)
         if side not in self.domain.sides:
             raise ValueError("side must be in domain.sides")
         if isinstance(self.boundary_conditions[side], Sequence):
@@ -129,7 +128,7 @@ class Problem:
                     invalid = True
                     for side in self.domain.sides:
                         if side in expression and dependent in side:
-                            # check for each occurance of side in expression whether 
+                            # check for each occurance of side in expression whether
                             # dependent is in side
                             # TODO finish this logic
                             pass

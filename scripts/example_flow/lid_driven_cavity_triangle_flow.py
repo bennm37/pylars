@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -5j]
-dom = Domain(corners, num_boundary_points=300, num_poles=49)
-sol = Solver(dom, 24)
-sol.add_boundary_condition("0", "psi(0)", 0)
-sol.add_boundary_condition("0", "u(0)", 1)
-sol.add_boundary_condition("2", "psi(2)", 0)
-sol.add_boundary_condition("2", "u(2)", 0)
-sol.add_boundary_condition("1", "psi(1)", 0)
-sol.add_boundary_condition("1", "u(1)", 0)
-psi, uv, p, omega = sol.solve()
-
-residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
+prob = Problem()
+prob.add_exterior_polygon(corners, num_edge_points=300, num_poles=49, deg_poly=20, length_scale=1.5, sigma=4)
+prob.add_boundary_condition("0", "psi[0]", 0)
+prob.add_boundary_condition("0", "u[0]", 1)
+prob.add_boundary_condition("2", "psi[2]", 0)
+prob.add_boundary_condition("2", "u[2]", 0)
+prob.add_boundary_condition("1", "psi[1]", 0)
+prob.add_boundary_condition("1", "u[1]", 0)
+solver = Solver(prob)
+sol = solver.solve()
+residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 
-a = Analysis(dom, sol)
+a = Analysis(prob, sol)
 fig, ax = a.plot(resolution=100)
 ax.axis("off")
 values = a.psi_values[~np.isnan(a.psi_values)].flatten()
