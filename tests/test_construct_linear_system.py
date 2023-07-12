@@ -26,6 +26,7 @@ def test_lid_driven_cavity_get_dependents():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
+        sigma=4,
         deg_poly=24,
         num_poles=num_poles,
     )
@@ -69,19 +70,20 @@ def test_lid_driven_cavity_construct_linear_system_1():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
+        sigma=4,
         deg_poly=24,
         num_poles=num_poles,
     )
     # moving lid
-    prob.add_boundary_condition("0", "psi(0)", 0)
-    prob.add_boundary_condition("0", "u(0)", 1)
+    prob.add_boundary_condition("0", "psi[0]", 0)
+    prob.add_boundary_condition("0", "u[0]", 1)
     # wall boundary conditions
-    prob.add_boundary_condition("2", "psi(2)", 0)
-    prob.add_boundary_condition("2", "u(2)", 0)
-    prob.add_boundary_condition("1", "psi(1)", 0)
-    prob.add_boundary_condition("1", "v(1)", 0)
-    prob.add_boundary_condition("3", "psi(3)", 0)
-    prob.add_boundary_condition("3", "v(3)", 0)
+    prob.add_boundary_condition("2", "psi[2]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("1", "psi[1]", 0)
+    prob.add_boundary_condition("1", "v[1]", 0)
+    prob.add_boundary_condition("3", "psi[3]", 0)
+    prob.add_boundary_condition("3", "v[3]", 0)
 
     solver = Solver(prob)
 
@@ -129,23 +131,24 @@ def test_lid_driven_cavity_construct_linear_system_2():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
-        deg_poly=24,
+        sigma=4,
+        deg_poly=n,
         num_poles=num_poles,
     )
-    prob.add_boundary_condition("0", "psi(0)", 0)
-    prob.add_boundary_condition("0", "u(0)", 1)
-    prob.add_boundary_condition("2", "psi(2)", 0)
-    prob.add_boundary_condition("2", "u(2)", 0)
-    prob.add_boundary_condition("1", "psi(1)", 0)
-    prob.add_boundary_condition("1", "v(1)", 0)
-    prob.add_boundary_condition("3", "psi(3)", 0)
-    prob.add_boundary_condition("3", "v(3)", 0)
+    prob.add_boundary_condition("0", "psi[0]", 0)
+    prob.add_boundary_condition("0", "u[0]", 1)
+    prob.add_boundary_condition("2", "psi[2]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("1", "psi[1]", 0)
+    prob.add_boundary_condition("1", "v[1]", 0)
+    prob.add_boundary_condition("3", "psi[3]", 0)
+    prob.add_boundary_condition("3", "v[3]", 0)
     solver = Solver(prob)
     solver.hessenbergs, solver.Q = va_orthogonalise(
-        solver.boundary_points, solver.degree, solver.probain.poles
+        solver.boundary_points, solver.degree, solver.poles
     )
     solver.basis, solver.basis_derivatives = va_evaluate(
-        solver.boundary_points, solver.hessenbergs, solver.probain.poles
+        solver.boundary_points, solver.hessenbergs, solver.poles
     )
     assert np.allclose(solver.basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(
@@ -197,6 +200,7 @@ def test_row_weighting():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
+        sigma=4,
         deg_poly=24,
         num_poles=num_poles,
     )

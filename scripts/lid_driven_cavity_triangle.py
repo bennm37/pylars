@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 corners = [1 + 1j, -1 + 1j, -1j]
 dom = Domain(corners, num_edge_points=300, num_poles=24)
 sol = Solver(dom, 24)
-sol.add_boundary_condition("0", "psi(0)", 0)
-sol.add_boundary_condition("0", "u(0)", 1)
-sol.add_boundary_condition("2", "psi(2)", 0)
-sol.add_boundary_condition("2", "u(2)", 0)
-sol.add_boundary_condition("1", "u(1)", 0)
-sol.add_boundary_condition("1", "v(1)", 0)
+sol.add_boundary_condition("0", "psi[0]", 0)
+sol.add_boundary_condition("0", "u[0]", 1)
+sol.add_boundary_condition("2", "psi[2]", 0)
+sol.add_boundary_condition("2", "u[2]", 0)
+sol.add_boundary_condition("1", "u[1]", 0)
+sol.add_boundary_condition("1", "v[1]", 0)
 psi, uv, p, omega = sol.solve()
 
 residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))

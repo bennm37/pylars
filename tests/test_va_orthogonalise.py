@@ -99,6 +99,7 @@ def test_poles_va_orthogonalise():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
+        sigma=4,
         deg_poly=24,
         num_poles=num_poles,
     )

@@ -78,20 +78,21 @@ def test_lid_driven_cavity_solve():
         corners,
         num_edge_points=300,
         length_scale=1.5 * np.sqrt(2),
+        sigma=4,
         deg_poly=24,
         num_poles=num_poles,
     )
     assert np.allclose(prob.domain.corners, corners)
     assert np.allclose(prob.domain.boundary_points, Z_answer)
-    prob.add_boundary_condition("0", "psi(0)", 0)
-    prob.add_boundary_condition("0", "u(0)", 1)
+    prob.add_boundary_condition("0", "psi[0]", 0)
+    prob.add_boundary_condition("0", "u[0]", 1)
     # wall boundary conditions
-    prob.add_boundary_condition("2", "psi(2)", 0)
-    prob.add_boundary_condition("2", "u(2)", 0)
-    prob.add_boundary_condition("1", "psi(1)", 0)
-    prob.add_boundary_condition("1", "v(1)", 0)
-    prob.add_boundary_condition("3", "psi(3)", 0)
-    prob.add_boundary_condition("3", "v(3)", 0)
+    prob.add_boundary_condition("2", "psi[2]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("1", "psi[1]", 0)
+    prob.add_boundary_condition("1", "v[1]", 0)
+    prob.add_boundary_condition("3", "psi[3]", 0)
+    prob.add_boundary_condition("3", "v[3]", 0)
     prob.check_boundary_conditions()
     solver = Solver(prob)
     sol = solver.solve()

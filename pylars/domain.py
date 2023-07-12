@@ -32,7 +32,7 @@ class Domain:
         self.num_poles = num_poles
         self.sigma = sigma
         self.length_scale = length_scale
-        self.deg_poly = 10
+        self.deg_poly = deg_poly
         self.check_input()
         self.generate_boundary_points()
         self.generate_poles()
@@ -82,6 +82,14 @@ class Domain:
         """Rename the sides of the polygon."""
         self.sides[self.sides.index(old)] = new
         self.indices[new] = self.indices.pop(old)
+
+    def group_sides(self, old_sides, new):
+        """Rename a list of side labels as a single side label."""
+        self.indices[str(new)] = []
+        for side in old_sides:
+            self.sides.remove(side)
+            self.indices[str(new)] += self.indices.pop(side)
+        self.sides.append(str(new))
 
     def generate_poles(self):
         """Generate exponentially clustered lighting poles.

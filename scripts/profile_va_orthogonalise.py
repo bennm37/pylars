@@ -21,8 +21,8 @@ def profile():
     # sort by cumulative time
     stats.sort_stats(pstats.SortKey.CUMULATIVE)
     stats_jit.sort_stats(pstats.SortKey.CUMULATIVE)
-    stats.print_stats(5)
-    stats_jit.print_stats(5)
+    stats.print_stats[5]
+    stats_jit.print_stats[5]
 
 
 if __name__ == "__main__":

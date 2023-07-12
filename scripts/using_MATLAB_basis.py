@@ -8,14 +8,14 @@ from scipy.linalg import lstsq
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 dom = Domain(corners, num_edge_points=300, num_poles=24)
 sol = Solver(dom, 24)
-sol.add_boundary_condition("0", "psi(0)", 0)
-sol.add_boundary_condition("0", "u(0)", 1)
-sol.add_boundary_condition("2", "psi(2)", 0)
-sol.add_boundary_condition("2", "u(2)", 0)
-sol.add_boundary_condition("1", "psi(1)", 1)
-sol.add_boundary_condition("1", "psi(1)", 1)
-sol.add_boundary_condition("3", "psi(3)", 3)
-sol.add_boundary_condition("3", "psi(3)", 3)
+sol.add_boundary_condition("0", "psi[0]", 0)
+sol.add_boundary_condition("0", "u[0]", 1)
+sol.add_boundary_condition("2", "psi[2]", 0)
+sol.add_boundary_condition("2", "u[2]", 0)
+sol.add_boundary_condition("1", "psi[1]", 1)
+sol.add_boundary_condition("1", "psi[1]", 1)
+sol.add_boundary_condition("3", "psi[3]", 3)
+sol.add_boundary_condition("3", "psi[3]", 3)
 n = 24
 num_poles = 24
 test_answers = loadmat(

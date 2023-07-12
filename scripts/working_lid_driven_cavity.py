@@ -9,15 +9,15 @@ dom = Domain(corners, num_edge_points=300, length_scale=np.sqrt(2) * 1.5)
 # dom.show()
 sol = Solver(dom, degree=24)
 # moving lid
-sol.add_boundary_condition("0", "psi(0)", 0)
-sol.add_boundary_condition("0", "u(0)", 1)
+sol.add_boundary_condition("0", "psi[0]", 0)
+sol.add_boundary_condition("0", "u[0]", 1)
 # wall boundary conditions
-sol.add_boundary_condition("2", "psi(2)", 0)
-sol.add_boundary_condition("2", "u(2)", 0)
-sol.add_boundary_condition("1", "psi(1)", 0)
-sol.add_boundary_condition("1", "v(1)", 0)
-sol.add_boundary_condition("3", "psi(3)", 0)
-sol.add_boundary_condition("3", "v(3)", 0)
+sol.add_boundary_condition("2", "psi[2]", 0)
+sol.add_boundary_condition("2", "u[2]", 0)
+sol.add_boundary_condition("1", "psi[1]", 0)
+sol.add_boundary_condition("1", "v[1]", 0)
+sol.add_boundary_condition("3", "psi[3]", 0)
+sol.add_boundary_condition("3", "v[3]", 0)
 sol.hessenbergs, sol.Q = va_orthogonalise(
     sol.boundary_points, sol.degree, sol.domain.poles
 )

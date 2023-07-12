@@ -1,6 +1,7 @@
 """The Solver class."""
 from pylars.numerics import va_orthogonalise, va_evaluate, make_function
 from pylars.problem import DEPENDENT, INDEPENDENT
+from pylars.solution import Solution
 import numpy as np
 import scipy.linalg as linalg
 from scipy.sparse import diags
@@ -12,16 +13,15 @@ class Solver:
     """Solve lighting stokes problems on a given domain."""
 
     def __init__(self, problem, least_squares="iterative"):
+        self.problem = problem
         self.domain = problem.domain
         self.boundary_conditions = problem.boundary_conditions
         self.least_squares = least_squares
-        self.check_input()
         self.num_edge_points = self.domain.num_edge_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
-        self.domain.poles = self.domain.poles
+        self.poles = self.domain.poles
         self.degree = self.domain.deg_poly
-        self.boundary_conditions = {side: None for side in self.domain.sides}
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
@@ -33,12 +33,12 @@ class Solver:
             "self.pressure",
         ]
         for identifier, code in zip(DEPENDENT, code_dependent):
-            identifier += "("
-            code += "("
+            identifier += "["
+            code += "["
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\({side}\)", f'[self.domain.indices["{side}"]]', expression
+                f"\[{side}\]", f'[self.domain.indices["{side}"]]', expression
             )
         for identifier, code in zip(
             INDEPENDENT,
@@ -100,7 +100,7 @@ class Solver:
         Reutrns the functions as a list of functions.
         """
         if check:
-            self.check_boundary_conditions()
+            self.problem.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points, self.degree, self.domain.poles
         )
@@ -124,7 +124,7 @@ class Solver:
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
-        return self.functions
+        return Solution(*self.functions)
 
     def construct_linear_system(self):
         # TODO this could move into solve for conciseness

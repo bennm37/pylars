@@ -35,6 +35,7 @@ class Problem:
             sigma=sigma,
             deg_poly=deg_poly,
         )
+        self.boundary_conditions = {side: None for side in self.domain.sides}
 
     def add_interior_curve(
         self,
@@ -107,13 +108,13 @@ class Problem:
             while dependent in expression:
                 index = expression.index(dependent)
                 following = expression[index + len(dependent) :]
-                if not following.startswith("("):
+                if not following.startswith("["):
                     raise ValueError(
                         f"dependent variable {dependent} not evaluated at a \
                         side"
                     )
                 following = following[1:]
-                closing = following.index(")")
+                closing = following.index("]")
                 side = following[:closing]
                 if side not in self.domain.sides:
                     raise ValueError(
@@ -121,7 +122,7 @@ class Problem:
                         {side} not in domain.sides"
                     )
                 else:
-                    expression = expression.replace(f"{dependent}({side})", "")
+                    expression = expression.replace(f"{dependent}[{side}]", "")
 
         for operation in OPERATIONS:
             expression = expression.replace(operation, "")
