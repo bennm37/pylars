@@ -25,7 +25,7 @@ class Domain:
         num_poles=24,
         sigma=4,
         length_scale=1,
-        deg_poly=10
+        deg_poly=10,
     ):
         self.corners = np.array(corners)
         self.num_edge_points = num_edge_points

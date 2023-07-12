@@ -40,7 +40,6 @@ residual = np.max(np.abs(sol.A @ sol.coefficients - sol.b))
 print(f"Residual: {residual:.15e}")
 
 
-
 x = np.linspace(-1, 1, 100)
 X, Y = np.meshgrid(x, x)
 Z = X + 1j * Y

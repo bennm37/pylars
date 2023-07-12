@@ -6,11 +6,10 @@ def test_validate_expression():
     """Test the syntax validator of the Problem class."""
     from pylars import Problem
     import numpy as np
+
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
-    prob.add_exterior_polygon(
-        corners
-    )
+    prob.add_exterior_polygon(corners)
     prob.validate("v[0]")
     prob.validate("p[0]+psi[3]")
     prob.validate("psi[0]+psi[1]")

@@ -30,7 +30,6 @@ sol.weight_rows()
 sol.normalize()
 sol.coefficients = np.linalg.lstsq(sol.A, sol.b, rcond=None)[0]
 psi, uv, p, omega = sol.construct_functions()
-# savemat("tests/data/lid_driven_cavity_matrix_python.mat", {"A": sol.A, "b": sol.b})
 
 
 # plotting

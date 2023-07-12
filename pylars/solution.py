@@ -1,18 +1,18 @@
 """Solution class for pylars."""
 from numbers import Number
 
+
 class Solution:
-    
-    def __init__(self,psi,uv,p,omega):
+    def __init__(self, psi, uv, p, omega):
         self.psi = psi
         self.uv = uv
         self.p = p
         self.omega = omega
-    
+        self.functions = [psi, uv, p, omega]
+
     def __add__(self, other):
         """Add two solutions together."""
         if isinstance(other, Solution):
-            sol_combined = Solution(self.domain, self.degree)
             psi_1, uv_1, p_1, omega_1 = self.functions
             psi_2, uv_2, p_2, omega_2 = other.functions
 
@@ -28,7 +28,7 @@ class Solution:
             def omega_combined(z):
                 return omega_1(z) + omega_2(z)
 
-            sol_combined.functions = (
+            sol_combined = Solution(
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -41,7 +41,6 @@ class Solution:
     def __sub__(self, other):
         """Subtract one solutions from another."""
         if isinstance(other, Solution):
-            sol_combined = Solution(self.domain, self.degree)
             psi_1, uv_1, p_1, omega_1 = self.functions
             psi_2, uv_2, p_2, omega_2 = other.functions
 
@@ -57,7 +56,7 @@ class Solution:
             def omega_combined(z):
                 return omega_1(z) - omega_2(z)
 
-            sol_combined.functions = (
+            sol_combined = Solution(
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -70,7 +69,6 @@ class Solution:
     def __mul__(self, other):
         """Multiply solution by a scalar."""
         if isinstance(other, Number):
-            sol_combined = Solution(self.domain, self.degree)
             psi_1, uv_1, p_1, omega_1 = self.functions
 
             def psi_combined(z):
@@ -85,7 +83,7 @@ class Solution:
             def omega_combined(z):
                 return omega_1(z) * other
 
-            sol_combined.functions = (
+            sol_combined = Solution(
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -100,7 +98,6 @@ class Solution:
     def __div__(self, other):
         """Divide solution by a scalar."""
         if isinstance(other, Number):
-            sol_combined = Solution(self.domain, self.degree)
             psi_1, uv_1, p_1, omega_1 = self.functions
 
             def psi_combined(z):
@@ -115,7 +112,7 @@ class Solution:
             def omega_combined(z):
                 return omega_1(z) / other
 
-            sol_combined.functions = (
+            sol_combined = Solution(
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -127,7 +124,6 @@ class Solution:
 
     def __neg__(self):
         """Negate the solution."""
-        sol_combined = Solution(self.domain, self.degree)
         psi_1, uv_1, p_1, omega_1 = self.functions
 
         def psi_combined(z):
@@ -142,7 +138,7 @@ class Solution:
         def omega_combined(z):
             return -omega_1(z)
 
-        sol_combined.functions = (
+        sol_combined = Solution(
             psi_combined,
             uv_combined,
             p_combined,
