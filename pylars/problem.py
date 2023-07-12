@@ -23,6 +23,7 @@ class Problem:
         sigma=1,
         deg_poly=10,
         num_poles=10,
+        spacing="clustered",
     ):
         """Create a new Domain object from a list of corners."""
         if self.domain is not None:
@@ -34,8 +35,8 @@ class Problem:
             length_scale=length_scale,
             sigma=sigma,
             deg_poly=deg_poly,
+            spacing=spacing,
         )
-        self.boundary_conditions = {side: None for side in self.domain.sides}
 
     def add_interior_curve(
         self,
@@ -55,12 +56,28 @@ class Problem:
             f=f, num_points=num_points, deg_laurent=deg_laurent
         )
 
+    def name_side(self, old, new):
+        if self.boundary_conditions is not None:
+            # TODO create an error class for this
+            raise ValueError("Boundary conditions are already set.")
+        self.domain._name_side(old, new)
+
+    def group_sides(self, old_sides, new):
+        if self.boundary_conditions is not None:
+            # TODO create an error class for this
+            raise ValueError("Boundary conditions are already set.")
+        self.domain._group_sides(old_sides, new)
+
     # BOUNDARY CONDITIONS
     def add_boundary_condition(self, side, expression, value):
         """Add an expression and value for a side to boundary conditions.
 
         The expression is stripped and added to the dictionary.
         """
+        if self.boundary_conditions is None:
+            self.boundary_conditions = {
+                side: None for side in self.domain.sides
+            }
         expression = expression.strip().replace(" ", "")
         self.validate(expression)
         if side not in self.domain.sides:
@@ -109,10 +126,18 @@ class Problem:
                 index = expression.index(dependent)
                 following = expression[index + len(dependent) :]
                 if not following.startswith("["):
-                    raise ValueError(
-                        f"dependent variable {dependent} not evaluated at a \
-                        side"
-                    )
+                    invalid = True
+                    for side in self.domain.sides:
+                        if side in expression and dependent in side:
+                            # check for each occurance of side in expression whether 
+                            # dependent is in side
+                            # TODO finish this logic
+                            pass
+                    if invalid:
+                        raise ValueError(
+                            f"dependent variable {dependent} not evaluated at a \
+                            side"
+                        )
                 following = following[1:]
                 closing = following.index("]")
                 side = following[:closing]

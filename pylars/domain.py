@@ -78,12 +78,12 @@ class Domain:
             for j, side in enumerate(self.sides)
         }
 
-    def name_side(self, old, new):
+    def _name_side(self, old, new):
         """Rename the sides of the polygon."""
         self.sides[self.sides.index(old)] = new
         self.indices[new] = self.indices.pop(old)
 
-    def group_sides(self, old_sides, new):
+    def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
         self.indices[str(new)] = []
         for side in old_sides:
