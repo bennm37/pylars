@@ -106,12 +106,26 @@ class Domain:
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
         self.interior_curves.append(points)
+        side = str(len(self.sides))
+        self.sides += [side]
+        n_bp = len(self.boundary_points)
+        self.indices[side] = [i for i in range(n_bp + 1, n_bp + num_points)]
+        self.boundary_points = np.concatenate(
+            [self.boundary_points, points.reshape(-1, 1)], axis=0
+        )
         return points
 
     def _name_side(self, old, new):
         """Rename the sides of the polygon."""
-        self.sides[self.sides.index(old)] = new
-        self.indices[new] = self.indices.pop(old)
+        if isinstance(old, str) and isinstance(new, str):
+            if old not in self.sides:
+                raise ValueError(f"Side {old} does not exist")
+            if new in self.sides:
+                raise ValueError(f"Side {new} already exists")
+            self.sides[self.sides.index(old)] = new
+            self.indices[new] = self.indices.pop(old)
+        else:
+            raise TypeError("Side names must be strings")
 
     def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
@@ -178,9 +192,10 @@ class Domain:
             np.array([self.corners.real, self.corners.imag]).T, holes=holes
         )
 
-    def show(self):
+    def plot(self, figax = None):
         """Display the labelled polygon."""
-        fig, ax = plt.subplots()
+        if figax is None:
+            fig, ax = plt.subplots()
         flat_poles = self.poles.flatten()
         try:
             x_min = min(flat_poles.real)
@@ -195,20 +210,21 @@ class Domain:
         ax.set_xlim(x_min - 0.1, x_max + 0.1)
         ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
-        # label each edge of the polygon in order
-        nc = len(self.corners)
-        for i in range(nc):
-            x = (self.corners[(i + 1) % nc].real + self.corners[i].real) / 2
-            y = (self.corners[(i + 1) % nc].imag + self.corners[i].imag) / 2
+        for side in self.sides:
+            print(side)
+            centroid = np.mean(self.boundary_points[self.indices[side]])
+            x, y = centroid.real, centroid.imag
+            print("using centroid")
             ax.text(
                 x,
                 y,
-                str(i),
+                str(side),
                 fontsize=20,
                 ha="center",
                 va="center",
             )
-        total_points = self.num_edge_points * nc
+        
+        total_points = len(self.boundary_points)
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
         print(f"Shape of boundary_points: {self.boundary_points.shape}")
@@ -220,14 +236,31 @@ class Domain:
             vmax=total_points,
             s=5,
         )
-        ax.scatter(
+
+        lighting_poles = ax.scatter(
             flat_poles.real,
             flat_poles.imag,
             c="red",
             s=10,
         )
+        handles = [lighting_poles]
+        degrees = []
+        degree_labels = []
+        for centroid, degree in self.laurents:   
+            laruent = ax.scatter(
+                centroid.real,
+                centroid.imag,
+                c=[(0,(1-np.exp(-degree/10)),0)],
+                s=10,
+            )
+            if degree not in degrees:
+                degrees.append(degree)
+                handles.append(laruent)
+                degree_labels.append(f"Laurent series ({degree})")
+        ax.legend(handles=handles,labels=[f"Lighting poles"]+degree_labels,loc="upper center")
         ax.set_aspect("equal")
-        plt.show()
+        plt.tight_layout()
+        return fig, ax
 
     def plot_polygon(self, ax, poly, **kwargs):
         exterior_coords = np.array(self.polygon.exterior.coords)
