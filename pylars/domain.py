@@ -9,7 +9,10 @@ import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number
 from pylars.numerics import cart, cluster
-from shapely import Point, Polygon
+from shapely import Point, Polygon, LineString
+from matplotlib.path import Path
+import matplotlib.patches as patches
+from matplotlib.collections import PatchCollection
 
 
 class Domain:
@@ -36,11 +39,13 @@ class Domain:
         self.deg_poly = deg_poly
         self.spacing = spacing
         self.check_input()
-        self.generate_boundary_points()
-        self.generate_poles()
+        self._generate_exterior_polygon_points()
+        self._generate_lighting_poles()
         self.polygon = Polygon(
             np.array([self.corners.real, self.corners.imag]).T
         )
+        self.interior_curves = []
+        self.laurents = []
 
     def check_input(self):
         """Check that the input is valid."""
@@ -56,7 +61,14 @@ class Domain:
         if self.spacing != "linear" and self.spacing != "clustered":
             raise ValueError("spacing must be 'linear' or 'clustered'")
 
-    def generate_boundary_points(self):
+    def add_interior_curve(
+        self, f, num_points=100, deg_laurent=10, aaa=False, mirror=False
+    ):
+        points = self._generate_interior_curve_points(f, num_points)
+        self._generate_laurent_series(points, deg_laurent)
+        self._update_polygon()
+
+    def _generate_exterior_polygon_points(self):
         """Create a list of boundary points on each edge."""
         if self.spacing == "linear":
             spacing = np.linspace(0, 1, self.num_edge_points)
@@ -84,10 +96,36 @@ class Domain:
             for j, side in enumerate(self.sides)
         }
 
+    def _generate_interior_curve_points(self, f, num_points):
+        if not np.isclose(f(0), f(1)):
+            raise ValueError("Curve must be closed")
+        points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
+        # create a shapely LineString and check it is simple
+        # (i.e. does not intersect itself)
+        line = LineString(np.array([points.real, points.imag]).T)
+        if not line.is_simple:
+            raise ValueError("Curve must not intersect itself")
+        self.interior_curves.append(points)
+        side = str(len(self.sides))
+        self.sides += [side]
+        n_bp = len(self.boundary_points)
+        self.indices[side] = [i for i in range(n_bp + 1, n_bp + num_points)]
+        self.boundary_points = np.concatenate(
+            [self.boundary_points, points.reshape(-1, 1)], axis=0
+        )
+        return points
+
     def _name_side(self, old, new):
         """Rename the sides of the polygon."""
-        self.sides[self.sides.index(old)] = new
-        self.indices[new] = self.indices.pop(old)
+        if isinstance(old, str) and isinstance(new, str):
+            if old not in self.sides:
+                raise ValueError(f"Side {old} does not exist")
+            if new in self.sides:
+                raise ValueError(f"Side {new} already exists")
+            self.sides[self.sides.index(old)] = new
+            self.indices[new] = self.indices.pop(old)
+        else:
+            raise TypeError("Side names must be strings")
 
     def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
@@ -97,7 +135,7 @@ class Domain:
             self.indices[str(new)] += self.indices.pop(side)
         self.sides.append(str(new))
 
-    def generate_poles(self):
+    def _generate_lighting_poles(self):
         """Generate exponentially clustered lighting poles.
 
         Poles are clustered exponentially.
@@ -140,9 +178,24 @@ class Domain:
             ]
         )
 
-    def show(self):
+    def _generate_laurent_series(self, interior_points, degree):
+        centroid = np.mean(interior_points)
+        self.laurents.append((centroid, degree))
+
+    def _update_polygon(self):
+        """Update the polygon."""
+        holes = [
+            np.array([curve.real, curve.imag]).T
+            for curve in self.interior_curves
+        ]
+        self.polygon = Polygon(
+            np.array([self.corners.real, self.corners.imag]).T, holes=holes
+        )
+
+    def plot(self, figax=None):
         """Display the labelled polygon."""
-        fig, ax = plt.subplots()
+        if figax is None:
+            fig, ax = plt.subplots()
         flat_poles = self.poles.flatten()
         try:
             x_min = min(flat_poles.real)
@@ -156,23 +209,22 @@ class Domain:
             y_max = max(self.corners.imag)
         ax.set_xlim(x_min - 0.1, x_max + 0.1)
         ax.set_ylim(y_min - 0.1, y_max + 0.1)
-        cartesian_corners = np.array([self.corners.real, self.corners.imag]).T
-        polygon = plt.Polygon(cartesian_corners, fill=True, alpha=0.5)
-        ax.add_patch(polygon)
-        # label each edge of the polygon in order
-        nc = len(self.corners)
-        for i in range(nc):
-            x = (self.corners[(i + 1) % nc].real + self.corners[i].real) / 2
-            y = (self.corners[(i + 1) % nc].imag + self.corners[i].imag) / 2
+        self.plot_polygon(ax, self.polygon)
+        for side in self.sides:
+            print(side)
+            centroid = np.mean(self.boundary_points[self.indices[side]])
+            x, y = centroid.real, centroid.imag
+            print("using centroid")
             ax.text(
                 x,
                 y,
-                str(i),
+                str(side),
                 fontsize=20,
                 ha="center",
                 va="center",
             )
-        total_points = self.num_edge_points * nc
+
+        total_points = len(self.boundary_points)
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
         print(f"Shape of boundary_points: {self.boundary_points.shape}")
@@ -184,14 +236,46 @@ class Domain:
             vmax=total_points,
             s=5,
         )
-        ax.scatter(
+
+        lighting_poles = ax.scatter(
             flat_poles.real,
             flat_poles.imag,
             c="red",
             s=10,
         )
+        handles = [lighting_poles]
+        degrees = []
+        degree_labels = []
+        for centroid, degree in self.laurents:
+            laruent = ax.scatter(
+                centroid.real,
+                centroid.imag,
+                c=[(0, (1 - np.exp(-degree / 10)), 0)],
+                s=10,
+            )
+            if degree not in degrees:
+                degrees.append(degree)
+                handles.append(laruent)
+                degree_labels.append(f"Laurent series ({degree})")
+        ax.legend(
+            handles=handles,
+            labels=[f"Lighting poles"] + degree_labels,
+            loc="upper center",
+        )
         ax.set_aspect("equal")
-        plt.show()
+        plt.tight_layout()
+        return fig, ax
+
+    def plot_polygon(self, ax, poly, **kwargs):
+        exterior_coords = np.array(self.polygon.exterior.coords)
+        exterior_patch = patches.Polygon(exterior_coords)
+        ax.add_patch(exterior_patch)
+        for inner in poly.interiors:
+            interior_patch = patches.Polygon(
+                np.array(inner.coords), color="white"
+            )
+            ax.add_patch(interior_patch)
+        ax.autoscale_view()
 
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""
