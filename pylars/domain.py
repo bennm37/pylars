@@ -192,7 +192,7 @@ class Domain:
             np.array([self.corners.real, self.corners.imag]).T, holes=holes
         )
 
-    def plot(self, figax=None):
+    def plot(self, figax = None):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
@@ -223,7 +223,7 @@ class Domain:
                 ha="center",
                 va="center",
             )
-
+        
         total_points = len(self.boundary_points)
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
@@ -246,22 +246,18 @@ class Domain:
         handles = [lighting_poles]
         degrees = []
         degree_labels = []
-        for centroid, degree in self.laurents:
+        for centroid, degree in self.laurents:   
             laruent = ax.scatter(
                 centroid.real,
                 centroid.imag,
-                c=[(0, (1 - np.exp(-degree / 10)), 0)],
+                c=[(0,(1-np.exp(-degree/10)),0)],
                 s=10,
             )
             if degree not in degrees:
                 degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
-        ax.legend(
-            handles=handles,
-            labels=[f"Lighting poles"] + degree_labels,
-            loc="upper center",
-        )
+        ax.legend(handles=handles,labels=[f"Lighting poles"]+degree_labels,loc="upper center")
         ax.set_aspect("equal")
         plt.tight_layout()
         return fig, ax
