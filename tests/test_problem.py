@@ -44,6 +44,42 @@ def test_domain_spacing_rectangle():
         )
 
 
+def test_domain_spacing_circle():
+    """Test domain spacing on a circle against MATLAB code."""
+    from scipy.io import loadmat
+    import numpy as np
+    from pylars import Problem
+
+    test_answers = loadmat("tests/data/single_circle_test.mat")
+    deg_poly, num_poles, deg_laurent = (
+        test_answers["n"][0][0],
+        test_answers["np"][0][0],
+        test_answers["nl"][0][0],
+    )
+    num_edge_points, num_ellipse_points = (
+        test_answers["nb"][0][0],
+        test_answers["np"][0][0],
+    )
+    Z_answer = test_answers["Z"]
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=num_edge_points,
+        num_poles=num_poles,
+        deg_poly=deg_poly,
+        spacing="linear",
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=num_ellipse_points,
+        deg_laurent=deg_laurent,
+    )
+    assert np.allclose(
+        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
+    )
+
+
 def test_poles_square():
     """Test that the poles against MATLAB code for a square domain."""
     from pylars import Problem
@@ -115,6 +151,7 @@ def test_mask_contains():
 if __name__ == "__main__":
     test_import_problem()
     test_domain_spacing_rectangle()
+    test_domain_spacing_circle()
     test_poles_square()
     test_contains()
     test_mask_contains()

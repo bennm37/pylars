@@ -43,6 +43,7 @@ class Problem:
         f,
         num_points=100,
         deg_laurent=10,
+        centroid=None,
         aaa=False,
     ):
         """Create an interior curve from a parametric function.
@@ -52,17 +53,24 @@ class Problem:
         """
         if aaa:
             return NotImplemented
+        if self.domain is None:
+            raise ValueError("Exterior polygon must be set first.")
         self.domain.add_interior_curve(
-            f=f, num_points=num_points, deg_laurent=deg_laurent
+            f=f,
+            num_points=num_points,
+            deg_laurent=deg_laurent,
+            centroid=centroid,
         )
 
     def name_side(self, old, new):
+        """Change the name of a side."""
         if self.boundary_conditions is not None:
             # TODO create an error class for this
             raise ValueError("Boundary conditions are already set.")
         self.domain._name_side(old, new)
 
     def group_sides(self, old_sides, new):
+        """Group a list of sides together under a new name."""
         if self.boundary_conditions is not None:
             # TODO create an error class for this
             raise ValueError("Boundary conditions are already set.")
@@ -128,14 +136,14 @@ class Problem:
                     invalid = True
                     for side in self.domain.sides:
                         if side in expression and dependent in side:
-                            # check for each occurance of side in expression whether
-                            # dependent is in side
+                            # check for each occurance of side in expression
+                            # whether dependent is in side
                             # TODO finish this logic
                             pass
                     if invalid:
                         raise ValueError(
-                            f"dependent variable {dependent} not evaluated at a \
-                            side"
+                            f"dependent variable {dependent} not \
+                            evaluated at a side"
                         )
                 following = following[1:]
                 closing = following.index("]")

@@ -118,8 +118,63 @@ def test_poles_va_orthogonalise():
     assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
 
 
+def test_laurent_va_orthogonalise():
+    """Test the va_orthogonalise with laurent series against MATLAB code."""
+    from pylars.numerics import va_orthogonalise
+    from pylars import Problem
+    import numpy as np
+    from scipy.io import loadmat
+
+    test_answers = loadmat("tests/data/single_circle_test.mat")
+    deg_poly, num_poles, deg_laurent = (
+        test_answers["n"][0][0],
+        test_answers["np"][0][0],
+        test_answers["nl"][0][0],
+    )
+    num_edge_points, num_ellipse_points = (
+        test_answers["nb"][0][0],
+        test_answers["np"][0][0],
+    )
+    H_answer = test_answers["Hes"]
+    # discard empty pole blocks
+    hessenbergs_answer = [
+        H_answer[:, k][0]
+        for k in range(H_answer.shape[1])
+        if H_answer[:, k][0].shape != (0, 0)
+    ]
+    Q_answer = test_answers["Q"]
+    Z_answer = test_answers["Z"]
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=num_edge_points,
+        num_poles=num_poles,
+        deg_poly=deg_poly,
+        spacing="linear",
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=num_ellipse_points,
+        deg_laurent=deg_laurent,
+        centroid=0.0 + 0.0j,
+    )
+    assert np.allclose(
+        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
+    )
+    hessenbergs, Q = va_orthogonalise(
+        prob.domain.boundary_points.reshape(-1, 1),
+        deg_poly,
+        laurents=prob.domain.laurents,
+    )
+    for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
+        assert np.allclose(hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
+
+
 if __name__ == "__main__":
     test_import_va_orthogonalise()
     test_simple_va_orthogonalise()
     test_large_va_orthongalise()
     test_poles_va_orthogonalise()
+    test_laurent_va_orthogonalise()

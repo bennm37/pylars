@@ -1,2 +1,2 @@
 # pylars
-Python Lighting Stokes Solver
+Python Lightning Stokes Solver

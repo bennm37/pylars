@@ -1,4 +1,5 @@
-from pylars import Problem, Solver, Analysis
+"""Flow a domain with a circular interior curve.""" ""
+from pylars import Problem
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -16,7 +17,9 @@ cs = [0.0 + 0.0j, -0.5 - 0.5j, +0.5 + 0.5j]
 degrees = [10, 20, 10]
 for r, c, deg in zip(rs, cs, degrees):
     prob.add_interior_curve(
-        lambda t: c + r * np.exp(2j * np.pi * t), num_points=100, deg_laurent=deg
+        lambda t: c + r * np.exp(2j * np.pi * t),
+        num_points=100,
+        deg_laurent=deg,
     )
 # prob.name_side("1", "inlet")
 # prob.name_side("3", "outlet")

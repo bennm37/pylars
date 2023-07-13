@@ -9,7 +9,7 @@ from matplotlib.animation import FuncAnimation
 
 
 class Analysis:
-    """Class for analyzing the solution of a lighting stokes problem.
+    """Class for analyzing the solution of a lightning stokes problem.
 
     Attributes
     ----------

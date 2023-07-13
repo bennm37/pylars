@@ -55,7 +55,7 @@ def make_function(name, z, coefficients, hessenbergs, poles):
             return np.imag(-4 * basis_deriv @ cf)
 
 
-def va_orthogonalise(z, n, poles=None):
+def va_orthogonalise(z, n, poles=None, laurents=None):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.
 
     The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
@@ -86,6 +86,22 @@ def va_orthogonalise(z, n, poles=None):
             Qp[:, 0] = qp.reshape(m)
             for k in range(num_poles):
                 qp = Qp[:, k].reshape(m, 1) / (z - pole_group[k])
+                for j in range(k + 1):
+                    Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
+                    qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
+                Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
+                Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
+            hessenbergs += [Hp]
+            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
+    if laurents is not None:
+        for laurent_series in laurents:
+            deg_laurent = laurent_series[1]
+            Hp = np.zeros((deg_laurent + 1, deg_laurent), dtype=np.complex128)
+            Qp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            qp = np.ones(m).reshape(m, 1)
+            Qp[:, 0] = qp.reshape(m)
+            for k in range(deg_laurent):
+                qp = Qp[:, k].reshape(m, 1) / (z - laurent_series[0])
                 for j in range(k + 1):
                     Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
                     qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)

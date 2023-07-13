@@ -3,7 +3,7 @@ from test_settings import ATOL, RTOL
 
 
 def test_cluster():
-    """Test the lighting poles clustering function."""
+    """Test the lightning poles clustering function."""
     import numpy as np
     from pylars.numerics import cluster
     from scipy.io import loadmat

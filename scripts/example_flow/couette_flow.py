@@ -1,4 +1,4 @@
-"""Solve periodic Couette flow using the lighting stokes method."""
+"""Solve periodic Couette flow using the lightning stokes method."""
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt

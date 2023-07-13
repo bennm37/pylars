@@ -10,7 +10,7 @@ import pickle as pkl
 
 
 class Solver:
-    """Solve lighting stokes problems on a given domain."""
+    """Solve lightning stokes problems on a given domain."""
 
     def __init__(self, problem, least_squares="iterative"):
         self.problem = problem

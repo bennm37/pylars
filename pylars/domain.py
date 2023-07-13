@@ -7,12 +7,10 @@ Raises:
 """
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
-from numbers import Number
+from numbers import Number, Integral
 from pylars.numerics import cart, cluster
 from shapely import Point, Polygon, LineString
-from matplotlib.path import Path
 import matplotlib.patches as patches
-from matplotlib.collections import PatchCollection
 
 
 class Domain:
@@ -40,7 +38,7 @@ class Domain:
         self.spacing = spacing
         self.check_input()
         self._generate_exterior_polygon_points()
-        self._generate_lighting_poles()
+        self._generate_lightning_poles()
         self.polygon = Polygon(
             np.array([self.corners.real, self.corners.imag]).T
         )
@@ -54,18 +52,27 @@ class Domain:
         for corner in self.corners:
             if not isinstance(corner, Number):
                 raise TypeError("Corners must be a list of complex numbers")
-        if type(self.num_edge_points) != int or self.num_edge_points <= 0:
+        if (
+            not isinstance(self.num_edge_points, Integral)
+        ) or self.num_edge_points <= 0:
             raise TypeError("num_edge_points must be a positive integer")
-        if type(self.num_poles) != int or self.num_poles < 0:
+        if (not isinstance(self.num_poles, Integral)) or self.num_poles < 0:
             raise TypeError("num_poles must be a non negative integer")
         if self.spacing != "linear" and self.spacing != "clustered":
             raise ValueError("spacing must be 'linear' or 'clustered'")
 
     def add_interior_curve(
-        self, f, num_points=100, deg_laurent=10, aaa=False, mirror=False
+        self,
+        f,
+        num_points=100,
+        deg_laurent=10,
+        centroid=None,
+        aaa=False,
+        mirror=False,
     ):
+        """Create an interior curve from a parametric function."""
         points = self._generate_interior_curve_points(f, num_points)
-        self._generate_laurent_series(points, deg_laurent)
+        self._generate_laurent_series(points, deg_laurent, centroid)
         self._update_polygon()
 
     def _generate_exterior_polygon_points(self):
@@ -135,8 +142,8 @@ class Domain:
             self.indices[str(new)] += self.indices.pop(side)
         self.sides.append(str(new))
 
-    def _generate_lighting_poles(self):
-        """Generate exponentially clustered lighting poles.
+    def _generate_lightning_poles(self):
+        """Generate exponentially clustered lightning poles.
 
         Poles are clustered exponentially.
         """
@@ -178,8 +185,9 @@ class Domain:
             ]
         )
 
-    def _generate_laurent_series(self, interior_points, degree):
-        centroid = np.mean(interior_points)
+    def _generate_laurent_series(self, interior_points, degree, centroid):
+        if centroid is None:
+            centroid = np.mean(interior_points)
         self.laurents.append((centroid, degree))
 
     def _update_polygon(self):
@@ -192,7 +200,7 @@ class Domain:
             np.array([self.corners.real, self.corners.imag]).T, holes=holes
         )
 
-    def plot(self, figax = None):
+    def plot(self, figax=None):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
@@ -223,7 +231,7 @@ class Domain:
                 ha="center",
                 va="center",
             )
-        
+
         total_points = len(self.boundary_points)
         color = np.arange(total_points)
         print(f"Total number of boundary points: {total_points}")
@@ -237,32 +245,37 @@ class Domain:
             s=5,
         )
 
-        lighting_poles = ax.scatter(
+        lightning_poles = ax.scatter(
             flat_poles.real,
             flat_poles.imag,
             c="red",
             s=10,
         )
-        handles = [lighting_poles]
+        handles = [lightning_poles]
         degrees = []
         degree_labels = []
-        for centroid, degree in self.laurents:   
+        for centroid, degree in self.laurents:
             laruent = ax.scatter(
                 centroid.real,
                 centroid.imag,
-                c=[(0,(1-np.exp(-degree/10)),0)],
+                c=[(0, (1 - np.exp(-degree / 10)), 0)],
                 s=10,
             )
             if degree not in degrees:
                 degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
-        ax.legend(handles=handles,labels=[f"Lighting poles"]+degree_labels,loc="upper center")
+        ax.legend(
+            handles=handles,
+            labels=["Lightning poles"] + degree_labels,
+            loc="upper center",
+        )
         ax.set_aspect("equal")
         plt.tight_layout()
         return fig, ax
 
-    def plot_polygon(self, ax, poly, **kwargs):
+    def plot_polygon(self, ax, poly):
+        """Plot a polygon on the given axis."""
         exterior_coords = np.array(self.polygon.exterior.coords)
         exterior_patch = patches.Polygon(exterior_coords)
         ax.add_patch(exterior_patch)
