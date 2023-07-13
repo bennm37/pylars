@@ -9,7 +9,10 @@ import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number
 from pylars.numerics import cart, cluster
-from shapely import Point, Polygon
+from shapely import Point, Polygon, LineString
+from matplotlib.path import Path
+import matplotlib.patches as patches
+from matplotlib.collections import PatchCollection
 
 
 class Domain:
@@ -36,11 +39,13 @@ class Domain:
         self.deg_poly = deg_poly
         self.spacing = spacing
         self.check_input()
-        self.generate_boundary_points()
-        self.generate_poles()
+        self._generate_exterior_polygon_points()
+        self._generate_lighting_poles()
         self.polygon = Polygon(
             np.array([self.corners.real, self.corners.imag]).T
         )
+        self.interior_curves = []
+        self.laurents = []
 
     def check_input(self):
         """Check that the input is valid."""
@@ -56,7 +61,14 @@ class Domain:
         if self.spacing != "linear" and self.spacing != "clustered":
             raise ValueError("spacing must be 'linear' or 'clustered'")
 
-    def generate_boundary_points(self):
+    def add_interior_curve(
+        self, f, num_points=100, deg_laurent=10, aaa=False, mirror=False
+    ):
+        points = self._generate_interior_curve_points(f, num_points)
+        self._generate_laurent_series(points, deg_laurent)
+        self._update_polygon()
+
+    def _generate_exterior_polygon_points(self):
         """Create a list of boundary points on each edge."""
         if self.spacing == "linear":
             spacing = np.linspace(0, 1, self.num_edge_points)
@@ -84,6 +96,18 @@ class Domain:
             for j, side in enumerate(self.sides)
         }
 
+    def _generate_interior_curve_points(self, f, num_points):
+        if not np.isclose(f(0), f(1)):
+            raise ValueError("Curve must be closed")
+        points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
+        # create a shapely LineString and check it is simple
+        # (i.e. does not intersect itself)
+        line = LineString(np.array([points.real, points.imag]).T)
+        if not line.is_simple:
+            raise ValueError("Curve must not intersect itself")
+        self.interior_curves.append(points)
+        return points
+
     def _name_side(self, old, new):
         """Rename the sides of the polygon."""
         self.sides[self.sides.index(old)] = new
@@ -97,7 +121,7 @@ class Domain:
             self.indices[str(new)] += self.indices.pop(side)
         self.sides.append(str(new))
 
-    def generate_poles(self):
+    def _generate_lighting_poles(self):
         """Generate exponentially clustered lighting poles.
 
         Poles are clustered exponentially.
@@ -140,6 +164,20 @@ class Domain:
             ]
         )
 
+    def _generate_laurent_series(self, interior_points, degree):
+        centroid = np.mean(interior_points)
+        self.laurents.append((centroid, degree))
+
+    def _update_polygon(self):
+        """Update the polygon."""
+        holes = [
+            np.array([curve.real, curve.imag]).T
+            for curve in self.interior_curves
+        ]
+        self.polygon = Polygon(
+            np.array([self.corners.real, self.corners.imag]).T, holes=holes
+        )
+
     def show(self):
         """Display the labelled polygon."""
         fig, ax = plt.subplots()
@@ -156,9 +194,7 @@ class Domain:
             y_max = max(self.corners.imag)
         ax.set_xlim(x_min - 0.1, x_max + 0.1)
         ax.set_ylim(y_min - 0.1, y_max + 0.1)
-        cartesian_corners = np.array([self.corners.real, self.corners.imag]).T
-        polygon = plt.Polygon(cartesian_corners, fill=True, alpha=0.5)
-        ax.add_patch(polygon)
+        self.plot_polygon(ax, self.polygon)
         # label each edge of the polygon in order
         nc = len(self.corners)
         for i in range(nc):
@@ -192,6 +228,17 @@ class Domain:
         )
         ax.set_aspect("equal")
         plt.show()
+
+    def plot_polygon(self, ax, poly, **kwargs):
+        exterior_coords = np.array(self.polygon.exterior.coords)
+        exterior_patch = patches.Polygon(exterior_coords)
+        ax.add_patch(exterior_patch)
+        for inner in poly.interiors:
+            interior_patch = patches.Polygon(
+                np.array(inner.coords), color="white"
+            )
+            ax.add_patch(interior_patch)
+        ax.autoscale_view()
 
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""
