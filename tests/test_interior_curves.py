@@ -19,7 +19,8 @@ def test_create_circles():
     cs = [0.0 + 0.0j, -0.5 - 0.5j, +0.5 + 0.5j]
     for r, c in zip(rs, cs):
         prob.add_interior_curve(
-            lambda t: c + r * np.exp(2j * np.pi * t), num_points=100
+            lambda t: c + r * np.exp(2j * np.pi * t), num_points=100,
+            centroid=c,
         )
     assert len(prob.domain.interior_curves) == 3
     for i in range(3):

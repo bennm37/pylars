@@ -20,6 +20,7 @@ for r, c, deg in zip(rs, cs, degrees):
         lambda t: c + r * np.exp(2j * np.pi * t),
         num_points=100,
         deg_laurent=deg,
+        centroid=c,
     )
 # prob.name_side("1", "inlet")
 # prob.name_side("3", "outlet")

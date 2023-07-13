@@ -43,6 +43,117 @@ def test_lid_driven_cavity_get_dependents():
     assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
 
 
+def test_single_circle_get_dependents():
+    """Test constructing dependents from the correct basis."""
+    from scipy.io import loadmat
+    from pylars import Problem, Solver
+    import numpy as np
+
+    test_answers = loadmat("tests/data/single_circle_test.mat")
+    deg_poly, num_poles, deg_laurent = (
+        test_answers["n"][0][0],
+        test_answers["np"][0][0],
+        test_answers["nl"][0][0],
+    )
+    num_edge_points, num_ellipse_points = (
+        test_answers["nb"][0][0],
+        test_answers["np"][0][0],
+    )
+    basis_answer = test_answers["R0"]
+    basis_deriv_answer = test_answers["R1"]
+    U_answer = test_answers["U"]
+    V_answer = test_answers["V"]
+    PSI_answer = test_answers["PSI"]
+    P_answer = test_answers["P"]
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=num_edge_points,
+        num_poles=num_poles,
+        deg_poly=deg_poly,
+        spacing="linear",
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=num_ellipse_points,
+        deg_laurent=deg_laurent,
+        centroid=0.0 + 0.0j,
+    )
+    solver = Solver(prob)
+    solver.basis = basis_answer
+    solver.basis_derivatives = basis_deriv_answer
+    solver.get_dependents()
+    U = solver.U
+    V = solver.V
+    PSI = solver.PSI
+    P = solver.P
+    assert np.allclose(U, U_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(V, V_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(P, P_answer, atol=ATOL, rtol=RTOL)
+
+
+def test_three_circles_get_dependents():
+    """Test constructing dependents from the correct basis."""
+    from scipy.io import loadmat
+    from pylars import Problem, Solver
+    import numpy as np
+
+    test_answers = loadmat("tests/data/three_circles_test.mat")
+    deg_poly, num_poles, deg_laurent = (
+        test_answers["n"][0][0],
+        test_answers["np"][0][0],
+        test_answers["nl"][0][0],
+    )
+    num_edge_points, num_ellipse_points = (
+        test_answers["nb"][0][0],
+        test_answers["np"][0][0],
+    )
+    Z_answer = test_answers["Z"]
+    basis_answer = test_answers["R0"]
+    basis_deriv_answer = test_answers["R1"]
+    U_answer = test_answers["U"]
+    V_answer = test_answers["V"]
+    PSI_answer = test_answers["PSI"]
+    P_answer = test_answers["P"]
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners=corners,
+        num_edge_points=num_edge_points,
+        num_poles=num_poles,
+        deg_poly=deg_poly,
+        spacing="linear",
+    )
+    rs = [0.15, 0.15, 0.15]
+    cs = [0.0 + 0.0j, 0.5 + 0.5j, -0.5 - 0.5j]
+    for r, c in zip(rs, cs):
+        prob.add_interior_curve(
+            lambda t: c + r * np.exp(2j * np.pi * t),
+            num_points=num_ellipse_points,
+            deg_laurent=deg_laurent,
+            centroid=c,
+        )
+    assert np.allclose(
+        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
+    )
+    solver = Solver(prob)
+    solver.basis = basis_answer
+    solver.basis_derivatives = basis_deriv_answer
+    solver.get_dependents()
+    U = solver.U
+    V = solver.V
+    PSI = solver.PSI
+    P = solver.P
+    # log terms are wrong for three circles but correct for 1
+    assert np.allclose(U, U_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(V, V_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(PSI, PSI_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(P, P_answer, atol=ATOL, rtol=RTOL)
+
+
 def test_lid_driven_cavity_construct_linear_system_1():
     """Test constructing the linear system from the MATLAB basis."""
     from scipy.io import loadmat
@@ -101,7 +212,7 @@ def test_lid_driven_cavity_construct_linear_system_1():
 
 def test_lid_driven_cavity_construct_linear_system_2():
     """Test constructing the linear system from scratch."""
-    from scipy.io import loadmat, savemat
+    from scipy.io import loadmat
     from pylars import Problem, Solver
     from pylars.numerics import va_orthogonalise, va_evaluate
     import numpy as np
@@ -213,6 +324,8 @@ def test_row_weighting():
 
 if __name__ == "__main__":
     test_lid_driven_cavity_get_dependents()
+    test_single_circle_get_dependents()
+    test_three_circles_get_dependents()
     test_lid_driven_cavity_construct_linear_system_1()
     test_lid_driven_cavity_construct_linear_system_2()
     test_row_weighting()

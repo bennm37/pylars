@@ -18,17 +18,29 @@ def cluster(num_points, length_scale, sigma):
 
 def split(coefficients):
     """Split the coefficients for f and g."""
-    # TODO check this is consitent with the dependent matricies.
     num_coeff = len(coefficients) // 4
-    cf = (
-        coefficients[:num_coeff]
-        + 1j * coefficients[2 * num_coeff : 3 * num_coeff]
+    complex_coeff = (
+        coefficients[: 2 * num_coeff] + 1j * coefficients[2 * num_coeff :]
     )
-    cg = (
-        coefficients[num_coeff : 2 * num_coeff]
-        + 1j * coefficients[3 * num_coeff :]
-    )
+    cf = complex_coeff[:num_coeff]
+    cg = complex_coeff[num_coeff : 2 * num_coeff]
     return cf, cg
+
+
+def split_laurent(coefficients, laurents):
+    """Split the coefficients for f and g for laurent series."""
+    coefficients = np.array(coefficients)
+    num_logs = len(laurents)
+    num_coeff = (len(coefficients) - 4 * num_logs) // 4
+    complex_coeff = (
+        coefficients[: len(coefficients) // 2]
+        + 1j * coefficients[len(coefficients) // 2 :]
+    )
+    cf = complex_coeff[:num_coeff]
+    cg = complex_coeff[num_coeff : 2 * num_coeff]
+    clf = complex_coeff[2 * num_coeff : 2 * num_coeff + num_logs]
+    clg = complex_coeff[2 * num_coeff + num_logs :]
+    return cf, cg, clf, clg
 
 
 def make_function(name, z, coefficients, hessenbergs, poles):

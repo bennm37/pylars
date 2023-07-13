@@ -74,6 +74,7 @@ def test_domain_spacing_circle():
         lambda t: 0.5 * np.exp(2j * np.pi * t),
         num_points=num_ellipse_points,
         deg_laurent=deg_laurent,
+        centroid=0.0 + 0.0j,
     )
     assert np.allclose(
         prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL

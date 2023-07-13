@@ -26,6 +26,20 @@ def test_split():
     assert np.allclose(cg, cg_answer, atol=ATOL, rtol=RTOL)
 
 
+def test_split_laurent():
+    """Test the splitting of coefficients for laurent basis."""
+    import numpy as np
+    from pylars.numerics import split_laurent
+
+    coeff = [0, 0, 0, 1, 1, 1, 2, 3, 4, 4, 4, 5, 5, 5, 6, 7]
+    laurents = [(0 + 0.0j, 10)]
+    cf, cg, clf, clg = split_laurent(coeff, laurents)
+    assert np.allclose(cf, np.array([0 + 4j, 0 + 4j, 0 + 4j]))
+    assert np.allclose(clf, np.array([2 + 6j]))
+    assert np.allclose(cg, np.array([1 + 5j, 1 + 5j, 1 + 5j]))
+    assert np.allclose(clg, np.array([3 + 7j]))
+
+
 def test_lid_driven_cavity_split():
     import numpy as np
     from pylars.numerics import split
@@ -47,4 +61,5 @@ def test_lid_driven_cavity_split():
 if __name__ == "__main__":
     test_cluster()
     test_split()
+    test_split_laurent()
     test_lid_driven_cavity_split()

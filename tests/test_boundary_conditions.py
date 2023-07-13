@@ -5,7 +5,6 @@ from test_settings import ATOL, RTOL
 def test_validate_expression():
     """Test the syntax validator of the Problem class."""
     from pylars import Problem
-    import numpy as np
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()

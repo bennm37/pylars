@@ -30,7 +30,7 @@ class Solver:
             "self.PSI",
             "self.U",
             "self.V",
-            "self.pressure",
+            "self.P",
         ]
         for identifier, code in zip(DEPENDENT, code_dependent):
             identifier += "["
@@ -136,7 +136,6 @@ class Solver:
         return Solution(*self.functions)
 
     def construct_linear_system(self):
-        # TODO this could move into solve for conciseness
         """Use the basis functions to construct the linear system.
 
         Uses the boundary condition dictionary to construct the linear system
@@ -190,36 +189,89 @@ class Solver:
         # stacked (f_r, g_r, f_i, g_i). This is convenient as then
         # splitting the coefficient vector into real and imaginary
         # parts is slightly easier. Changed to MATLAB notation.
+        # NOTE for laurent series the coefficient vector is
+        # structured (f_r, g_r, f_lr, g_lr, f_i, g_i, f_li, g_li)
+        # where terms with an l correspond to the log terms.
         # TODO verbose but I guess clear. Could be more concise?
         # TODO is copying large arrays like this expensive?
-        Z = self.boundary_points
-        m = len(Z)
+        z = self.boundary_points
+        m = len(z)
         basis, basis_deriv = self.basis, self.basis_derivatives
-        z_conj = diags(Z.conj().reshape(m))
+        conj_z = diags(z.conj().reshape(m))
 
-        u_1 = np.real(z_conj @ basis_deriv - basis)
-        u_2 = np.real(basis_deriv)
-        u_3 = -np.imag(z_conj @ basis_deriv - basis)
-        u_4 = -np.imag(basis_deriv)
-        self.U = np.hstack((u_1, u_2, u_3, u_4))
+        if not self.domain.laurents:
+            u_1 = np.real(conj_z @ basis_deriv - basis)
+            u_2 = np.real(basis_deriv)
+            u_3 = -np.imag(conj_z @ basis_deriv - basis)
+            u_4 = -np.imag(basis_deriv)
+            self.U = np.hstack((u_1, u_2, u_3, u_4))
 
-        v_1 = -np.imag(z_conj @ basis_deriv + basis)
-        v_2 = -np.imag(basis_deriv)
-        v_3 = -np.real(z_conj @ basis_deriv + basis)
-        v_4 = -np.real(basis_deriv)
-        self.V = np.hstack((v_1, v_2, v_3, v_4))
+            v_1 = -np.imag(conj_z @ basis_deriv + basis)
+            v_2 = -np.imag(basis_deriv)
+            v_3 = -np.real(conj_z @ basis_deriv + basis)
+            v_4 = -np.real(basis_deriv)
+            self.V = np.hstack((v_1, v_2, v_3, v_4))
 
-        p_1 = np.real(4 * basis_deriv)
-        p_2 = np.zeros_like(p_1)
-        p_3 = -np.imag(4 * basis_deriv)
-        p_4 = np.zeros_like(p_1)
-        self.pressure = np.hstack((p_1, p_2, p_3, p_4))
+            p_1 = np.real(4 * basis_deriv)
+            p_2 = np.zeros_like(p_1)
+            p_3 = -np.imag(4 * basis_deriv)
+            p_4 = np.zeros_like(p_1)
+            self.P = np.hstack((p_1, p_2, p_3, p_4))
 
-        s_1 = np.imag(z_conj @ basis)
-        s_2 = np.imag(basis)
-        s_3 = np.real(z_conj @ basis)
-        s_4 = np.real(basis)
-        self.PSI = np.hstack((s_1, s_2, s_3, s_4))
+            s_1 = np.imag(conj_z @ basis)
+            s_2 = np.imag(basis)
+            s_3 = np.real(conj_z @ basis)
+            s_4 = np.real(basis)
+            self.PSI = np.hstack((s_1, s_2, s_3, s_4))
+        else:
+            centers = np.array(
+                [laurent_series[0] for laurent_series in self.domain.laurents]
+            ).reshape(1, -1)
+            num_laurent = centers.shape[1]
+            z_m_centers = z - centers
+            one_over_z = 1 / (z_m_centers)  # m x num_laurent array
+            log_z = np.log(z_m_centers)
+            u_1 = np.real(conj_z @ basis_deriv - basis)
+            u_2 = np.real(basis_deriv)
+            u_3 = np.real(conj_z @ one_over_z - 2 * log_z)
+            u_4 = np.real(one_over_z)
+            u_5 = -np.imag(conj_z @ basis_deriv - basis)
+            u_6 = -np.imag(basis_deriv)
+            u_7 = -np.imag(conj_z * one_over_z)
+            u_8 = -np.imag(one_over_z)
+            self.U = np.hstack((u_1, u_2, u_3, u_4, u_5, u_6, u_7, u_8))
+
+            v_1 = -np.imag(conj_z @ basis_deriv + basis)
+            v_2 = -np.imag(basis_deriv)
+            v_3 = np.imag(-conj_z * one_over_z)
+            v_4 = np.imag(-one_over_z)
+            v_5 = -np.real(conj_z @ basis_deriv + basis)
+            v_6 = -np.real(basis_deriv)
+            v_7 = np.real(-conj_z * one_over_z - 2 * log_z)
+            v_8 = np.real(-one_over_z)
+            self.V = np.hstack((v_1, v_2, v_3, v_4, v_5, v_6, v_7, v_8))
+
+            p_1 = np.real(4 * basis_deriv)
+            p_2 = np.zeros_like(p_1)
+            p_3 = np.real(4 * one_over_z)
+            p_4 = np.zeros((m, num_laurent))
+            p_5 = -np.imag(4 * basis_deriv)
+            p_6 = np.zeros_like(p_1)
+            p_7 = -np.imag(4 * one_over_z)
+            p_8 = np.zeros((m, num_laurent))
+            self.P = np.hstack((p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8))
+
+            psi_1 = np.imag(conj_z @ basis)
+            psi_2 = np.imag(basis)
+            psi_3 = np.imag(conj_z * log_z - z_m_centers * log_z + z)
+            psi_4 = np.imag(log_z)
+            psi_5 = np.real(conj_z @ basis)
+            psi_6 = np.real(basis)
+            psi_7 = np.real(conj_z * log_z + z_m_centers * log_z - z)
+            psi_8 = np.real(log_z)
+            self.PSI = np.hstack(
+                (psi_1, psi_2, psi_3, psi_4, psi_5, psi_6, psi_7, psi_8)
+            )
 
     def pickle_solutions(self, filename):
         """Store the solution using pickle."""
