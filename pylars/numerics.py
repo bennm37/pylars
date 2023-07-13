@@ -112,7 +112,7 @@ def va_orthogonalise(z, n, poles=None, laurents=None):
     return hessenbergs, Q
 
 
-def va_evaluate(z, hessenbergs, poles=None):
+def va_evaluate(z, hessenbergs, poles=None, laurents=None):
     """Construct the basis and its derivatives."""
     H = hessenbergs[0]
     n = H.shape[1]
@@ -177,4 +177,35 @@ def va_evaluate(z, hessenbergs, poles=None):
                 ).reshape(m)
             Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
             D = np.concatenate((D, Dp[:, 1:]), axis=1)
+    if laurents is not None:
+        for i, laurent_series in enumerate(laurents):
+            deg_laurent = laurent_series[1]
+            Hp = hessenbergs[i + 1]
+            Qp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            Dp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            Qp[:, 0] = np.ones(m)
+            one_over_z = 1 / (z - laurent_series[0])
+            one_over_z2 = one_over_z**2
+            for k in range(deg_laurent):
+                hkk = Hp[k + 1, k]
+                Qp[:, k + 1] = (
+                    (
+                        one_over_z * Qp[:, k].reshape(m, 1)
+                        - Qp[:, : k + 1].reshape(m, k + 1)
+                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                    )
+                    / hkk
+                ).reshape(m)
+                Dp[:, k + 1] = (
+                    (
+                        one_over_z * Dp[:, k].reshape(m, 1)
+                        - Dp[:, : k + 1].reshape(m, k + 1)
+                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                        - one_over_z2 * Qp[:, k].reshape(m, 1)
+                    )
+                    / hkk
+                ).reshape(m)
+            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
+            D = np.concatenate((D, Dp[:, 1:]), axis=1)
+
     return Q, D

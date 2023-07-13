@@ -141,7 +141,7 @@ def test_large_poles_va_evaluate():
 
 
 def test_large_poles_va_evaluate_hypothesis():
-    """Test the va_orthogonalise with poles against the MATLAB code."""
+    """Test the va_evaluate with poles against the MATLAB code."""
     from pylars.numerics import va_orthogonalise, va_evaluate
     from pylars import Problem
     import numpy as np
@@ -196,6 +196,68 @@ def test_large_poles_va_evaluate_hypothesis():
     assert np.allclose(basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL)
 
 
+def test_laurent_va_evaluate():
+    """Test the va_evaluate with laurent against the MATLAB code."""
+    from pylars.numerics import va_orthogonalise, va_evaluate
+    from pylars import Problem
+    import numpy as np
+    from scipy.io import loadmat
+
+    test_answers = loadmat("tests/data/single_circle_test.mat")
+    deg_poly, num_poles, deg_laurent = (
+        test_answers["n"][0][0],
+        test_answers["np"][0][0],
+        test_answers["nl"][0][0],
+    )
+    num_edge_points, num_ellipse_points = (
+        test_answers["nb"][0][0],
+        test_answers["np"][0][0],
+    )
+    H_answer = test_answers["Hes"]
+    # discard empty pole blocks
+    hessenbergs_answer = [
+        H_answer[:, k][0]
+        for k in range(H_answer.shape[1])
+        if H_answer[:, k][0].shape != (0, 0)
+    ]
+    Q_answer = test_answers["Q"]
+    Z_answer = test_answers["Z"]
+    basis_answer = test_answers["R0"]
+    basis_deriv_answer = test_answers["R1"]
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=num_edge_points,
+        num_poles=num_poles,
+        deg_poly=deg_poly,
+        spacing="linear",
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=num_ellipse_points,
+        deg_laurent=deg_laurent,
+        centroid=0.0 + 0.0j,
+    )
+    assert np.allclose(
+        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
+    )
+    hessenbergs, Q = va_orthogonalise(
+        prob.domain.boundary_points.reshape(-1, 1),
+        deg_poly,
+        laurents=prob.domain.laurents,
+    )
+    for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
+        assert np.allclose(hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
+    basis, basis_deriv = va_evaluate(
+        prob.domain.boundary_points, hessenbergs, laurents=prob.domain.laurents
+    )
+    # check all the basis functions are the same
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL)
+
+
 if __name__ == "__main__":
     test_import_va_evaluate()
     test_small_va_evaluate()
@@ -203,3 +265,4 @@ if __name__ == "__main__":
     test_small_poles_va_evaluate_1()
     test_small_poles_va_evaluate_2()
     test_large_poles_va_evaluate()
+    test_laurent_va_evaluate()

@@ -163,3 +163,4 @@ cython_debug/
 tests/data/VAorthog_debug/
 media/
 .vscode
+*.DS_Store
