@@ -2,7 +2,7 @@
 from test_settings import RTOL
 
 
-def test_create_functions():
+def test_lid_driven_cavity_make_functions():
     """Test using make_function to create functions."""
     from scipy.io import loadmat
     from pylars.numerics import make_function
@@ -51,6 +51,140 @@ def test_create_functions():
     assert np.allclose(
         omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
     )
+
+
+def test_single_circle_make_functions():
+    """Test using make_function to create functions."""
+    from scipy.io import loadmat
+    from pylars.numerics import make_function
+    import numpy as np
+
+    test_answers = loadmat("tests/data/single_circle_test.mat")
+    deg_laurent = test_answers["nl"][0][0]
+    Z = test_answers["Z"]
+    H_answer = test_answers["Hes"]
+    # discard empty pole blocks
+    hessenbergs = [
+        H_answer[:, k][0]
+        for k in range(H_answer.shape[1])
+        if H_answer[:, k][0].shape != (0, 0)
+    ]
+    c = test_answers["c"]
+    psi_100_100_answer = test_answers["psi_100_100"]
+    p_100_100_answer = test_answers["p_100_100"]
+    uv_100_100_answer = test_answers["uv_100_100"]
+    omega_100_100_answer = test_answers["omega_100_100"]
+    f_100_100_answer = test_answers["f_100_100"]
+    g_100_100_answer = test_answers["g_100_100"]
+    laurents = [(0.0 + 0.0j, deg_laurent)]
+
+    def psi(z):
+        return make_function("psi", z, c, hessenbergs, laurents=laurents)
+
+    def p(z):
+        return make_function("p", z, c, hessenbergs, laurents=laurents)
+
+    def uv(z):
+        return make_function("uv", z, c, hessenbergs, laurents=laurents)
+
+    def omega(z):
+        return make_function("omega", z, c, hessenbergs, laurents=laurents)
+
+    def f(z):
+        return make_function("f", z, c, hessenbergs, laurents=laurents)
+
+    def g(z):
+        return make_function("g", z, c, hessenbergs, laurents=laurents)
+
+    x = np.linspace(-1, 1, 100)
+    X, Y = np.meshgrid(x, x)
+    Z = X + 1j * Y
+    psi_100_100 = psi(Z).reshape(100, 100)
+    uv_100_100 = uv(Z).reshape(100, 100)
+    p_100_100 = p(Z).reshape(100, 100)
+    omega_100_100 = omega(Z).reshape(100, 100)
+    f_100_100 = f(Z).reshape(100, 100)
+    g_100_100 = g(Z).reshape(100, 100)
+    ATOL = 1e-12  # small velocity elements are not
+    # accurate for floating point reasons
+    # TODO mask this??
+    assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(f_100_100, f_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(g_100_100, g_100_100_answer, atol=ATOL, rtol=RTOL)
+
+
+def test_three_circles_make_functions():
+    """Test using make_function to create functions."""
+    from scipy.io import loadmat
+    from pylars.numerics import make_function
+    import numpy as np
+
+    test_answers = loadmat("tests/data/three_circles_test.mat")
+    deg_laurent = test_answers["nl"][0][0]
+    Z = test_answers["Z"]
+    H_answer = test_answers["Hes"]
+    # discard empty pole blocks
+    hessenbergs = [
+        H_answer[:, k][0]
+        for k in range(H_answer.shape[1])
+        if H_answer[:, k][0].shape != (0, 0)
+    ]
+    c = test_answers["c"]
+    psi_100_100_answer = test_answers["psi_100_100"]
+    p_100_100_answer = test_answers["p_100_100"]
+    uv_100_100_answer = test_answers["uv_100_100"]
+    omega_100_100_answer = test_answers["omega_100_100"]
+    f_100_100_answer = test_answers["f_100_100"]
+    g_100_100_answer = test_answers["g_100_100"]
+    laurents = [
+        (0.0 + 0.0j, deg_laurent),
+        (0.5 + 0.5j, deg_laurent),
+        (-0.5 + -0.5j, deg_laurent),
+    ]
+
+    def psi(z):
+        return make_function("psi", z, c, hessenbergs, laurents=laurents)
+
+    def p(z):
+        return make_function("p", z, c, hessenbergs, laurents=laurents)
+
+    def uv(z):
+        return make_function("uv", z, c, hessenbergs, laurents=laurents)
+
+    def omega(z):
+        return make_function("omega", z, c, hessenbergs, laurents=laurents)
+
+    def f(z):
+        return make_function("f", z, c, hessenbergs, laurents=laurents)
+
+    def g(z):
+        return make_function("g", z, c, hessenbergs, laurents=laurents)
+
+    x = np.linspace(-1, 1, 100)
+    X, Y = np.meshgrid(x, x)
+    Z = X + 1j * Y
+    psi_100_100 = psi(Z).reshape(100, 100)
+    uv_100_100 = uv(Z).reshape(100, 100)
+    p_100_100 = p(Z).reshape(100, 100)
+    omega_100_100 = omega(Z).reshape(100, 100)
+    f_100_100 = f(Z).reshape(100, 100)
+    g_100_100 = g(Z).reshape(100, 100)
+    ATOL = 1e-12  # small velocity elements are not
+    # accurate for floating point reasons
+    # TODO mask this??
+    assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(f_100_100, f_100_100_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(g_100_100, g_100_100_answer, atol=ATOL, rtol=RTOL)
 
 
 def test_lid_driven_cavity_solve():
@@ -138,5 +272,6 @@ def test_lid_driven_cavity_solve():
 
 
 if __name__ == "__main__":
-    test_create_functions()
+    test_lid_driven_cavity_make_functions()
+    test_single_circle_make_functions()
     test_lid_driven_cavity_solve()

@@ -43,28 +43,74 @@ def split_laurent(coefficients, laurents):
     return cf, cg, clf, clg
 
 
-def make_function(name, z, coefficients, hessenbergs, poles):
+def make_function(
+    name, z, coefficients, hessenbergs, poles=None, laurents=None
+):
     """Make a function with the given name."""
     z = np.array([z]).reshape(-1, 1)
-    basis, basis_deriv = va_evaluate(z, hessenbergs, poles)
-    cf, cg = split(coefficients)
-    match name:
-        case "f":
-            return basis @ cf
-        case "g":
-            return basis @ cg
-        case "psi":
-            return np.imag(np.conj(z) * (basis @ cf) + basis @ cg)
-        case "uv":
-            return (
-                z * np.conj(basis_deriv @ cf)
-                - basis @ cf
-                + np.conj(basis_deriv @ cg)
-            )
-        case "p":
-            return np.real(4 * basis_deriv @ cf)
-        case "omega":
-            return np.imag(-4 * basis_deriv @ cf)
+    basis, basis_deriv = va_evaluate(z, hessenbergs, poles, laurents)
+    if not laurents:
+        cf, cg = split(coefficients)
+        match name:
+            case "f":
+                return basis @ cf
+            case "g":
+                return basis @ cg
+            case "psi":
+                return np.imag(np.conj(z) * (basis @ cf) + basis @ cg)
+            case "uv":
+                return (
+                    z * np.conj(basis_deriv @ cf)
+                    - basis @ cf
+                    + np.conj(basis_deriv @ cg)
+                )
+            case "p":
+                return np.real(4 * basis_deriv @ cf)
+            case "omega":
+                return np.imag(-4 * basis_deriv @ cf)
+    else:
+        cf, cg, clf, clg = split_laurent(coefficients, laurents)
+        centers = np.array(
+            [laurent_series[0] for laurent_series in laurents]
+        ).reshape(1, -1)
+        match name:
+            case "f":
+                return basis @ cf + np.log(z - centers) @ clf
+            case "g":
+                return (
+                    basis @ cg
+                    + np.log(z - centers) @ clg
+                    - ((z - centers) * np.log(z - centers) - z) @ np.conj(clf)
+                )
+            case "psi":
+                result = np.imag(
+                    np.conj(z) * (basis @ cf) + basis @ cg
+                ) + np.imag(
+                    np.conj(z) * (np.log(z - centers) @ clf)
+                    + np.log(z - centers) @ clg
+                    - ((z - centers) * np.log(z - centers) - z) @ np.conj(clf)
+                )
+                return result
+            case "uv":
+                return (
+                    z * np.conj(basis_deriv @ cf)
+                    - basis @ cf
+                    + np.conj(basis_deriv @ cg)
+                    + z * np.conj((1 / (z - centers)) @ clf)
+                    - np.log(z - centers) @ clf
+                    + np.conj(
+                        (1 / (z - centers)) @ clg
+                        - np.log(z - centers) @ np.conj(clf)
+                    )
+                )
+            case "p":
+                return np.real(4 * basis_deriv @ cf) + np.real(
+                    (4 / (z - centers)) @ clf
+                )
+            case "omega":
+                return np.imag(-4 * basis_deriv @ cf) + np.imag(
+                    (-4 / (z - centers)) @ clf
+                )
 
 
 def va_orthogonalise(z, n, poles=None, laurents=None):
