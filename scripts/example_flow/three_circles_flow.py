@@ -2,7 +2,7 @@
 from pylars import Problem, Solver, Analysis
 import matplotlib.pyplot as plt
 import numpy as np
-import time 
+import time
 
 start = time.perf_counter()
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
