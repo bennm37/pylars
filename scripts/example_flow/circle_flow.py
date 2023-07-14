@@ -1,36 +1,34 @@
 """Flow a domain with a circular interior curve.""" ""
-from pylars import Problem
+from pylars import Problem, Solver, Analysis
 import matplotlib.pyplot as plt
 import numpy as np
 
-corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 prob = Problem()
+corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
 prob.add_exterior_polygon(
-    corners=corners,
-    num_edge_points=300,
-    num_poles=10,
-    deg_poly=24,
+    corners,
+    num_edge_points=600,
+    num_poles=0,
+    deg_poly=20,
     spacing="linear",
 )
-rs = [0.2, 0.2, 0.2]
-cs = [0.0 + 0.0j, -0.5 - 0.5j, +0.5 + 0.5j]
-degrees = [10, 20, 10]
-for r, c, deg in zip(rs, cs, degrees):
-    prob.add_interior_curve(
-        lambda t: c + r * np.exp(2j * np.pi * t),
-        num_points=100,
-        deg_laurent=deg,
-        centroid=c,
-    )
-# prob.name_side("1", "inlet")
-# prob.name_side("3", "outlet")
-# prob.group_sides(["0","2"],"walls")
-# prob.group_sides(["4","5","6"],"scaffold")
-# prob.add_boundary_condition("inlet", "u[inlet]-u[outlet]", 0)
-# prob.add_boundary_condition("inlet", "v[inlet]-v[outlet]", 0)
-# prob.add_boundary_condition("walls", "u[walls]", 0)
-# prob.add_boundary_condition("walls", "v[walls]", 0)
-# prob.add_boundary_condition("scaffold","u[scaffold]", 0)
-# prob.add_boundary_condition("scaffold","v[scaffold]", 0)
-prob.domain.plot()
+prob.add_interior_curve(
+    lambda t: 0.5 * np.exp(2j * np.pi * t),
+    num_points=100,
+    deg_laurent=20,
+    centroid=0.0 + 0.0j,
+)
+prob.add_boundary_condition("0", "psi[0]", 1)
+prob.add_boundary_condition("0", "u[0]", 0)
+prob.add_boundary_condition("2", "psi[2]", 0)
+prob.add_boundary_condition("2", "u[2]", 0)
+prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+prob.add_boundary_condition("4", "u[4]", 0)
+prob.add_boundary_condition("4", "v[4]", 0)
+
+solver = Solver(prob)
+sol = solver.solve(check=False, normalize=False)
+an = Analysis(prob, sol)
+fig, ax = an.plot(resolution=100, interior_patch=True)
 plt.show()

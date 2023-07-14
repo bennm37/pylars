@@ -47,6 +47,7 @@ def test_large_va_evaluate():
 
 
 def test_small_poles_va_evaluate_1():
+    """Test the va_orthogonalise with poles for a small example."""
     from pylars.numerics import va_orthogonalise, va_evaluate
     import numpy as np
 
@@ -61,6 +62,7 @@ def test_small_poles_va_evaluate_1():
 
 
 def test_small_poles_va_evaluate_2():
+    """Test the va_orthogonalise with poles against the MATLAB code."""
     from pylars.numerics import va_orthogonalise, va_evaluate
     import numpy as np
     from scipy.io import loadmat

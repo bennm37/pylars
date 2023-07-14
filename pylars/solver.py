@@ -54,10 +54,6 @@ class Solver:
             try:
                 try:
                     expression1, value1 = self.boundary_conditions[side][0]
-                    result = self.evaluate(
-                        expression1,
-                        self.boundary_points[self.domain.indices[side]],
-                    )
                     self.A1[self.domain.indices[side]] = self.evaluate(
                         expression1,
                         self.boundary_points[self.domain.indices[side]],
@@ -89,13 +85,16 @@ class Solver:
     def setup(self):
         """Get basis functions and derivatives and dependent variables."""
         self.hessenbergs, self.Q = va_orthogonalise(
-            self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles, self.domain.laurents
+            self.boundary_points.reshape(-1, 1),
+            self.degree,
+            self.domain.poles,
+            self.domain.laurents,
         )
         self.basis, self.basis_derivatives = va_evaluate(
             self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
-            self.domain.laurents
+            self.domain.laurents,
         )
         self.get_dependents()
 
@@ -114,10 +113,16 @@ class Solver:
         if check:
             self.problem.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
-            self.boundary_points, self.degree, self.domain.poles, self.domain.laurents
+            self.boundary_points,
+            self.degree,
+            self.domain.poles,
+            self.domain.laurents,
         )
         self.basis, self.basis_derivatives = va_evaluate(
-            self.boundary_points, self.hessenbergs, self.domain.poles, self.domain.laurents
+            self.boundary_points,
+            self.hessenbergs,
+            self.domain.poles,
+            self.domain.laurents,
         )
         self.get_dependents()
         self.construct_linear_system()

@@ -278,9 +278,8 @@ def test_single_circle_solve():
     from scipy.io import loadmat
 
     test_answers = loadmat("tests/data/single_circle_test.mat")
-    deg_poly, num_poles, deg_laurent = (
+    deg_poly, deg_laurent = (
         test_answers["n"][0][0],
-        test_answers["np"][0][0],
         test_answers["nl"][0][0],
     )
     num_edge_points, num_ellipse_points = (

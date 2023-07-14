@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pylars.colormaps import parula
 from matplotlib.animation import FuncAnimation
+import matplotlib.patches as patches
 
 
 class Analysis:
@@ -27,7 +28,7 @@ class Analysis:
         self.domain = problem.domain
         self.solver = solver
 
-    def plot(self, resolution=100):
+    def plot(self, resolution=100, levels=20, interior_patch=False):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
@@ -52,10 +53,18 @@ class Analysis:
             self.Y,
             self.psi_values,
             colors="k",
-            levels=10,
+            levels=levels,
             linestyles="solid",
             linewidths=0.5,
         )
+        if interior_patch:
+            if self.domain.interior_curves is not None:
+                for interior_curve in self.domain.interior_curves:
+                    points = np.array(
+                        [interior_curve.real, interior_curve.imag]
+                    ).T
+                    poly = patches.Polygon(points, color="w")
+                    ax.add_patch(poly)
         ax.set_aspect("equal")
         return fig, ax
 
