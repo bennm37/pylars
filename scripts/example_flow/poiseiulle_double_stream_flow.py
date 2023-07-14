@@ -81,7 +81,7 @@ b_snap = [0.0, 0.5, 1.0]
 for a, b in zip(a_snap, b_snap):
     sol_combined = a * sol_left + b * sol_top
     an = Analysis(prob_left, sol_combined)
-    fig, ax = an.plot_periodic(a, b, gapa=1, gapb=0, n_tile=3)
+    fig, ax = an.plot_periodic(a, b, gapa=-1, gapb=0, n_tile=3)
     plt.tight_layout()
     plt.show()
     # plt.savefig(f"media/linear_{a:.1f}_{b:.1f}.pdf")
