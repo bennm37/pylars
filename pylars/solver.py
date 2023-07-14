@@ -134,16 +134,7 @@ class Solver:
             self.weight_rows()
         if normalize:
             self.normalize()
-
-        if self.least_squares == "iterative":
-            x1 = linalg.lstsq(self.A, self.b)[0]
-            # solve least squares again
-            b2 = self.b - self.A @ x1
-            x2 = linalg.lstsq(self.A, b2)[0]
-            self.coefficients = x1 + x2
-        if self.least_squares == "pinv":
-            self.coefficients = linalg.pinv(self.A) @ self.b
-        # self.residuals = self.results[1]
+        self.coefficients = linalg.lstsq(self.A, self.b)[0]
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
