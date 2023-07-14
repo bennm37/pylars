@@ -190,7 +190,7 @@ class Domain:
             centroid = np.mean(interior_points)
         self.laurents.append((centroid, degree))
 
-    def _update_polygon(self):
+    def _update_polygon(self, buffer=0):
         """Update the polygon."""
         holes = [
             np.array([curve.real, curve.imag]).T
@@ -199,6 +199,8 @@ class Domain:
         self.polygon = Polygon(
             np.array([self.corners.real, self.corners.imag]).T, holes=holes
         )
+        if buffer > 0:
+            self.polygon = self.polygon.buffer(buffer)
 
     def plot(self, figax=None):
         """Display the labelled polygon."""

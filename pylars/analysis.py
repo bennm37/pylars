@@ -5,6 +5,7 @@ Supports plotting of the contours and velocity magnitude of the solution.
 import numpy as np
 import matplotlib.pyplot as plt
 from pylars.colormaps import parula
+from shapely import Polygon
 from matplotlib.animation import FuncAnimation
 import matplotlib.patches as patches
 
@@ -28,7 +29,7 @@ class Analysis:
         self.domain = problem.domain
         self.solver = solver
 
-    def plot(self, resolution=100, levels=20, interior_patch=False):
+    def plot(self, resolution=100, levels=20, interior_patch=False, buffer=0):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
@@ -63,7 +64,10 @@ class Analysis:
                     points = np.array(
                         [interior_curve.real, interior_curve.imag]
                     ).T
-                    poly = patches.Polygon(points, color="w")
+                    # buffer the polygon
+                    s_poly = Polygon(points).buffer(buffer)
+                    points = np.array(s_poly.exterior.coords.xy).T
+                    poly = patches.Polygon(points, color="w", zorder=10)
                     ax.add_patch(poly)
         ax.set_aspect("equal")
         return fig, ax

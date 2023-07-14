@@ -54,10 +54,6 @@ class Solver:
             try:
                 try:
                     expression1, value1 = self.boundary_conditions[side][0]
-                    result = self.evaluate(
-                        expression1,
-                        self.boundary_points[self.domain.indices[side]],
-                    )
                     self.A1[self.domain.indices[side]] = self.evaluate(
                         expression1,
                         self.boundary_points[self.domain.indices[side]],

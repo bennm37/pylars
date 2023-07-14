@@ -2,7 +2,9 @@
 from pylars import Problem, Solver, Analysis
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
+start = time.perf_counter()
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 prob = Problem()
 prob.add_exterior_polygon(
@@ -36,6 +38,10 @@ prob.add_boundary_condition("6", "v[6]", 0)
 
 solver = Solver(prob)
 sol = solver.solve(check=False, normalize=False)
+end = time.perf_counter()
+print(f"Time elapsed: {end-start:.2f} seconds")
+# plotting
+prob.domain._update_polygon(buffer=1e-2)
 an = Analysis(prob, sol)
 fig, ax = an.plot(resolution=100, interior_patch=True, levels=20)
 plt.show()
