@@ -54,6 +54,10 @@ class Solver:
             try:
                 try:
                     expression1, value1 = self.boundary_conditions[side][0]
+                    result = self.evaluate(
+                        expression1,
+                        self.boundary_points[self.domain.indices[side]],
+                    )
                     self.A1[self.domain.indices[side]] = self.evaluate(
                         expression1,
                         self.boundary_points[self.domain.indices[side]],
@@ -85,12 +89,13 @@ class Solver:
     def setup(self):
         """Get basis functions and derivatives and dependent variables."""
         self.hessenbergs, self.Q = va_orthogonalise(
-            self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles
+            self.boundary_points.reshape(-1, 1), self.degree, self.domain.poles, self.domain.laurents
         )
         self.basis, self.basis_derivatives = va_evaluate(
             self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
+            self.domain.laurents
         )
         self.get_dependents()
 
@@ -109,10 +114,10 @@ class Solver:
         if check:
             self.problem.check_boundary_conditions()
         self.hessenbergs, self.Q = va_orthogonalise(
-            self.boundary_points, self.degree, self.domain.poles
+            self.boundary_points, self.degree, self.domain.poles, self.domain.laurents
         )
         self.basis, self.basis_derivatives = va_evaluate(
-            self.boundary_points, self.hessenbergs, self.domain.poles
+            self.boundary_points, self.hessenbergs, self.domain.poles, self.domain.laurents
         )
         self.get_dependents()
         self.construct_linear_system()
@@ -143,8 +148,14 @@ class Solver:
         """
         m = len(self.boundary_points)
         n = self.basis.shape[1]
-        self.A1, self.A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
-        self.b1, self.b2 = np.zeros((m)), np.zeros((m))
+        if not self.domain.laurents:
+            self.A1, self.A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
+            self.b1, self.b2 = np.zeros((m)), np.zeros((m))
+        else:
+            num_laurent = len(self.domain.laurents)
+            self.A1 = np.zeros((m, 4 * (n + num_laurent)))
+            self.A2 = np.zeros((m, 4 * (n + num_laurent)))
+            self.b1, self.b2 = np.zeros((m)), np.zeros((m))
         self.apply_boundary_conditions()
         self.A = np.vstack((self.A1, self.A2))
         self.b = np.vstack((self.b1.reshape(m, 1), self.b2.reshape(m, 1)))
@@ -288,16 +299,27 @@ class Solver:
                 self.coefficients,
                 self.hessenbergs,
                 self.domain.poles,
+                self.domain.laurents,
             )
 
         def uv(z):
             return make_function(
-                "uv", z, self.coefficients, self.hessenbergs, self.domain.poles
+                "uv",
+                z,
+                self.coefficients,
+                self.hessenbergs,
+                self.domain.poles,
+                self.domain.laurents,
             )
 
         def p(z):
             return make_function(
-                "p", z, self.coefficients, self.hessenbergs, self.domain.poles
+                "p",
+                z,
+                self.coefficients,
+                self.hessenbergs,
+                self.domain.poles,
+                self.domain.laurents,
             )
 
         def omega(z):
@@ -307,6 +329,7 @@ class Solver:
                 self.coefficients,
                 self.hessenbergs,
                 self.domain.poles,
+                self.domain.laurents,
             )
 
         return psi, uv, p, omega

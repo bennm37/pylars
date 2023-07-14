@@ -154,18 +154,18 @@ def va_orthogonalise(z, n, poles=None, laurents=None):
     if laurents is not None:
         for laurent_series in laurents:
             deg_laurent = laurent_series[1]
-            Hp = np.zeros((deg_laurent + 1, deg_laurent), dtype=np.complex128)
+            Hl = np.zeros((deg_laurent + 1, deg_laurent), dtype=np.complex128)
             Qp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
             qp = np.ones(m).reshape(m, 1)
             Qp[:, 0] = qp.reshape(m)
             for k in range(deg_laurent):
                 qp = Qp[:, k].reshape(m, 1) / (z - laurent_series[0])
                 for j in range(k + 1):
-                    Hp[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
-                    qp = qp - Hp[j, k] * Qp[:, j].reshape(m, 1)
-                Hp[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
-                Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
-            hessenbergs += [Hp]
+                    Hl[j, k] = np.dot(Qp[:, j].conj(), qp)[0] / m
+                    qp = qp - Hl[j, k] * Qp[:, j].reshape(m, 1)
+                Hl[k + 1, k] = np.linalg.norm(qp) / np.sqrt(m)
+                Qp[:, k + 1] = (qp / Hl[k + 1, k]).reshape(m)
+            hessenbergs += [Hl]
             Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
     return hessenbergs, Q
 
@@ -238,19 +238,22 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
     if laurents is not None:
         for i, laurent_series in enumerate(laurents):
             deg_laurent = laurent_series[1]
-            Hp = hessenbergs[i + 1]
+            if poles is not None:
+                Hl = hessenbergs[len(poles) + i + 1]
+            else:
+                Hl = hessenbergs[i + 1]
             Qp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
             Dp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
             Qp[:, 0] = np.ones(m)
             one_over_z = 1 / (z - laurent_series[0])
             one_over_z2 = one_over_z**2
             for k in range(deg_laurent):
-                hkk = Hp[k + 1, k]
+                hkk = Hl[k + 1, k]
                 Qp[:, k + 1] = (
                     (
                         one_over_z * Qp[:, k].reshape(m, 1)
                         - Qp[:, : k + 1].reshape(m, k + 1)
-                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                        @ Hl[: k + 1, k].reshape(k + 1, 1)
                     )
                     / hkk
                 ).reshape(m)
@@ -258,7 +261,7 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
                     (
                         one_over_z * Dp[:, k].reshape(m, 1)
                         - Dp[:, : k + 1].reshape(m, k + 1)
-                        @ Hp[: k + 1, k].reshape(k + 1, 1)
+                        @ Hl[: k + 1, k].reshape(k + 1, 1)
                         - one_over_z2 * Qp[:, k].reshape(m, 1)
                     )
                     / hkk
