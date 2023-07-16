@@ -287,12 +287,12 @@ def test_single_circle_solve():
         test_answers["np"][0][0],
     )
     Z_answer = test_answers["Z"]
-    A_answer = test_answers["A"]
+    # A_answer = test_answers["A"]
     rhs_answer = test_answers["rhs"]
     psi_100_100_answer = test_answers["psi_100_100"]
     p_100_100_answer = test_answers["p_100_100"]
     uv_100_100_answer = test_answers["uv_100_100"]
-    omega_100_100_answer = test_answers["omega_100_100"]
+    # omega_100_100_answer = test_answers["omega_100_100"]
     prob = Problem()
     corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
     prob.add_exterior_polygon(
@@ -316,7 +316,6 @@ def test_single_circle_solve():
     prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
     prob.add_boundary_condition("4", "u[4]", 0)
     prob.add_boundary_condition("4", "v[4]", 0)
-    # prob.domain.show()
     ATOL = 1e-12
     RTOL = 1e-3
     solver = Solver(prob)

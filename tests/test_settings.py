@@ -19,4 +19,4 @@ def show_diff(a, b, rtol=RTOL, atol=ATOL, reshape=None):
         a = a.reshape(l // reshape, reshape * h)
         b = b.reshape(l // reshape, reshape * h)
     diff = np.abs(a - b) < RTOL * np.abs(b) + ATOL
-    plt.imshow(diff)
+    plt.imshow(diff, vmin=0, vmax=1)

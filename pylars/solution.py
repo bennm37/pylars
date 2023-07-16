@@ -1,14 +1,38 @@
 """Solution class for pylars."""
 from numbers import Number
+import numpy as np
 
 
 class Solution:
+    """Solution class to store the solution to a problem."""
+
     def __init__(self, psi, uv, p, omega):
         self.psi = psi
         self.uv = uv
         self.p = p
         self.omega = omega
         self.functions = [psi, uv, p, omega]
+
+    def stress_discrete(self, z, dx=1e-6):
+        """Calculate the total stress using finite differences."""
+        zshape = z.shape
+        z = z.reshape(-1)
+        isotropic = np.array(
+            [np.eye(2) * self.p(point) for point in z]
+        ).reshape(zshape + (2, 2))
+
+        # caluclate velocity gradients using forward difference for interior
+        # points
+        # TODO handle boundary points
+        uv = self.uv(z)
+        U_x = (self.uv(z + dx) - uv) / dx
+        u_x, v_x = U_x.real, U_x.imag
+        U_y = (self.uv(z + dx * 1j) - uv) / dx
+        u_y, v_y = U_y.real, U_y.imag
+        deviatoric = np.array([[2 * u_x, u_y + v_x], [u_y + v_x, 2 * v_y]])
+        deviatoric = np.moveaxis(deviatoric, (2), (0)).reshape(zshape + (2, 2))
+        stress = isotropic + deviatoric
+        return stress
 
     def __add__(self, other):
         """Add two solutions together."""

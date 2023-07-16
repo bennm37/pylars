@@ -2,6 +2,7 @@
 from pylars import Domain
 import numpy as np
 import matplotlib.pyplot as plt
+
 # Create a square domain
 corners = [0, 1, 1 + 1j, 1j]
 domain = Domain(corners)

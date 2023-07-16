@@ -21,6 +21,8 @@ prob.add_interior_curve(
 prob.domain.plot()
 plt.tight_layout()
 plt.savefig("media/circle_domain.pdf")
+
+
 prob.add_boundary_condition("0", "psi[0]", 1)
 prob.add_boundary_condition("0", "u[0]", 0)
 prob.add_boundary_condition("2", "psi[2]", 0)

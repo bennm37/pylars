@@ -9,7 +9,7 @@ prob = Problem()
 prob.add_exterior_polygon(
     corners, num_edge_points=300, num_poles=40, deg_poly=50
 )
-# prob.domain.show()
+
 # 1 is the inlet, 4 is the outlet, 0,2,3,5 are the walls
 # prob.add_boundary_condition("1", "p[1]", 11)
 # prob.add_boundary_condition("1", "v[1]", 0)

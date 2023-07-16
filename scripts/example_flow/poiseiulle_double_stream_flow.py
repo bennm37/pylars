@@ -61,7 +61,9 @@ sol_top = solver_top.solve(check=False, weight=False)
 
 # combine the solutions
 a, b = 1, 1
+
 sol_combined = a * sol_left + b * sol_top
+
 check_flow(prob_left, sol_combined)
 # animate_circle(sol_left, sol_top)
 
