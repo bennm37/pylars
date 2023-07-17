@@ -160,6 +160,6 @@ def test_goursat_force():
 
 
 if __name__ == "__main__":
-    test_poiseuille_stress()
-    test_couette_stress()
+    # test_poiseuille_stress()
+    # test_couette_stress()
     test_discrete_vs_goursat_circle_stress()

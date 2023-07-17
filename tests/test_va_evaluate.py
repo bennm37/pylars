@@ -37,35 +37,179 @@ def test_small_second_va_evaluate():
     from tests.test_settings import ATOL, RTOL
     import numpy as np
 
-    Z = np.array([0, 2, 1 + 1j]).reshape(3, 1)
+    X = np.linspace(0, 1, 100)
+    Z = X + 1j * X[::-1]
     H = np.array([[1, 1, 1], [1, 1, 1], [0, 1, 1], [0, 0, 1]])
     hessenbergs = [H]
-    basis, basis_deriv, basis_2deriv = va_evaluate(
+    basis, basis_deriv, basis_second_deriv = va_evaluate(
         Z, hessenbergs, second_deriv=True
     )
     # allowing lambdas for conciseness
     poly0 = lambda z: np.ones_like(z)
     poly_deriv0 = lambda z: np.zeros_like(z)
-    poly_2deriv0 = lambda z: np.zeros_like(z)
+    poly_second_deriv0 = lambda z: np.zeros_like(z)
     poly1 = lambda z: z - 1
     poly_deriv1 = lambda z: np.ones_like(z)
-    poly_2deriv1 = lambda z: np.zeros_like(z)
+    poly_second_deriv1 = lambda z: np.zeros_like(z)
     poly2 = lambda z: z**2 - 2 * z
     poly_deriv2 = lambda z: 2 * z - 2
-    poly_2deriv2 = lambda z: 2 * np.ones_like(z)
+    poly_second_deriv2 = lambda z: 2 * np.ones_like(z)
     poly3 = lambda z: z**3 - 3 * z**2 + z
     poly_deriv3 = lambda z: 3 * z**2 - 6 * z + 1
-    poly_2deriv3 = lambda z: 6 * z - 6 * np.ones_like(z)
+    poly_second_deriv3 = lambda z: 6 * z - 6 * np.ones_like(z)
     basis_answer = np.array([poly0(Z), poly1(Z), poly2(Z), poly3(Z)]).T
     basis_deriv_answer = np.array(
         [poly_deriv0(Z), poly_deriv1(Z), poly_deriv2(Z), poly_deriv3(Z)]
     ).T
-    basis_2deriv_answer = np.array(
-        [poly_2deriv0(Z), poly_2deriv1(Z), poly_2deriv2(Z), poly_2deriv3(Z)]
+    basis_second_deriv_answer = np.array(
+        [
+            poly_second_deriv0(Z),
+            poly_second_deriv1(Z),
+            poly_second_deriv2(Z),
+            poly_second_deriv3(Z),
+        ]
     ).T
     assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(basis_2deriv, basis_2deriv_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        basis_second_deriv, basis_second_deriv_answer, atol=ATOL, rtol=RTOL
+    )
+
+
+def test_small_poles_second_va_evaluate():
+    """Investigating va_evaluate."""
+    from pylars.numerics import va_evaluate
+    from tests.test_settings import ATOL, RTOL
+    import numpy as np
+
+    X = np.linspace(0, 1, 100)
+    Z = X + 1j * X[::-1]
+    poles = [np.array([2, 3])]
+    H = np.array([[1, 1], [1, 1], [0, 1]])
+    hessenbergs = [H, H]
+    basis, basis_deriv, basis_second_deriv = va_evaluate(
+        Z, hessenbergs, poles=poles, second_deriv=True
+    )
+    # polynomial part
+    poly0 = lambda z: np.ones_like(z)
+    poly_deriv0 = lambda z: np.zeros_like(z)
+    poly_second_deriv0 = lambda z: np.zeros_like(z)
+    poly1 = lambda z: z - 1
+    poly_deriv1 = lambda z: np.ones_like(z)
+    poly_second_deriv1 = lambda z: np.zeros_like(z)
+    poly2 = lambda z: z**2 - 2 * z
+    poly_deriv2 = lambda z: 2 * z - 2
+    poly_second_deriv2 = lambda z: 2 * np.ones_like(z)
+    # pole part
+    pole1 = lambda z: 1 / (z - 2) - 1
+    pole_deriv1 = lambda z: -1 / (z - 2) ** 2
+    pole_second_deriv1 = lambda z: 2 / (z - 2) ** 3
+    pole2 = lambda z: 1 / ((z - 2) * (z - 3)) - 1 / (z - 2) - 1 / (z - 3)
+    pole_deriv2 = (
+        lambda z: 1 / (z - 2) ** 2
+        + 1 / (z - 3) ** 2
+        - (2 * z - 5) / ((z - 2) * (z - 3)) ** 2
+    )
+    pole_second_deriv2 = lambda z: -4 / (z - 2) ** 3
+    basis_answer = np.array(
+        [poly0(Z), poly1(Z), poly2(Z), pole1(Z), pole2(Z)]
+    ).T
+    basis_deriv_answer = np.array(
+        [
+            poly_deriv0(Z),
+            poly_deriv1(Z),
+            poly_deriv2(Z),
+            pole_deriv1(Z),
+            pole_deriv2(Z),
+        ]
+    ).T
+    basis_second_deriv_answer = np.array(
+        [
+            poly_second_deriv0(Z),
+            poly_second_deriv1(Z),
+            poly_second_deriv2(Z),
+            pole_second_deriv1(Z),
+            pole_second_deriv2(Z),
+        ]
+    ).T
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        basis_second_deriv, basis_second_deriv_answer, atol=ATOL, rtol=RTOL
+    )
+
+
+def test_small_laurent_second_va_evaluate():
+    """Investigating va_evaluate."""
+    from pylars.numerics import va_evaluate
+    from tests.test_settings import ATOL, RTOL
+    import numpy as np
+
+    X = np.linspace(0, 1, 100)
+    Z = X + 1j * X[::-1]
+    laurents = [(2.0 + 0.0j, 2), (3.0 + 0.0j, 1)]
+    H = np.array([[1, 1], [1, 1], [0, 1]])
+    H1 = np.array([[1], [1]])
+    hessenbergs = [H, H, H1]
+    basis, basis_deriv, basis_second_deriv = va_evaluate(
+        Z, hessenbergs, laurents=laurents, second_deriv=True
+    )
+    # polynomial part
+    poly0 = lambda z: np.ones_like(z)
+    poly_deriv0 = lambda z: np.zeros_like(z)
+    poly_second_deriv0 = lambda z: np.zeros_like(z)
+    poly1 = lambda z: z - 1
+    poly_deriv1 = lambda z: np.ones_like(z)
+    poly_second_deriv1 = lambda z: np.zeros_like(z)
+    poly2 = lambda z: z**2 - 2 * z
+    poly_deriv2 = lambda z: 2 * z - 2
+    poly_second_deriv2 = lambda z: 2 * np.ones_like(z)
+    # laurent series part for 2
+    laurent_21 = lambda z: 1 / (z - 2) - 1
+    laurent_2_deriv1 = lambda z: -1 / (z - 2) ** 2
+    laurent_2_second_deriv1 = lambda z: 2 / (z - 2) ** 3
+    laurent_22 = lambda z: 1 / (z - 2) ** 2 - 2 / (z - 2)
+    laurent_2_deriv2 = lambda z: -2 / (z - 2) ** 3 + 2 / (z - 2) ** 2
+    laurent_2_second_deriv2 = lambda z: 6 / (z - 2) ** 4 - 4 / (z - 2) ** 3
+    # laurent series part for 3
+    laurent_31 = lambda z: 1 / (z - 3) - 1
+    laurent_3_deriv1 = lambda z: -1 / (z - 3) ** 2
+    laurent_3_second_deriv1 = lambda z: 2 / (z - 3) ** 3
+    basis_answer = np.array(
+        [
+            poly0(Z),
+            poly1(Z),
+            poly2(Z),
+            laurent_21(Z),
+            laurent_22(Z),
+            laurent_31(Z),
+        ]
+    ).T
+    basis_deriv_answer = np.array(
+        [
+            poly_deriv0(Z),
+            poly_deriv1(Z),
+            poly_deriv2(Z),
+            laurent_2_deriv1(Z),
+            laurent_2_deriv2(Z),
+            laurent_3_deriv1(Z),
+        ]
+    ).T
+    basis_second_deriv_answer = np.array(
+        [
+            poly_second_deriv0(Z),
+            poly_second_deriv1(Z),
+            poly_second_deriv2(Z),
+            laurent_2_second_deriv1(Z),
+            laurent_2_second_deriv2(Z),
+            laurent_3_second_deriv1(Z),
+        ]
+    ).T
+    assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(basis_deriv, basis_deriv_answer, atol=ATOL, rtol=RTOL)
+    assert np.allclose(
+        basis_second_deriv, basis_second_deriv_answer, atol=ATOL, rtol=RTOL
+    )
 
 
 def test_large_va_evaluate():
@@ -300,6 +444,9 @@ def test_laurent_va_evaluate():
 if __name__ == "__main__":
     test_import_va_evaluate()
     test_small_va_evaluate()
+    test_small_second_va_evaluate()
+    test_small_poles_second_va_evaluate()
+    test_small_laurent_second_va_evaluate()
     test_large_va_evaluate()
     test_small_poles_va_evaluate_1()
     test_small_poles_va_evaluate_2()
