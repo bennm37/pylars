@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def check_flow(problem, solution):
     """Checks if the flow is doubly periodic."""
     dom = problem.domain
-    psi, uv, p, omega = solution.functions
+    psi, uv, p, omega, eij = solution.functions
     boundary_top = dom.boundary_points[dom.indices["0"]]
     boundary_bottom = dom.boundary_points[dom.indices["2"]]
     boundary_left = dom.boundary_points[dom.indices["1"]]

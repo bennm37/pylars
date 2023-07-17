@@ -48,7 +48,12 @@ def make_function(
 ):
     """Make a function with the given name."""
     z = np.array([z]).reshape(-1, 1)
-    basis, basis_deriv = va_evaluate(z, hessenbergs, poles, laurents)
+    if name == "eij":
+        basis, basis_deriv, basis_deriv2 = va_evaluate(
+            z, hessenbergs, poles, laurents, second_deriv=True
+        )
+    else:
+        basis, basis_deriv = va_evaluate(z, hessenbergs, poles, laurents)
     if not laurents:
         cf, cg = split(coefficients)
         match name:
@@ -68,6 +73,14 @@ def make_function(
                 return np.real(4 * basis_deriv @ cf)
             case "omega":
                 return np.imag(-4 * basis_deriv @ cf)
+            case "eij":
+                result = z * np.conj(basis_deriv2 @ cf) + np.conj(
+                    basis_deriv2 @ cg
+                )
+                eij = np.array(
+                    [[result.real, result.imag], [result.imag, -result.real]]
+                )
+                return np.moveaxis(eij, 2, 0)
     else:
         cf, cg, clf, clg = split_laurent(coefficients, laurents)
         centers = np.array(
@@ -170,7 +183,7 @@ def va_orthogonalise(z, n, poles=None, laurents=None):
     return hessenbergs, Q
 
 
-def va_evaluate(z, hessenbergs, poles=None, laurents=None):
+def va_evaluate(z, hessenbergs, poles=None, laurents=None, second_deriv=False):
     """Construct the basis and its derivatives."""
     H = hessenbergs[0]
     n = H.shape[1]
@@ -186,6 +199,8 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
         raise TypeError("Z must be a numpy array or a number")
     Q = np.zeros((m, n + 1), dtype=np.complex128)
     D = np.zeros((m, n + 1), dtype=np.complex128)
+    if second_deriv:
+        D2 = np.zeros((m, n + 1), dtype=np.complex128)
     Q[:, 0] = np.ones(m)
     for k in range(n):
         hkk = H[k + 1, k]
@@ -206,19 +221,31 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
             )
             / hkk
         ).reshape(m)
+        if second_deriv:
+            D2[:, k + 1] = (
+                (
+                    z * D2[:, k].reshape(m, 1)
+                    - D2[:, : k + 1].reshape(m, k + 1)
+                    @ H[: k + 1, k].reshape(k + 1, 1)
+                    + 2 * D[:, k].reshape(m, 1)
+                )
+                / hkk
+            ).reshape(m)
     if poles is not None:
         for i, pole_group in enumerate(poles):
             num_poles = len(pole_group)
             Hp = hessenbergs[i + 1]
             Qp = np.zeros((m, num_poles + 1), dtype=np.complex128)
             Dp = np.zeros((m, num_poles + 1), dtype=np.complex128)
+            if second_deriv:
+                Dp2 = np.zeros((m, num_poles + 1), dtype=np.complex128)
             Qp[:, 0] = np.ones(m)
             for k in range(num_poles):
                 hkk = Hp[k + 1, k]
-                Z_pole = 1 / (z - pole_group[k])
+                z_pole = 1 / (z - pole_group[k])
                 Qp[:, k + 1] = (
                     (
-                        Z_pole * Qp[:, k].reshape(m, 1)
+                        z_pole * Qp[:, k].reshape(m, 1)
                         - Qp[:, : k + 1].reshape(m, k + 1)
                         @ Hp[: k + 1, k].reshape(k + 1, 1)
                     )
@@ -226,15 +253,27 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
                 ).reshape(m)
                 Dp[:, k + 1] = (
                     (
-                        Z_pole * Dp[:, k].reshape(m, 1)
+                        z_pole * Dp[:, k].reshape(m, 1)
                         - Dp[:, : k + 1].reshape(m, k + 1)
                         @ Hp[: k + 1, k].reshape(k + 1, 1)
-                        - Z_pole**2 * Qp[:, k].reshape(m, 1)
+                        - z_pole**2 * Qp[:, k].reshape(m, 1)
                     )
                     / hkk
                 ).reshape(m)
+                if second_deriv:
+                    Dp2[:, k + 1] = (
+                        (
+                            z_pole * Dp2[:, k].reshape(m, 1)
+                            - Dp2[:, : k + 1].reshape(m, k + 1)
+                            @ Hp[: k + 1, k].reshape(k + 1, 1)
+                            - z_pole**2 * Dp[:, k].reshape(m, 1)
+                        )
+                        / hkk
+                    ).reshape(m)
             Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
             D = np.concatenate((D, Dp[:, 1:]), axis=1)
+            if second_deriv:
+                D2 = np.concatenate((D2, Dp2[:, 1:]), axis=1)
     if laurents is not None:
         for i, laurent_series in enumerate(laurents):
             deg_laurent = laurent_series[1]
@@ -242,31 +281,46 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None):
                 Hl = hessenbergs[len(poles) + i + 1]
             else:
                 Hl = hessenbergs[i + 1]
-            Qp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
-            Dp = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
-            Qp[:, 0] = np.ones(m)
+            Ql = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            Dl = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            if second_deriv:
+                Dl2 = np.zeros((m, deg_laurent + 1), dtype=np.complex128)
+            Ql[:, 0] = np.ones(m)
             one_over_z = 1 / (z - laurent_series[0])
             one_over_z2 = one_over_z**2
             for k in range(deg_laurent):
                 hkk = Hl[k + 1, k]
-                Qp[:, k + 1] = (
+                Ql[:, k + 1] = (
                     (
-                        one_over_z * Qp[:, k].reshape(m, 1)
-                        - Qp[:, : k + 1].reshape(m, k + 1)
+                        one_over_z * Ql[:, k].reshape(m, 1)
+                        - Ql[:, : k + 1].reshape(m, k + 1)
                         @ Hl[: k + 1, k].reshape(k + 1, 1)
                     )
                     / hkk
                 ).reshape(m)
-                Dp[:, k + 1] = (
+                Dl[:, k + 1] = (
                     (
-                        one_over_z * Dp[:, k].reshape(m, 1)
-                        - Dp[:, : k + 1].reshape(m, k + 1)
+                        one_over_z * Dl[:, k].reshape(m, 1)
+                        - Dl[:, : k + 1].reshape(m, k + 1)
                         @ Hl[: k + 1, k].reshape(k + 1, 1)
-                        - one_over_z2 * Qp[:, k].reshape(m, 1)
+                        - one_over_z2 * Ql[:, k].reshape(m, 1)
                     )
                     / hkk
                 ).reshape(m)
-            Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
-            D = np.concatenate((D, Dp[:, 1:]), axis=1)
-
+                if second_deriv:
+                    Dl2[:, k + 1] = (
+                        (
+                            one_over_z * Dl[:, k].reshape(m, 1)
+                            - Dl[:, : k + 1].reshape(m, k + 1)
+                            @ Hl[: k + 1, k].reshape(k + 1, 1)
+                            - one_over_z2 * Ql[:, k].reshape(m, 1)
+                        )
+                        / hkk
+                    ).reshape(m)
+            Q = np.concatenate((Q, Ql[:, 1:]), axis=1)
+            D = np.concatenate((D, Dl[:, 1:]), axis=1)
+            if second_deriv:
+                D2 = np.concatenate((D2, Dl2[:, 1:]), axis=1)
+    if second_deriv:
+        return Q, D, D2
     return Q, D

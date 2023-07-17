@@ -38,7 +38,7 @@ class Analysis:
         y = np.linspace(ymin, ymax, resolution)
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")
         self.Z = self.X + 1j * self.Y
-        psi, uv, p, omega = self.solver.functions
+        psi, uv, p, omega, eij = self.solver.functions
         self.Z[~self.domain.mask_contains(self.Z)] = np.nan
         self.psi_values = psi(self.Z.flatten()).reshape(resolution, resolution)
         self.uv_values = uv(self.Z.flatten()).reshape(resolution, resolution)
@@ -111,7 +111,7 @@ class Analysis:
             x_tiled, y_tiled, indexing="ij"
         )
         self.Z = self.X + 1j * self.Y
-        psi, uv, p, omega = self.solver.functions
+        psi, uv, p, omega, eij = self.solver.functions
         if gapa is None:
             gapa = np.around(psi(ymax) - psi(ymin), 15)
         if gapb is None:
@@ -257,7 +257,7 @@ class Analysis:
     def plot_stream_boundary(self):
         """Plot the stream function along the boundary."""
         points = self.domain.boundary_points
-        psi, uv, p, omega = self.solver.functions
+        psi, uv, p, omega, eij = self.solver.functions
         fig, ax = plt.subplots()
         ax.plot(psi(points))
         ax.plot(uv(points).real)

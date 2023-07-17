@@ -1,7 +1,7 @@
 """Test the different stress calculation methods."""
 
 
-def test_poiseuille_discrete_stress():
+def test_poiseuille_stress():
     """Test stress calculation using the solution class."""
     from pylars import Problem, Solver
     import numpy as np
@@ -53,12 +53,17 @@ def test_poiseuille_discrete_stress():
         stress = isotropic + deviatoric
         return stress.reshape(zshape + (2, 2))
 
-    poiseuille_stress(Z)
-    stress = sol.stress_discrete(Z)
-    assert np.allclose(stress, poiseuille_stress(Z), atol=ATOL, rtol=RTOL)
+    stress_discrete = sol.stress_discrete(Z)
+    assert np.allclose(
+        stress_discrete, poiseuille_stress(Z), atol=ATOL, rtol=RTOL
+    )
+    stress_goursat = sol.stress_goursat(Z)
+    assert np.allclose(
+        stress_goursat, poiseuille_stress(Z), atol=ATOL, rtol=RTOL
+    )
 
 
-def test_couette_discrete_stress():
+def test_couette_stress():
     """Test stress calculation using the solution class."""
     from pylars import Problem, Solver
     import numpy as np
@@ -103,13 +108,50 @@ def test_couette_discrete_stress():
         stress = isotropic + deviatoric
         return stress.reshape(zshape + (2, 2))
 
-    stress = sol.stress_discrete(Z)
-    assert np.allclose(stress, couette_stress(Z), atol=ATOL, rtol=RTOL)
+    stress_discrete = sol.stress_discrete(Z)
+    assert np.allclose(
+        stress_discrete, couette_stress(Z), atol=ATOL, rtol=RTOL
+    )
+    stress_goursat = sol.stress_goursat(Z)
+    assert np.allclose(stress_goursat, couette_stress(Z), atol=ATOL, rtol=RTOL)
 
 
-def test_pouseuille_goursat_stress():
-    """Test stress calculation using the solution class."""
-    pass
+def test_discrete_vs_goursat_circle_stress():
+    """Flow a domain with a circular interior curve.""" ""
+    from pylars import Problem, Solver
+    import numpy as np
+
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=600,
+        num_poles=0,
+        deg_poly=20,
+        spacing="linear",
+    )
+    circle = lambda t: 0.5 * np.exp(2j * np.pi * t)  # noqa: E731
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=100,
+        deg_laurent=20,
+        centroid=0.0 + 0.0j,
+    )
+    prob.add_boundary_condition("0", "psi[0]", 1)
+    prob.add_boundary_condition("0", "u[0]", 0)
+    prob.add_boundary_condition("2", "psi[2]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+    prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("4", "u[4]", 0)
+    prob.add_boundary_condition("4", "v[4]", 0)
+    solver = Solver(prob)
+    sol = solver.solve(check=False, normalize=False)
+    z = circle(np.linspace(0, 1, 200))
+    stress_discrete = sol.stress_discrete(z)
+    stress_goursat = sol.stress_goursat(z)
+    ATOL, RTOL = 1e-9, 1e-5
+    assert np.allclose(stress_discrete, stress_goursat, atol=ATOL, rtol=RTOL)
 
 
 def test_goursat_force():
@@ -118,7 +160,6 @@ def test_goursat_force():
 
 
 if __name__ == "__main__":
-    test_poiseuille_discrete_stress()
-    test_couette_discrete_stress()
-    test_pouseuille_goursat_stress()
-    test_goursat_force()
+    test_poiseuille_stress()
+    test_couette_stress()
+    test_discrete_vs_goursat_circle_stress()

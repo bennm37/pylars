@@ -328,4 +328,14 @@ class Solver:
                 self.domain.laurents,
             )
 
-        return psi, uv, p, omega
+        def eij(z):
+            return make_function(
+                "eij",
+                z,
+                self.coefficients,
+                self.hessenbergs,
+                self.domain.poles,
+                self.domain.laurents,
+            )
+
+        return psi, uv, p, omega, eij
