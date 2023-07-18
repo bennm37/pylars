@@ -127,14 +127,27 @@ def make_function(
             case "eij":
                 result = (
                     z * np.conj(basis_deriv_2 @ cf)
-                    + np.conj(basis_deriv_2 @ cg)
                     + z * np.conj((-1 / (z - centers) ** 2) @ clf)
-                    + np.conj((-1 / (z - centers) ** 2) @ clg)
+                    + np.conj(basis_deriv_2 @ cg)
+                    + np.conj(
+                        (-1 / (z - centers) ** 2) @ clg
+                        + (-1 / (z - centers)) @ np.conj(clf)
+                    )
                 )
                 eij = np.array(
                     [[result.real, result.imag], [result.imag, -result.real]]
                 )
                 return np.moveaxis(eij, 2, 0)
+                # result = (
+                #     z * np.conj(basis_deriv_2 @ cf)
+                #     + np.conj(basis_deriv_2 @ cg)
+                #     + z * np.conj((-1 / (z - centers) ** 2) @ clf)
+                #     + np.conj((-1 / (z - centers) ** 2) @ clg)
+                # )
+                # eij = np.array(
+                #     [[result.real, result.imag], [result.imag, -result.real]]
+                # )
+                # return np.moveaxis(eij, 2, 0)
 
 
 def va_orthogonalise(z, n, poles=None, laurents=None):

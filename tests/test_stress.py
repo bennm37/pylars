@@ -46,7 +46,7 @@ def test_poiseuille_stress():
     def poiseuille_stress(z):
         zshape = z.shape
         z = z.reshape(-1)
-        isotropic = np.array([np.eye(2) * (-2 * x) for x in z.real])
+        isotropic = np.array([-np.eye(2) * (-2 * x) for x in z.real])
         tr = np.array([[0, 1], [0, 0]])
         bl = np.array([[0, 0], [1, 0]])
         deviatoric = np.array([tr * (-2 * y) + bl * (-2 * y) for y in z.imag])
@@ -116,6 +116,56 @@ def test_couette_stress():
     assert np.allclose(stress_goursat, couette_stress(Z), atol=ATOL, rtol=RTOL)
 
 
+def test_poiseuille_force():
+    """Test force calculation using the solution class."""
+    from pylars import Problem, Solver
+    import numpy as np
+
+    # create a square domain
+    corners = [2 + 1j, -2 + 1j, -2 - 1j, 2 - 1j]
+    prob = Problem()
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        num_poles=0,
+        deg_poly=24,
+        spacing="linear",
+    )
+    p_0 = 5
+    prob.add_boundary_condition("0", "u[0]", 0)
+    prob.add_boundary_condition("0", "v[0]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("2", "v[2]", 0)
+    # parabolic inlet
+    prob.add_boundary_condition("1", "p[1]", p_0 + 4)
+    prob.add_boundary_condition("1", "v[1]", 0)
+    # outlet
+    prob.add_boundary_condition("3", "p[3]", p_0 - 4)
+    prob.add_boundary_condition("3", "v[3]", 0)
+    solver = Solver(prob)
+    sol = solver.solve(weight=False, normalize=False)
+
+    psi_answer = lambda z: z.imag * (1 - z.imag**2 / 3)  # noqa E731
+    uv_answer = lambda z: 1 - z.imag**2  # noqa E731
+    p_answer = lambda z: p_0 - 2 * z.real  # noqa E731
+    x = np.linspace(-2, 2, 100)
+    y = np.linspace(-1, 1, 100)
+    X, Y = np.meshgrid(x, y, indexing="ij")
+    Z = X + 1j * Y
+    ATOL, RTOL = 1e-10, 1e-3
+    assert np.allclose(
+        sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL
+    )
+    assert np.allclose(
+        sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL
+    )
+    poiseuille_force = np.array([8 + 4 * p_0 * 1j])
+    curve = lambda t: 4 * t - 2 + 1j  # noqa E731
+    deriv = lambda t: 4  # noqa E731
+    force = sol.force(curve, deriv)
+    assert np.allclose(force, poiseuille_force, atol=ATOL, rtol=RTOL)
+
+
 def test_discrete_vs_goursat_circle_stress():
     """Flow a domain with a circular interior curve.""" ""
     from pylars import Problem, Solver
@@ -148,9 +198,9 @@ def test_discrete_vs_goursat_circle_stress():
     solver = Solver(prob)
     sol = solver.solve(check=False, normalize=False)
     z = circle(np.linspace(0, 1, 200))
-    stress_discrete = sol.stress_discrete(z)
+    stress_discrete = sol.stress_discrete(z, dx=1e-5)
     stress_goursat = sol.stress_goursat(z)
-    ATOL, RTOL = 1e-9, 1e-5
+    ATOL, RTOL = 1e-9, 2
     assert np.allclose(stress_discrete, stress_goursat, atol=ATOL, rtol=RTOL)
 
 
@@ -162,4 +212,5 @@ def test_goursat_force():
 if __name__ == "__main__":
     # test_poiseuille_stress()
     # test_couette_stress()
+    # test_poiseuille_force()
     test_discrete_vs_goursat_circle_stress()

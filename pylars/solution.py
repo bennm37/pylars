@@ -1,6 +1,7 @@
 """Solution class for pylars."""
 from numbers import Number
 import numpy as np
+from scipy.integrate import quad
 
 
 class Solution:
@@ -16,19 +17,19 @@ class Solution:
 
     def stress_discrete(self, z, dx=1e-6):
         """Calculate the total stress using finite differences."""
+        z = np.array(z)
         zshape = z.shape
         z = z.reshape(-1)
         pressures = self.p(z)
-        isotropic = np.array([np.eye(2) * p for p in pressures]).reshape(
+        isotropic = np.array([-np.eye(2) * p for p in pressures]).reshape(
             zshape + (2, 2)
         )
-        # caluclate velocity gradients using forward difference for interior
+        # caluclate velocity gradients using central difference for interior
         # points
         # TODO handle boundary points
-        uv = self.uv(z)
-        U_x = (self.uv(z + dx) - uv) / dx
+        U_x = (self.uv(z + dx) - self.uv(z - dx)) / (2 * dx)
         u_x, v_x = U_x.real, U_x.imag
-        U_y = (self.uv(z + dx * 1j) - uv) / dx
+        U_y = (self.uv(z + dx * 1j) - self.uv(z - dx * 1j)) / (2 * dx)
         u_y, v_y = U_y.real, U_y.imag
         deviatoric = np.array([[2 * u_x, u_y + v_x], [u_y + v_x, 2 * v_y]])
         deviatoric = np.moveaxis(deviatoric, (2), (0)).reshape(zshape + (2, 2))
@@ -37,15 +38,28 @@ class Solution:
 
     def stress_goursat(self, z):
         """Calculate the total stress using finite differences."""
+        z = np.array(z)
         zshape = z.shape
         z = z.reshape(-1)
         pressures = self.p(z)
-        isotropic = np.array([np.eye(2) * p for p in pressures]).reshape(
+        isotropic = np.array([-np.eye(2) * p for p in pressures]).reshape(
             zshape + (2, 2)
         )
         deviatoric = 2 * self.eij(z).reshape(zshape + (2, 2))
         stress = isotropic + deviatoric
         return stress
+
+    def force(self, curve, deriv, num_points=600):
+        """Calculate the force on a positively oriented curve."""
+
+        def integrand(s):
+            stress = self.stress_goursat(curve(s))
+            normal = -1j * deriv(s)
+            norm = np.array([normal.real, normal.imag])
+            result = norm @ stress
+            return result[0] + 1j * result[1]
+
+        return quad(integrand, 0, 1, complex_func=True)[0]
 
     def __add__(self, other):
         """Add two solutions together."""

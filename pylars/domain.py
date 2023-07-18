@@ -8,6 +8,7 @@ Raises:
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number, Integral
+from collections.abc import Sequence
 from pylars.numerics import cart, cluster
 from shapely import Point, Polygon, LineString
 import matplotlib.patches as patches
@@ -287,6 +288,27 @@ class Domain:
             )
             ax.add_patch(interior_patch)
         ax.autoscale_view()
+
+    def simple_poles_in_polygon(self, polygon):
+        """Return the indices of simple poles inside a polygon."""
+        if isinstance(polygon, Sequence):
+            polygon = np.array(polygon)
+            poly = Polygon(np.array([polygon.real, polygon.imag]).T)
+            indices = []
+            i = self.deg_poly
+            for pole_group in self.poles:
+                for pole in pole_group:
+                    if poly.contains(Point([pole.real, pole.imag])):
+                        indices.append(i)
+                    i += 1
+            for laurents in self.laurents:
+                centroid, degree = laurents
+                if poly.contains(Point([centroid.real, centroid.imag])):
+                    indices.append(i)
+                i += degree
+            return indices
+        else:
+            raise TypeError("polygon must be a sequence of complex numbers")
 
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""

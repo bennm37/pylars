@@ -149,10 +149,48 @@ def test_mask_contains():
     assert np.allclose(inside, inside_answer)
 
 
+def test_simple_poles_in_polygon():
+    """Test that simple poles are inside the polygon."""
+    import numpy as np
+    from pylars import Problem
+    import matplotlib.pyplot as plt
+
+    corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    prob = Problem()
+    num_poles = 24
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=300,
+        length_scale=1.5 * np.sqrt(2),
+        sigma=4,
+        deg_poly=24,
+        num_poles=num_poles,
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=100,
+        deg_laurent=10,
+        centroid=0.0 + 0.0j,
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 + 0.5j + 0.1 * np.exp(2j * np.pi * t),
+        num_points=100,
+        deg_laurent=10,
+        centroid=0.5 + 0.5j,
+    )
+    poly1 = [0.4 + 0.4j, -0.5 + 0.5j, -0.1 - 0.5j]
+    indices_answer1 = [120]
+    assert prob.domain.simple_poles_in_polygon(poly1) == indices_answer1
+    poly2 = corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+    indices_answer2 = [120, 130]
+    assert prob.domain.simple_poles_in_polygon(poly2) == indices_answer2
+
+
 if __name__ == "__main__":
     test_import_problem()
     test_domain_spacing_rectangle()
     test_domain_spacing_circle()
     test_poles_square()
     test_contains()
+    test_simple_poles_in_polygon()
     test_mask_contains()
