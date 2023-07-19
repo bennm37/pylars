@@ -153,7 +153,6 @@ def test_simple_poles_in_polygon():
     """Test that simple poles are inside the polygon."""
     import numpy as np
     from pylars import Problem
-    import matplotlib.pyplot as plt
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
