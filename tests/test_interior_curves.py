@@ -25,7 +25,7 @@ def test_create_circles():
         )
     assert len(prob.domain.interior_curves) == 3
     for i in range(3):
-        assert len(prob.domain.interior_curves[i]) == 100
+        assert isinstance(prob.domain.interior_curves[i], str)
     assert 0.0 + 0.0j not in prob.domain
     assert -0.5 - 0.5j not in prob.domain
     assert 0.5 - 0.5j in prob.domain

@@ -45,6 +45,7 @@ class Domain:
         )
         self.interior_curves = []
         self.laurents = []
+        self.laurent_index = {}
 
     def check_input(self):
         """Check that the input is valid."""
@@ -72,8 +73,33 @@ class Domain:
         mirror=False,
     ):
         """Create an interior curve from a parametric function."""
-        points = self._generate_interior_curve_points(f, num_points)
-        self._generate_laurent_series(points, deg_laurent, centroid)
+        side = self._generate_interior_curve_points(f, num_points)
+        self._generate_laurent_series(side, deg_laurent, centroid)
+        self._update_polygon()
+
+    def translate(self, side, disp):
+        """Translate a side of the domain."""
+        if side not in self.sides:
+            raise ValueError(f"Side {side} does not exist")
+        if not isinstance(disp, Number):
+            raise TypeError("disp must be a complex number")
+        self.boundary_points[self.indices[side]] += disp
+        old_centroid, degree = self.laurents[self.laurent_index[side]]
+        new_laurent = (old_centroid + disp, degree)
+        self.laurents[self.laurent_index[side]] = new_laurent
+        self._update_polygon()
+
+    def rotate(self, side, angle):
+        """Rotate a side of the domain."""
+        if side not in self.sides:
+            raise ValueError(f"Side {side} does not exist")
+        if not isinstance(angle, Number):
+            raise TypeError("angle must be a complex number")
+        points = self.boundary_points[self.indices[side]]
+        # should maybe store centroids as well?
+        centroid = self.laurents[self.laurent_index[side]][0]
+        new_points = centroid + (points - centroid) * np.exp(1j * angle)
+        self.boundary_points[self.indices[side]] = new_points
         self._update_polygon()
 
     def _generate_exterior_polygon_points(self):
@@ -113,15 +139,15 @@ class Domain:
         line = LineString(np.array([points.real, points.imag]).T)
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
-        self.interior_curves.append(points)
         side = str(len(self.sides))
         self.sides += [side]
+        self.interior_curves += [side]
         n_bp = len(self.boundary_points)
-        self.indices[side] = [i for i in range(n_bp + 1, n_bp + num_points)]
+        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
         self.boundary_points = np.concatenate(
             [self.boundary_points, points.reshape(-1, 1)], axis=0
         )
-        return points
+        return side
 
     def _name_side(self, old, new):
         """Rename the sides of the polygon."""
@@ -186,15 +212,22 @@ class Domain:
             ]
         )
 
-    def _generate_laurent_series(self, interior_points, degree, centroid):
+    def _generate_laurent_series(self, side, degree, centroid):
+        interior_points = self.boundary_points[self.indices[side]]
         if centroid is None:
             centroid = np.mean(interior_points)
         self.laurents.append((centroid, degree))
+        self.laurent_index[side] = len(self.laurents) - 1
 
     def _update_polygon(self, buffer=0):
         """Update the polygon."""
         holes = [
-            np.array([curve.real, curve.imag]).T
+            np.array(
+                [
+                    self.boundary_points[self.indices[curve]].reshape(-1).real,
+                    self.boundary_points[self.indices[curve]].reshape(-1).imag,
+                ]
+            ).T
             for curve in self.interior_curves
         ]
         self.polygon = Polygon(
