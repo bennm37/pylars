@@ -14,6 +14,7 @@ def check_flow(problem, solution):
     boundary_right = dom.boundary_points[dom.indices["3"]]
     assert np.allclose(uv(boundary_top), uv(boundary_bottom[::-1]))
     assert np.allclose(uv(boundary_left), uv(boundary_right[::-1]))
+    assert np.allclose(psi(boundary_left), psi(boundary_right[::-1]))
     print("Flow is doubly periodic")
     #  print psi, u and v at the corners
     print("U at corners: ", uv(corners).real)
