@@ -49,17 +49,38 @@ class Solution:
         stress = isotropic + deviatoric
         return stress
 
-    def force(self, curve, deriv, num_points=600):
-        """Calculate the force on a positively oriented curve."""
+    def force(self, curve, deriv):
+        """Calculate the force on exerted by the fluid on a curve.
+
+        The curve should be positively oriented.
+        """
 
         def integrand(s):
             stress = self.stress_goursat(curve(s))
-            normal = -1j * deriv(s)
+            normal = 1j * deriv(s)  # inward facing normal
             norm = np.array([normal.real, normal.imag])
             result = norm @ stress
             return result[0] + 1j * result[1]
 
         return quad(integrand, 0, 1, complex_func=True)[0]
+
+    def torque(self, curve, deriv, centroid):
+        """Calculate the torque exerted by the fluid on a curve.
+
+        The curve should be positively oriented.
+        """
+
+        def integrand(s):
+            z = curve(s)
+            stress = self.stress_goursat(z)
+            normal = 1j * deriv(s)  # inward facing normal
+            norm = np.array([normal.real, normal.imag])
+            result = norm @ stress
+            force = result[0] + 1j * result[1]
+            torque = (z - centroid) * force
+            return torque.imag
+
+        return quad(integrand, 0, 1)[0]
 
     def __add__(self, other):
         """Add two solutions together."""

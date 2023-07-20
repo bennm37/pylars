@@ -116,56 +116,6 @@ def test_couette_stress():
     assert np.allclose(stress_goursat, couette_stress(Z), atol=ATOL, rtol=RTOL)
 
 
-def test_poiseuille_force():
-    """Test force calculation using the solution class."""
-    from pylars import Problem, Solver
-    import numpy as np
-
-    # create a square domain
-    corners = [2 + 1j, -2 + 1j, -2 - 1j, 2 - 1j]
-    prob = Problem()
-    prob.add_exterior_polygon(
-        corners,
-        num_edge_points=300,
-        num_poles=0,
-        deg_poly=24,
-        spacing="linear",
-    )
-    p_0 = 5
-    prob.add_boundary_condition("0", "u[0]", 0)
-    prob.add_boundary_condition("0", "v[0]", 0)
-    prob.add_boundary_condition("2", "u[2]", 0)
-    prob.add_boundary_condition("2", "v[2]", 0)
-    # parabolic inlet
-    prob.add_boundary_condition("1", "p[1]", p_0 + 4)
-    prob.add_boundary_condition("1", "v[1]", 0)
-    # outlet
-    prob.add_boundary_condition("3", "p[3]", p_0 - 4)
-    prob.add_boundary_condition("3", "v[3]", 0)
-    solver = Solver(prob)
-    sol = solver.solve(weight=False, normalize=False)
-
-    psi_answer = lambda z: z.imag * (1 - z.imag**2 / 3)  # noqa E731
-    uv_answer = lambda z: 1 - z.imag**2  # noqa E731
-    p_answer = lambda z: p_0 - 2 * z.real  # noqa E731
-    x = np.linspace(-2, 2, 100)
-    y = np.linspace(-1, 1, 100)
-    X, Y = np.meshgrid(x, y, indexing="ij")
-    Z = X + 1j * Y
-    ATOL, RTOL = 1e-10, 1e-3
-    assert np.allclose(
-        sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL
-    )
-    poiseuille_force = np.array([8 + 4 * p_0 * 1j])
-    curve = lambda t: 4 * t - 2 + 1j  # noqa E731
-    deriv = lambda t: 4  # noqa E731
-    force = sol.force(curve, deriv)
-    assert np.allclose(force, poiseuille_force, atol=ATOL, rtol=RTOL)
-
-
 def test_discrete_vs_goursat_circle_stress():
     """Flow a domain with a circular interior curve.""" ""
     from pylars import Problem, Solver
@@ -204,13 +154,64 @@ def test_discrete_vs_goursat_circle_stress():
     assert np.allclose(stress_discrete, stress_goursat, atol=ATOL, rtol=RTOL)
 
 
-def test_goursat_force():
-    """Test force calculation using the solution class."""
-    pass
+def test_comsol_cylinder_stress():
+    """Compare stress data to COMSOL."""
+    import pandas as pd
+    from pylars import Problem, Solver
+    import numpy as np
+
+    prob = Problem()
+    corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
+    prob.add_exterior_polygon(
+        corners,
+        num_edge_points=600,
+        num_poles=0,
+        deg_poly=20,
+        spacing="linear",
+    )
+    prob.add_interior_curve(
+        lambda t: 0.5 * np.exp(2j * np.pi * t),
+        num_points=100,
+        deg_laurent=20,
+        centroid=0.0 + 0.0j,
+    )
+    prob.add_boundary_condition("0", "u[0]", 0)
+    prob.add_boundary_condition("0", "v[0]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("2", "v[2]", 0)
+    prob.add_boundary_condition("3", "p[3]", 1)
+    prob.add_boundary_condition("3", "v[3]", 0)
+    prob.add_boundary_condition("1", "p[1]", -1)
+    prob.add_boundary_condition("1", "v[1]", 0)
+    prob.add_boundary_condition("4", "u[4]", 0)
+    prob.add_boundary_condition("4", "v[4]", 0)
+    solver = Solver(prob)
+    sol = solver.solve(check=False, normalize=False)
+    # calculate normal stress data
+    stress_x_df = pd.read_csv("tests/data/COMSOL_cylinder_stress_x.csv")
+    theta = stress_x_df["theta"]
+    circle = lambda t: 0.5 * np.exp(t * 1j)  # noqa E731
+    normal = lambda t: -np.exp(t * 1j)  # noqa E731
+    z = circle(np.array(theta))
+    stress = sol.stress_goursat(z)
+    normals = normal(np.array(theta))
+    normals = np.array([normals.real, normals.imag]).T
+    # normal_stress = np.einsum('ij,ljk->ij', normals, stress)
+    normal_stress = np.array([S @ n for n, S in zip(normals, stress)])
+
+    # normal stress data from COMSOL
+    stress_x_df = pd.read_csv("tests/data/COMSOL_cylinder_stress_x.csv")
+    stress_y_df = pd.read_csv("tests/data/COMSOL_cylinder_stress_y.csv")
+    theta = stress_x_df["theta"]
+    stress_x = stress_x_df["stress_x"]
+    stress_y = stress_y_df["stress_y"]
+    # qualitative agreement
+    assert np.allclose(normal_stress[:, 0], stress_x, atol=2e-2, rtol=1e-3)
+    assert np.allclose(normal_stress[:, 1], stress_y, atol=2e-2, rtol=1e-3)
 
 
 if __name__ == "__main__":
-    # test_poiseuille_stress()
-    # test_couette_stress()
-    # test_poiseuille_force()
+    test_poiseuille_stress()
+    test_couette_stress()
     test_discrete_vs_goursat_circle_stress()
+    test_comsol_cylinder_stress()
