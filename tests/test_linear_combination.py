@@ -9,10 +9,12 @@ def tensorify(expr):
 
 def test_add():
     """Test adding two Solver objects."""
-    from pylars import Solution
+    from pylars import Problem, Solution
     import numpy as np
 
+    prob = Problem()
     sol1 = Solution(
+        prob,
         lambda x: x,
         lambda x: x,
         lambda x: x,
@@ -20,6 +22,7 @@ def test_add():
         lambda x: tensorify(x),
     )
     sol2 = Solution(
+        prob,
         lambda x: x**2 - 1,
         lambda x: x**2 - 2,
         lambda x: x**2 - 3,
@@ -41,10 +44,12 @@ def test_add():
 
 def test_mul():
     """Test multiplying a Solver object by a scalar."""
-    from pylars import Solution
+    from pylars import Problem, Solution
     import numpy as np
 
+    prob = Problem()
     sol1 = Solution(
+        prob,
         lambda x: x**2 - 1,
         lambda x: x**2 - 2,
         lambda x: x**2 - 3,
@@ -66,10 +71,12 @@ def test_mul():
 
 def test_linear_combination():
     """Test linear combination of solver objects."""
-    from pylars import Solution
+    from pylars import Problem, Solution
     import numpy as np
 
+    prob = Problem()
     sol1 = Solution(
+        prob,
         lambda x: x,
         lambda x: x,
         lambda x: x,
@@ -77,6 +84,7 @@ def test_linear_combination():
         lambda x: tensorify(x),
     )
     sol2 = Solution(
+        prob,
         lambda x: x**2,
         lambda x: x**2,
         lambda x: x**2,
@@ -98,10 +106,12 @@ def test_linear_combination():
 
 def test_negate():
     """Test negation of solver objects."""
-    from pylars import Solution
+    from pylars import Problem, Solution
     import numpy as np
 
+    prob = Problem()
     sol1 = Solution(
+        prob,
         lambda x: x,
         lambda x: -x,
         lambda x: x,

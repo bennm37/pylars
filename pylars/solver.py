@@ -25,13 +25,7 @@ class Solver:
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
-        # TODO add flip to evaluate
-        code_dependent = [
-            "self.PSI",
-            "self.U",
-            "self.V",
-            "self.P",
-        ]
+        code_dependent = ["self.PSI", "self.U", "self.V", "self.P", "self.E12"]
         for identifier, code in zip(DEPENDENT, code_dependent):
             identifier += "["
             code += "["
@@ -90,11 +84,18 @@ class Solver:
             self.domain.poles,
             self.domain.laurents,
         )
-        self.basis, self.basis_derivatives = va_evaluate(
+        # TODO check if e12 in boundary conditions before evaluating
+        # second derivative
+        (
+            self.basis,
+            self.basis_derivatives,
+            self.basis_derivatives_2,
+        ) = va_evaluate(
             self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
             self.domain.laurents,
+            second_deriv=True,
         )
         self.get_dependents()
 
@@ -118,11 +119,16 @@ class Solver:
             self.domain.poles,
             self.domain.laurents,
         )
-        self.basis, self.basis_derivatives = va_evaluate(
-            self.boundary_points,
+        (
+            self.basis,
+            self.basis_derivatives,
+            self.basis_derivatives_2,
+        ) = va_evaluate(
+            self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
             self.domain.laurents,
+            second_deriv=True,
         )
         self.get_dependents()
         self.construct_linear_system()
@@ -134,7 +140,7 @@ class Solver:
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
-        return Solution(*self.functions)
+        return Solution(self.problem.copy(), *self.functions)
 
     def construct_linear_system(self):
         """Use the basis functions to construct the linear system.
@@ -203,7 +209,9 @@ class Solver:
         # TODO is copying large arrays like this expensive?
         z = self.boundary_points
         m = len(z)
-        basis, basis_deriv = self.basis, self.basis_derivatives
+        basis = self.basis
+        basis_deriv = self.basis_derivatives
+        basis_deriv_2 = self.basis_derivatives_2
         conj_z = diags(z.conj().reshape(m))
 
         if not self.domain.laurents:
@@ -225,11 +233,17 @@ class Solver:
             p_4 = np.zeros_like(p_1)
             self.P = np.hstack((p_1, p_2, p_3, p_4))
 
-            s_1 = np.imag(conj_z @ basis)
-            s_2 = np.imag(basis)
-            s_3 = np.real(conj_z @ basis)
-            s_4 = np.real(basis)
-            self.PSI = np.hstack((s_1, s_2, s_3, s_4))
+            psi_1 = np.imag(conj_z @ basis)
+            psi_2 = np.imag(basis)
+            psi_3 = np.real(conj_z @ basis)
+            psi_4 = np.real(basis)
+            self.PSI = np.hstack((psi_1, psi_2, psi_3, psi_4))
+
+            e12_1 = -np.imag(conj_z @ basis_deriv_2)
+            e12_2 = -np.imag(basis_deriv_2)
+            e12_3 = -np.real(conj_z @ basis_deriv_2)
+            e12_4 = -np.real(basis_deriv_2)
+            self.E12 = np.hstack((e12_1, e12_2, e12_3, e12_4))
         else:
             centers = np.array(
                 [laurent_series[0] for laurent_series in self.domain.laurents]
@@ -280,6 +294,19 @@ class Solver:
                 (psi_1, psi_2, psi_3, psi_4, psi_5, psi_6, psi_7, psi_8)
             )
 
+            # TODO check e12_3 and e12_7 with Yidan.
+            e12_1 = -np.imag(conj_z @ basis_deriv_2)
+            e12_2 = -np.imag(basis_deriv_2)
+            e12_3 = -np.imag(-conj_z * one_over_z**2 - one_over_z)
+            e12_4 = -np.imag(-conj_z * one_over_z**2)
+            e12_5 = -np.real(conj_z @ basis_deriv_2)
+            e12_6 = -np.real(basis_deriv_2)
+            e12_7 = -np.real(-conj_z * one_over_z**2 + one_over_z)
+            e12_8 = -np.real(-conj_z * one_over_z**2)
+            self.E12 = np.hstack(
+                (e12_1, e12_2, e12_3, e12_4, e12_5, e12_6, e12_7, e12_8)
+            )
+
     def pickle_solutions(self, filename):
         """Store the solution using pickle."""
         with open(filename, "wb") as f:
@@ -287,55 +314,61 @@ class Solver:
 
     def construct_functions(self):
         """Construct callable physical quantities from the coefficients."""
+        # need to copy otherwise passing reference to domain object
+        # which may change
+        coefficients = self.coefficients.copy()
+        hessenbergs = self.hessenbergs.copy()
+        poles = self.domain.poles.copy()
+        laurents = self.domain.laurents.copy()
 
         def psi(z):
             return make_function(
                 "psi",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
-                self.domain.laurents,
+                coefficients,
+                hessenbergs,
+                poles,
+                laurents,
             )
 
         def uv(z):
             return make_function(
                 "uv",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
-                self.domain.laurents,
+                coefficients,
+                hessenbergs,
+                poles,
+                laurents,
             )
 
         def p(z):
             return make_function(
                 "p",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
-                self.domain.laurents,
+                coefficients,
+                hessenbergs,
+                poles,
+                laurents,
             )
 
         def omega(z):
             return make_function(
                 "omega",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
-                self.domain.laurents,
+                coefficients,
+                hessenbergs,
+                poles,
+                laurents,
             )
 
         def eij(z):
             return make_function(
                 "eij",
                 z,
-                self.coefficients,
-                self.hessenbergs,
-                self.domain.poles,
-                self.domain.laurents,
+                coefficients,
+                hessenbergs,
+                poles,
+                laurents,
             )
 
         return psi, uv, p, omega, eij

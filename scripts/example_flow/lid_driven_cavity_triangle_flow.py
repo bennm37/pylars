@@ -24,7 +24,7 @@ sol = solver.solve()
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 
-a = Analysis(prob, sol)
+a = Analysis(sol)
 fig, ax = a.plot(resolution=100)
 ax.axis("off")
 values = a.psi_values[~np.isnan(a.psi_values)].flatten()

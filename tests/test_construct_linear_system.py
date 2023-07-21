@@ -34,6 +34,7 @@ def test_lid_driven_cavity_get_dependents():
     solver = Solver(prob)
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer
+    solver.basis_derivatives_2 = np.zeros_like(basis_deriv_answer)
     solver.get_dependents()
     U = solver.U
     V = solver.V
@@ -83,6 +84,7 @@ def test_single_circle_get_dependents():
     solver = Solver(prob)
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer
+    solver.basis_derivatives_2 = np.zeros_like(basis_deriv_answer)
     solver.get_dependents()
     U = solver.U
     V = solver.V
@@ -142,6 +144,7 @@ def test_three_circles_get_dependents():
     solver = Solver(prob)
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer
+    solver.basis_derivatives_2 = np.zeros_like(basis_deriv_answer)
     solver.get_dependents()
     U = solver.U
     V = solver.V
@@ -203,6 +206,7 @@ def test_lid_driven_cavity_construct_linear_system_1():
     solver.PSI = PSI_answer
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer
+    solver.basis_derivatives_2 = np.zeros_like(basis_deriv_answer)
     solver.construct_linear_system()
     A = solver.A
     b = solver.b
@@ -258,8 +262,15 @@ def test_lid_driven_cavity_construct_linear_system_2():
     solver.hessenbergs, solver.Q = va_orthogonalise(
         solver.boundary_points, solver.degree, solver.poles
     )
-    solver.basis, solver.basis_derivatives = va_evaluate(
-        solver.boundary_points, solver.hessenbergs, solver.poles
+    (
+        solver.basis,
+        solver.basis_derivatives,
+        solver.basis_derivatives_2,
+    ) = va_evaluate(
+        solver.boundary_points,
+        solver.hessenbergs,
+        solver.poles,
+        second_deriv=True,
     )
     assert np.allclose(solver.basis, basis_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(

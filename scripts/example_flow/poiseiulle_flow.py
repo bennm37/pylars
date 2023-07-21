@@ -26,7 +26,7 @@ sol = solver.solve(weight=False, normalize=False)
 
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
-analysis = Analysis(prob, sol)
+analysis = Analysis(sol)
 fig, ax = analysis.plot()
 ax.axis("off")
 

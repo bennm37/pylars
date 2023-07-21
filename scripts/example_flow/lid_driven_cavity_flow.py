@@ -31,7 +31,7 @@ print("Time taken: ", end - start, "s")
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 
-a = Analysis(prob, sol)
+a = Analysis(sol)
 fig, ax = a.plot(resolution=300)
 max = a.psi_values[~np.isnan(a.psi_values)].max()
 levels_moffat = max + np.linspace(-6e-6, 0, 10)

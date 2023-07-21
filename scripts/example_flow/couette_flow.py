@@ -24,7 +24,7 @@ sol = solver.solve(check=False, weight=False)
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 
-an = Analysis(prob, sol)
+an = Analysis(sol)
 fig, ax = an.plot()
 y = np.linspace(-1, 1, 100)
 ax.plot(sol.uv(1j * y - 1).real - 1, y, color="black")

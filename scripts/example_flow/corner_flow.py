@@ -42,7 +42,7 @@ residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 
 # plotting
-a = Analysis(prob, sol)
+a = Analysis(sol)
 fig, ax = a.plot(resolution=300)
 max = a.psi_values[~np.isnan(a.psi_values)].max()
 moffat_levels = max + np.linspace(-1.6e-5, 0, 10)

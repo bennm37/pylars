@@ -7,7 +7,8 @@ from scipy.integrate import quad
 class Solution:
     """Solution class to store the solution to a problem."""
 
-    def __init__(self, psi, uv, p, omega, eij):
+    def __init__(self, problem, psi, uv, p, omega, eij):
+        self.problem = problem
         self.psi = psi
         self.uv = uv
         self.p = p
@@ -104,6 +105,7 @@ class Solution:
                 return eij_1(z) + eij_2(z)
 
             sol_combined = Solution(
+                self.problem,
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -136,6 +138,7 @@ class Solution:
                 return eij_1(z) - eij_2(z)
 
             sol_combined = Solution(
+                self.problem,
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -167,6 +170,7 @@ class Solution:
                 return eij_1(z) * other
 
             sol_combined = Solution(
+                self.problem,
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -200,6 +204,7 @@ class Solution:
                 return eij_1(z) / other
 
             sol_combined = Solution(
+                self.problem,
                 psi_combined,
                 uv_combined,
                 p_combined,
@@ -230,6 +235,7 @@ class Solution:
             return -eij_1(z)
 
         sol_combined = Solution(
+            self.problem,
             psi_combined,
             uv_combined,
             p_combined,

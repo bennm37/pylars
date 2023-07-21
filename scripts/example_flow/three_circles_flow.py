@@ -42,6 +42,6 @@ end = time.perf_counter()
 print(f"Time elapsed: {end-start:.2f} seconds")
 # plotting
 prob.domain._update_polygon(buffer=1e-2)
-an = Analysis(prob, sol)
+an = Analysis(sol)
 fig, ax = an.plot(resolution=100, interior_patch=True, levels=20)
 plt.show()

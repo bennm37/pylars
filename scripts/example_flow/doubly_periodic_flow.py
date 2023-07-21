@@ -63,7 +63,7 @@ sol = solver.solve(check=False, weight=False, normalize=False)
 print(
     f"Residual is {np.linalg.norm(solver.A @ solver.coefficients - solver.b)}"
 )
-an = Analysis(prob, sol)
+an = Analysis(sol)
 check_flow(prob, sol)
 sol.stress_discrete(1 + 1j)
 fig, ax = an.plot(resolution=100)

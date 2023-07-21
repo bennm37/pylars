@@ -2,9 +2,10 @@
 from pylars import Domain
 from collections.abc import Sequence
 import numpy as np
+import copy
 
 OPERATIONS = ["[::-1]", "+", "-", "*", "/", "**", "(", ")"]
-DEPENDENT = ["psi", "u", "v", "p"]
+DEPENDENT = ["psi", "u", "v", "p", "e12"]
 INDEPENDENT = ["x", "y"]
 
 
@@ -191,3 +192,7 @@ class Problem:
     def show(self):
         """Display the boundary points, poles and boundary conditions."""
         return NotImplemented
+
+    def copy(self):
+        """Return a copy of the current object."""
+        return copy.deepcopy(self)

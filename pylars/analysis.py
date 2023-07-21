@@ -15,8 +15,7 @@ class Analysis:
 
     Attributes
     ----------
-    domain: Domain
-    solver: Solver
+    solution : Solution
 
     Methods
     -------
@@ -24,12 +23,20 @@ class Analysis:
         Plot the contours and velocity magnitude of the solution.
     """
 
-    def __init__(self, problem, solver):
-        self.problem = problem
-        self.domain = problem.domain
-        self.solver = solver
+    def __init__(self, solution):
+        self.solution = solution
+        self.problem = solution.problem
+        self.domain = solution.problem.domain
 
-    def plot(self, resolution=100, levels=20, interior_patch=False, buffer=0):
+    def plot(
+        self,
+        resolution=100,
+        levels=20,
+        interior_patch=False,
+        buffer=0,
+        figax=None,
+        colorbar=True,
+    ):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
@@ -38,17 +45,21 @@ class Analysis:
         y = np.linspace(ymin, ymax, resolution)
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")
         self.Z = self.X + 1j * self.Y
-        psi, uv, p, omega, eij = self.solver.functions
+        psi, uv, p, omega, eij = self.solution.functions
         self.Z[~self.domain.mask_contains(self.Z)] = np.nan
         self.psi_values = psi(self.Z.flatten()).reshape(resolution, resolution)
         self.uv_values = uv(self.Z.flatten()).reshape(resolution, resolution)
-        fig, ax = plt.subplots()
+        if figax is not None:
+            fig, ax = figax
+        else:
+            fig, ax = plt.subplots()
         speed = np.abs(self.uv_values)
         parula.set_bad("white")
         pc = ax.pcolormesh(
             self.X, self.Y, speed, cmap=parula, shading="gouraud"
         )
-        plt.colorbar(pc)
+        if colorbar:
+            plt.colorbar(pc)
         ax.contour(
             self.X,
             self.Y,
@@ -61,13 +72,14 @@ class Analysis:
         if interior_patch:
             if self.domain.interior_curves is not None:
                 for interior_curve in self.domain.interior_curves:
-                    points = np.array(
-                        [interior_curve.real, interior_curve.imag]
-                    ).T
+                    points = self.domain.boundary_points[
+                        self.domain.indices[interior_curve]
+                    ].reshape(-1)
+                    points = np.array([points.real, points.imag]).T
                     # buffer the polygon
                     s_poly = Polygon(points).buffer(buffer)
                     points = np.array(s_poly.exterior.coords.xy).T
-                    poly = patches.Polygon(points, color="w", zorder=10)
+                    poly = patches.Polygon(points, color="w", zorder=2)
                     ax.add_patch(poly)
         ax.set_aspect("equal")
         return fig, ax
@@ -111,7 +123,7 @@ class Analysis:
             x_tiled, y_tiled, indexing="ij"
         )
         self.Z = self.X + 1j * self.Y
-        psi, uv, p, omega, eij = self.solver.functions
+        psi, uv, p, omega, eij = self.solution.functions
         if gapa is None:
             gapa = np.around(psi(ymax) - psi(ymin), 15)
         if gapb is None:
@@ -219,7 +231,7 @@ class Analysis:
     ):
         """Animate a linear combination of the solutions."""
         a, b = a_values[0], b_values[0]
-        sol_combined = a * self.solver + b * sol_2
+        sol_combined = a * self.solution + b * sol_2
         an = Analysis(self.domain, sol_combined)
         fig, ax = an.plot_periodic(
             a=a, b=b, gapa=gapa, gapb=gapb, n_tile=n_tile, colorbar=False
@@ -230,7 +242,7 @@ class Analysis:
                 print(f"Animating frame {i}")
             ax.clear()
             a, b = a_values[i], b_values[i]
-            sol_combined = a * self.solver + b * sol_2
+            sol_combined = a * self.solution + b * sol_2
             an = Analysis(self.domain, sol_combined)
             fig1, ax1 = an.plot_periodic(
                 a=a,
@@ -246,18 +258,10 @@ class Analysis:
         anim = FuncAnimation(fig, update, frames=len(a_values), interval=200)
         return fig, ax, anim
 
-    def plot_error(self):
-        """Plot the error along the boundary."""
-        A, b, coeff = self.solver.A, self.solver.b, self.solver.coefficients
-        err = np.abs(A @ coeff - b)
-        fig, ax = plt.subplots()
-        ax.plot(err)
-        return fig, ax
-
     def plot_stream_boundary(self):
         """Plot the stream function along the boundary."""
         points = self.domain.boundary_points
-        psi, uv, p, omega, eij = self.solver.functions
+        psi, uv, p, omega, eij = self.solution.functions
         fig, ax = plt.subplots()
         ax.plot(psi(points))
         ax.plot(uv(points).real)

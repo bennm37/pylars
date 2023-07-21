@@ -34,7 +34,7 @@ prob.add_boundary_condition("4", "v[4]", 0)
 
 solver = Solver(prob)
 sol = solver.solve(check=False, normalize=False)
-an = Analysis(prob, sol)
+an = Analysis(sol)
 fig, ax = an.plot(resolution=100, interior_patch=True, buffer=1e-2)
 plt.savefig("media/circle_flow.pdf")
 plt.show()

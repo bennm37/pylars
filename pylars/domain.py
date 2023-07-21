@@ -102,6 +102,14 @@ class Domain:
         self.boundary_points[self.indices[side]] = new_points
         self._update_polygon()
 
+    def area(self, side):
+        """Calculate the area enclosed by an interior curve."""
+        if side not in self.interior_curves:
+            raise ValueError("Area can only be evaluated on interior curves.")
+        points = self.boundary_points[self.indices[side]].reshape(-1)
+        poly = Polygon(np.array([points.real, points.imag]).T)
+        return poly.area
+
     def _generate_exterior_polygon_points(self):
         """Create a list of boundary points on each edge."""
         if self.spacing == "linear":
