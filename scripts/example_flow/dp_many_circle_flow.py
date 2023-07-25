@@ -2,6 +2,7 @@
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
+from circle_flow_2 import generate_normal_circles
 
 # create a square domain
 shift = 0.0 + 0.0j
@@ -9,24 +10,21 @@ corners = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j])
 corners += shift
 prob = Problem()
 prob.add_exterior_polygon(
-    corners, num_edge_points=50, deg_poly=50, num_poles=0, spacing="linear"
+    corners, num_edge_points=50, deg_poly=75, num_poles=0, spacing="linear"
 )
 centroid = shift + 0.5 - 0.5j
-R = 0.2j
-prob.add_interior_curve(
-    lambda t: centroid + R * np.exp(2j * np.pi * t),
-    num_points=50,
-    deg_laurent=10,
-    centroid=centroid,
-)
-centroid2 = shift + 0.5j
-R = 0.2j
-prob.add_interior_curve(
-    lambda t: centroid2 + R * np.exp(2j * np.pi * t),
-    num_points=50,
-    deg_laurent=10,
-    centroid=centroid2,
-)
+n_circles = 10
+np.random.seed(0)
+centroids, radii = generate_normal_circles(n_circles, 0.03, 0.00)
+print("Circles generated")
+for centroid, radius in zip(centroids, radii):
+    prob.add_interior_curve(
+        lambda t: centroid + radius * np.exp(2j * np.pi * t),
+        num_points=50,
+        deg_laurent=10,
+        centroid=centroid,
+    )
+
 
 prob.add_point(shift + -1 - 1j)
 # prob.domain.plot()
@@ -43,14 +41,15 @@ prob.add_boundary_condition("1", "psi[1]-psi[3][::-1]", 0)
 prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
 prob.add_boundary_condition("3", "p[1]-p[3][::-1]", p_drop)
 prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
-prob.add_boundary_condition("4", "u[4]", 0)
-prob.add_boundary_condition("4", "v[4]", 0)
-prob.add_boundary_condition("5", "u[5]", 0)
-prob.add_boundary_condition("5", "v[5]", 0)
-prob.add_boundary_condition("6", "p[6]", 2)
-prob.add_boundary_condition("6", "psi[6]", 0)
+interiors = [str(i) for i in range(4, 4 + n_circles)]
+for interior in interiors:
+    prob.add_boundary_condition(f"{interior}", f"u[{interior}]", 0)
+    prob.add_boundary_condition(f"{interior}", f"v[{interior}]", 0)
+prob.add_boundary_condition(f"{4+n_circles}", f"p[{4+n_circles}]", 2)
+prob.add_boundary_condition(f"{4+n_circles}", f"psi[{4+n_circles}]", 0)
 
 solver = Solver(prob)
+print("Solving the problem")
 sol = solver.solve(check=False, weight=False, normalize=False)
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 # relatieve_
