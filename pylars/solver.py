@@ -48,6 +48,10 @@ class Solver:
             try:
                 try:
                     expression1, value1 = self.boundary_conditions[side][0]
+                    self.evaluate(
+                        expression1,
+                        self.boundary_points[self.domain.indices[side]],
+                    )
                     self.A1[self.domain.indices[side]] = self.evaluate(
                         expression1,
                         self.boundary_points[self.domain.indices[side]],
@@ -180,16 +184,98 @@ class Solver:
 
     def normalize(self, a=0, b=1):
         """Normalize f and g so that they are unique."""
-        n_row, n_col = self.A.shape
-        self.b = np.vstack([self.b, np.zeros((4, 1))])
-        self.A = np.vstack([self.A, np.zeros((4, n_col))])
-        r0_a, r1_a = va_evaluate(a, self.hessenbergs, self.domain.poles)
-        zero = np.zeros_like(r0_a, dtype=np.float64)
-        self.A[-4, :] = np.hstack([np.real(r0_a), zero, -np.imag(r0_a), zero])
-        self.A[-3, :] = np.hstack([np.imag(r0_a), zero, np.real(r0_a), zero])
-        self.A[-2, :] = np.hstack([zero, np.real(r0_a), zero, -np.imag(r0_a)])
-        r0_b, r1_b = va_evaluate(b, self.hessenbergs, self.domain.poles)
-        self.A[-1, :] = np.hstack([np.real(r0_b), zero, -np.imag(r0_b), zero])
+        if self.domain.laurents:
+            return NotImplementedError
+            n_row, n_col = self.A.shape
+            self.b = np.vstack([self.b, np.zeros((4, 1))])
+            self.A = np.vstack([self.A, np.zeros((4, n_col))])
+            a = np.complex128(a)
+            b = np.complex128(b)
+            r0_a, r1_a = va_evaluate(
+                a, self.hessenbergs, self.domain.poles, self.domain.laurents
+            )
+            centers = np.array(
+                [laurent_series[0] for laurent_series in self.domain.laurents]
+            ).reshape(1, -1)
+            flog_a = np.log(a - centers) + (
+                (a - centers) * np.log(a) + a
+            ) / np.conj(a)
+            glog_a = np.log(a - centers)
+            flog_b = np.log(b - centers) + (
+                (b - centers) * np.log(b) + b
+            ) / np.conj(b)
+            zero = np.zeros_like(r0_a, dtype=np.float64)
+            zero_log = np.zeros_like(flog_a, dtype=np.float64)
+            self.A[-4, :] = np.hstack(
+                [
+                    np.real(r0_a),
+                    zero,
+                    np.real(flog_a),
+                    zero_log,
+                    -np.imag(r0_a),
+                    zero,
+                    -np.imag(flog_a),
+                    zero_log,
+                ]
+            )
+            self.A[-3, :] = np.hstack(
+                [
+                    np.imag(r0_a),
+                    zero,
+                    np.imag(flog_a),
+                    zero_log,
+                    np.real(r0_a),
+                    zero,
+                    np.real(flog_a),
+                    zero_log,
+                ]
+            )
+            self.A[-2, :] = np.hstack(
+                [
+                    zero,
+                    np.real(r0_a),
+                    zero_log,
+                    np.real(glog_a),
+                    zero,
+                    -np.imag(r0_a),
+                    zero_log,
+                    -np.imag(glog_a),
+                ]
+            )
+            r0_b, r1_b = va_evaluate(
+                b, self.hessenbergs, self.domain.poles, self.domain.laurents
+            )
+            self.A[-1, :] = np.hstack(
+                [
+                    np.real(r0_b),
+                    zero,
+                    np.real(flog_b),
+                    zero_log,
+                    -np.imag(r0_b),
+                    zero,
+                    np.real(flog_b),
+                    zero_log,
+                ]
+            )
+        else:
+            n_row, n_col = self.A.shape
+            self.b = np.vstack([self.b, np.zeros((4, 1))])
+            self.A = np.vstack([self.A, np.zeros((4, n_col))])
+            r0_a, r1_a = va_evaluate(a, self.hessenbergs, self.domain.poles)
+            zero = np.zeros_like(r0_a, dtype=np.float64)
+            self.A[-4, :] = np.hstack(
+                [np.real(r0_a), zero, -np.imag(r0_a), zero]
+            )
+            self.A[-3, :] = np.hstack(
+                [np.imag(r0_a), zero, np.real(r0_a), zero]
+            )
+            self.A[-2, :] = np.hstack(
+                [zero, np.real(r0_a), zero, -np.imag(r0_a)]
+            )
+            r0_b, r1_b = va_evaluate(b, self.hessenbergs, self.domain.poles)
+            self.A[-1, :] = np.hstack(
+                [np.real(r0_b), zero, -np.imag(r0_b), zero]
+            )
 
     def get_dependents(self):
         """Create the dependent variable arrays.
@@ -298,11 +384,11 @@ class Solver:
             e12_1 = -np.imag(conj_z @ basis_deriv_2)
             e12_2 = -np.imag(basis_deriv_2)
             e12_3 = -np.imag(-conj_z * one_over_z**2 - one_over_z)
-            e12_4 = -np.imag(-conj_z * one_over_z**2)
+            e12_4 = -np.imag(-(one_over_z**2))
             e12_5 = -np.real(conj_z @ basis_deriv_2)
             e12_6 = -np.real(basis_deriv_2)
             e12_7 = -np.real(-conj_z * one_over_z**2 + one_over_z)
-            e12_8 = -np.real(-conj_z * one_over_z**2)
+            e12_8 = -np.real(-(one_over_z**2))
             self.E12 = np.hstack(
                 (e12_1, e12_2, e12_3, e12_4, e12_5, e12_6, e12_7, e12_8)
             )

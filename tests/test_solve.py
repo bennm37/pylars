@@ -370,8 +370,8 @@ def test_single_circle_solve():
 
 
 if __name__ == "__main__":
-    # test_lid_driven_cavity_make_functions()
-    # test_single_circle_make_functions()
-    # test_three_circles_make_functions()
-    # test_lid_driven_cavity_solve()
+    test_lid_driven_cavity_make_functions()
+    test_single_circle_make_functions()
+    test_three_circles_make_functions()
+    test_lid_driven_cavity_solve()
     test_single_circle_solve()

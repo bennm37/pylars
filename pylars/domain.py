@@ -244,6 +244,17 @@ class Domain:
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
 
+    def enlarge_holes(self, scale_factor):
+        """Enlarge the holes in the polygon."""
+        for interior_curve in self.interior_curves:
+            points = self.boundary_points[self.indices[interior_curve]]
+            centroid = self.laurents[self.laurent_index[interior_curve]][0]
+            enlarged_points = (points - centroid) * scale_factor + centroid
+            self.boundary_points[self.indices[interior_curve]] = (
+                enlarged_points
+            ).reshape(-1, 1)
+        self._update_polygon()
+
     def plot(self, figax=None):
         """Display the labelled polygon."""
         if figax is None:

@@ -63,6 +63,15 @@ class Problem:
             centroid=centroid,
         )
 
+    def add_point(self, point):
+        """Add an expression and value for a point to boundary conditions."""
+        self.domain.boundary_points = np.append(
+            self.domain.boundary_points, point
+        ).reshape(-1, 1)
+        point_name = f"{len(self.domain.sides)}"
+        self.domain.sides.append(point_name)
+        self.domain.indices[point_name] = len(self.domain.boundary_points) - 1
+
     def name_side(self, old, new):
         """Change the name of a side."""
         if self.boundary_conditions is not None:

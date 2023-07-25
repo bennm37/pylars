@@ -33,7 +33,7 @@ class Analysis:
         resolution=100,
         levels=20,
         interior_patch=False,
-        buffer=0,
+        epsilon=1e-3,
         figax=None,
         colorbar=True,
     ):
@@ -41,8 +41,8 @@ class Analysis:
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
-        x = np.linspace(xmin, xmax, resolution)
-        y = np.linspace(ymin, ymax, resolution)
+        x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
+        y = np.linspace(ymin + epsilon, ymax - epsilon, resolution)
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")
         self.Z = self.X + 1j * self.Y
         psi, uv, p, omega, eij = self.solution.functions
@@ -76,9 +76,6 @@ class Analysis:
                         self.domain.indices[interior_curve]
                     ].reshape(-1)
                     points = np.array([points.real, points.imag]).T
-                    # buffer the polygon
-                    s_poly = Polygon(points).buffer(buffer)
-                    points = np.array(s_poly.exterior.coords.xy).T
                     poly = patches.Polygon(points, color="w", zorder=2)
                     ax.add_patch(poly)
         ax.set_aspect("equal")
