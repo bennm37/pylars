@@ -70,6 +70,7 @@ class Mover:
         self.curve = lambda t: self.centroid + self.initial_curve(t) * np.exp(
             1j * self.angle
         )
+        self.deriv = lambda t: self.initial_deriv(t) * np.exp(1j * self.angle)
 
     def rotate(self, angle):
         """Rotate the mover."""
@@ -77,6 +78,7 @@ class Mover:
         self.curve = lambda t: self.centroid + self.initial_curve(t) * np.exp(
             1j * self.angle
         )
+        self.deriv = lambda t: self.initial_deriv(t) * np.exp(1j * self.angle)
 
     def copy(self):
         """Create a deepcopy."""

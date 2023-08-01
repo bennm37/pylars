@@ -97,6 +97,7 @@ def test_mover_simulation():
         deg_poly=20,
         spacing="linear",
     )
+    init_prob.add_point(-1.0 - 1.0j)
     # init_prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
     # init_prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
     # init_prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
@@ -108,15 +109,19 @@ def test_mover_simulation():
     init_prob.add_boundary_condition("2", "v[2]", 0)
     init_prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
     init_prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
-    init_prob.add_boundary_condition("3", "p[1]-p[3][::-1]", -2)
+    init_prob.add_boundary_condition("3", "p[1]-p[3][::-1]", -1)
     init_prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
+    init_prob.add_boundary_condition("4", "p[4]", 0)
+    init_prob.add_boundary_condition("4", "psi[4]", 0)
+
 
     centroid = 0.0 + 0.0j
     angle = 0.0
     velocity = 0.0 + 0.0j
     angular_velocity = 0.0
-    curve = lambda t: 0.5 * np.exp(2j * np.pi * t)
-    deriv = lambda t: 1j * np.pi * np.exp(2j * np.pi * t)
+    R = 0.05
+    curve = lambda t: R * np.exp(2j * np.pi * t)
+    deriv = lambda t: R * 2j * np.pi * np.exp(2j * np.pi * t)
     cell = Mover(
         curve=curve,
         deriv=deriv,
@@ -131,7 +136,7 @@ def test_mover_simulation():
     solutions = results["solution_data"]
     for solution in solutions:
         an = Analysis(solution)
-        fig, ax = an.plot()
+        fig, ax = an.plot(interior_patch=True)
         plt.show()
     print(results)
     plt.plot(results["mover_data"]["positions"].real)
