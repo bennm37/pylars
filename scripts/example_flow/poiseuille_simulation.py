@@ -13,8 +13,8 @@ prob.add_exterior_polygon(
     deg_poly=50,
     spacing="linear",
 )
-centroid = -0.75 + 0.0j
-R = 0.1
+centroid = -0.5 + 0.4j
+R = 0.2
 circle = lambda t: centroid + R * np.exp(2j * np.pi * t)  # noqa: E731
 cicle_deriv = lambda t: 1j * np.pi * np.exp(2j * np.pi * t)  # noqa: E731
 num_points = 50
@@ -27,12 +27,13 @@ prob.add_interior_curve(
 )
 rho = 100.0
 mass = prob.domain.area("4") * rho
+moi = mass * R**2
 # prob.domain.plot()
 # plt.show()
-prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
-prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
-prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
-prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
+prob.add_boundary_condition("0", "u[0]", 0)
+prob.add_boundary_condition("0", "v[0]", 0)
+prob.add_boundary_condition("2", "u[2]", 0)
+prob.add_boundary_condition("2", "v[2]", 0)
 prob.add_boundary_condition("1", "u[3]-u[1][::-1]", 0)
 prob.add_boundary_condition("1", "v[3]-v[1][::-1]", 0)
 prob.add_boundary_condition("3", "p[3]-p[1][::-1]", 2)
@@ -44,8 +45,8 @@ position = centroid
 angle = 0.0
 velocity = 0.0 + 0.0j
 angular_velocity = 0.0
-dt = 0.02
-ts = np.arange(0, 0.6, dt)
+dt = 0.05
+ts = np.arange(0, 0.8, dt)
 n_steps = len(ts)
 position_data = np.zeros((n_steps, 2))
 velocity_data = np.zeros((n_steps, 2))
@@ -66,7 +67,7 @@ for i, t in enumerate(ts):
     force = sol.force(current_circle, cicle_deriv)
     torque = sol.torque(current_circle, cicle_deriv, centroid)
     acceleration = -force / mass
-    angular_acceleration = -torque / mass
+    angular_acceleration = torque / moi
     velocity += acceleration * dt
     angular_velocity += angular_acceleration * dt
     position += velocity * dt
@@ -86,7 +87,8 @@ for i, t in enumerate(ts):
 
 # animating
 an = Analysis(solutions[0])
-fig, ax = an.plot(resolution=100, interior_patch=True)
+vmin, vmax = 0, 0.6
+fig, ax = an.plot(resolution=100, interior_patch=True, vmin=vmin, vmax=vmax)
 t = 0.0
 ax.set(title=f"t = {t:.2f}")
 ax.quiver(
@@ -109,7 +111,7 @@ def update(i):
     """Update the animation."""
     ax.clear()
     ax.set(title=f"t = {ts[i]:.2f}")
-    if i % 10 == 0:
+    if i % 5 == 0:
         print("Animating frame", i)
     an = Analysis(solutions[i])
     an.plot(
@@ -117,6 +119,8 @@ def update(i):
         interior_patch=True,
         figax=(fig, ax),
         colorbar=False,
+        vmin=vmin,
+        vmax=vmax,
     )
     t = 0.0
     ax.title.set_text(f"t = {t:.2f}")
@@ -140,4 +144,4 @@ def update(i):
 
 
 anim = animation.FuncAnimation(fig, update, frames=n_steps, interval=75)
-anim.save("media/dp_simulation_test.mp4")
+anim.save("media/poiseuille_oc_simulation.mp4")

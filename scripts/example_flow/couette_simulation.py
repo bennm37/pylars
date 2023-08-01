@@ -13,8 +13,8 @@ prob.add_exterior_polygon(
     deg_poly=50,
     spacing="linear",
 )
-centroid = -0.75 + 0.0j
-R = 0.1
+centroid = 0.0 + -0.2j
+R = 0.3
 circle = lambda t: centroid + R * np.exp(2j * np.pi * t)  # noqa: E731
 cicle_deriv = lambda t: 1j * np.pi * np.exp(2j * np.pi * t)  # noqa: E731
 num_points = 50
@@ -27,16 +27,27 @@ prob.add_interior_curve(
 )
 rho = 100.0
 mass = prob.domain.area("4") * rho
+moi = mass * R**2
 # prob.domain.plot()
 # plt.show()
-prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
-prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
-prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
-prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
-prob.add_boundary_condition("1", "u[3]-u[1][::-1]", 0)
-prob.add_boundary_condition("1", "v[3]-v[1][::-1]", 0)
-prob.add_boundary_condition("3", "p[3]-p[1][::-1]", 2)
-prob.add_boundary_condition("3", "e12[3]-e12[1][::-1]", 0)
+# broken BCs
+# prob.add_boundary_condition("0", "u[0]", 1)
+# prob.add_boundary_condition("0", "v[0]", 0)
+# prob.add_boundary_condition("2", "u[2]", 0)
+# prob.add_boundary_condition("2", "v[2]", 0)
+# prob.add_boundary_condition("1", "p[1]", 0)
+# prob.add_boundary_condition("1", "v[1]", 0)
+# prob.add_boundary_condition("3", "p[3]", 0)
+# prob.add_boundary_condition("3", "v[3]", 0)
+
+prob.add_boundary_condition("0", "v[0]", 0)
+prob.add_boundary_condition("0", "u[0]", 1)
+prob.add_boundary_condition("2", "v[2]", 0)
+prob.add_boundary_condition("2", "u[2]", 0)
+prob.add_boundary_condition("1", "p[1]", 1)
+prob.add_boundary_condition("1", "v[1]", 0)
+prob.add_boundary_condition("3", "p[3]", 0)
+prob.add_boundary_condition("3", "v[3]", 0)
 prob.add_boundary_condition("4", "u[4]", 0)
 prob.add_boundary_condition("4", "v[4]", 0)
 solver = Solver(prob)
@@ -44,8 +55,8 @@ position = centroid
 angle = 0.0
 velocity = 0.0 + 0.0j
 angular_velocity = 0.0
-dt = 0.02
-ts = np.arange(0, 0.6, dt)
+dt = 0.05
+ts = np.arange(0, 2.0, dt)
 n_steps = len(ts)
 position_data = np.zeros((n_steps, 2))
 velocity_data = np.zeros((n_steps, 2))
@@ -56,23 +67,27 @@ tangent = lambda t: 1j * np.exp(2j * np.pi * t)  # noqa: E731
 for i, t in enumerate(ts):
     if i % 5 == 0:
         print("Computing step", i)
-    sol = solver.solve(check=False, normalize=False)
+    sol = solver.solve(check=False, normalize=False, weight=False)
     solutions += [sol]
     position_data[i] = position.real, position.imag
     velocity_data[i] = velocity.real, velocity.imag
     angle_data[i] = angle
     angular_velocity_data[i] = angular_velocity
-    current_circle = lambda t: position + R * np.exp(2j * np.pi * t)
+    current_circle = lambda t: position + R * np.exp(2j * np.pi * t + angle)
+    current_circle_deriv = (
+        lambda t: 1j * np.pi * np.exp(2j * np.pi * t + angle)
+    )
+    current_tangent = lambda t: current_circle_deriv(t) / np.pi
     force = sol.force(current_circle, cicle_deriv)
     torque = sol.torque(current_circle, cicle_deriv, centroid)
     acceleration = -force / mass
-    angular_acceleration = -torque / mass
+    angular_acceleration = torque / moi
     velocity += acceleration * dt
     angular_velocity += angular_acceleration * dt
     position += velocity * dt
     angle += angular_velocity * dt
     solver.problem.domain.translate("4", velocity * dt)
-    solver.problem.domain.rotate("4", angle)
+    # solver.problem.domain.rotate("4", angle)
     solver.problem.boundary_conditions["4"] = [
         ("u[4]", velocity.real + angular_velocity * tangent(theta).real),
         ("v[4]", velocity.imag + angular_velocity * tangent(theta).imag),
@@ -86,7 +101,8 @@ for i, t in enumerate(ts):
 
 # animating
 an = Analysis(solutions[0])
-fig, ax = an.plot(resolution=100, interior_patch=True)
+vmin, vmax = 0, 0.6
+fig, ax = an.plot(resolution=200, interior_patch=True, vmin=vmin, vmax=vmax)
 t = 0.0
 ax.set(title=f"t = {t:.2f}")
 ax.quiver(
@@ -109,14 +125,16 @@ def update(i):
     """Update the animation."""
     ax.clear()
     ax.set(title=f"t = {ts[i]:.2f}")
-    if i % 10 == 0:
+    if i % 5 == 0:
         print("Animating frame", i)
     an = Analysis(solutions[i])
     an.plot(
-        resolution=100,
+        resolution=200,
         interior_patch=True,
         figax=(fig, ax),
         colorbar=False,
+        vmin=vmin,
+        vmax=vmax,
     )
     t = 0.0
     ax.title.set_text(f"t = {t:.2f}")
@@ -140,4 +158,4 @@ def update(i):
 
 
 anim = animation.FuncAnimation(fig, update, frames=n_steps, interval=75)
-anim.save("media/dp_simulation_test.mp4")
+anim.save("media/couette_simulation.mp4")

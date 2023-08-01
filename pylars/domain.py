@@ -44,6 +44,7 @@ class Domain:
             np.array([self.corners.real, self.corners.imag]).T
         )
         self.interior_curves = []
+        self.movers = []
         self.laurents = []
         self.laurent_index = {}
 
@@ -76,6 +77,22 @@ class Domain:
         side = self._generate_interior_curve_points(f, num_points)
         self._generate_laurent_series(side, deg_laurent, centroid)
         self._update_polygon()
+
+    def add_mover(
+        self,
+        f,
+        num_points=100,
+        deg_laurent=10,
+        centroid=None,
+        aaa=False,
+        mirror=False,
+    ):
+        """Create an interior curve from a parametric function."""
+        side = self._generate_interior_curve_points(f, num_points)
+        self._generate_laurent_series(side, deg_laurent, centroid)
+        self._update_polygon()
+        self.movers += side
+        return side
 
     def translate(self, side, disp):
         """Translate a side of the domain."""

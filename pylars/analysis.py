@@ -5,7 +5,6 @@ Supports plotting of the contours and velocity magnitude of the solution.
 import numpy as np
 import matplotlib.pyplot as plt
 from pylars.colormaps import parula
-from shapely import Polygon
 from matplotlib.animation import FuncAnimation
 import matplotlib.patches as patches
 
@@ -36,6 +35,9 @@ class Analysis:
         epsilon=1e-3,
         figax=None,
         colorbar=True,
+        vmin=None,
+        vmax=None,
+        quiver=False,
     ):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
@@ -56,7 +58,13 @@ class Analysis:
         speed = np.abs(self.uv_values)
         parula.set_bad("white")
         pc = ax.pcolormesh(
-            self.X, self.Y, speed, cmap=parula, shading="gouraud"
+            self.X,
+            self.Y,
+            speed,
+            cmap=parula,
+            shading="gouraud",
+            vmin=vmin,
+            vmax=vmax,
         )
         if colorbar:
             plt.colorbar(pc)
@@ -78,6 +86,17 @@ class Analysis:
                     points = np.array([points.real, points.imag]).T
                     poly = patches.Polygon(points, color="w", zorder=2)
                     ax.add_patch(poly)
+        if quiver:
+            stride = 20
+            ax.quiver(
+                self.X[::stride, ::stride],
+                self.Y[::stride, ::stride],
+                self.uv_values.real[::stride, ::stride],
+                self.uv_values.imag[::stride, ::stride],
+                color="gray",
+                scale=10,
+                zorder=1,
+            )
         ax.set_aspect("equal")
         return fig, ax
 

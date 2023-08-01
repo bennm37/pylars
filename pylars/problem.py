@@ -63,6 +63,35 @@ class Problem:
             centroid=centroid,
         )
 
+    def add_mover(
+        self,
+        mover,
+        num_points=100,
+        deg_laurent=10,
+        aaa=False,
+    ):
+        """Add a mover object.
+
+        f(t) should be a closed simply connected parametric curve
+        defined on t in [0,1].
+        """
+        if aaa:
+            return NotImplemented
+        if self.domain is None:
+            raise ValueError("Exterior polygon must be set first.")
+        side = self.domain.add_mover(
+            f=mover.curve,
+            num_points=num_points,
+            deg_laurent=deg_laurent,
+            centroid=mover.centroid,
+        )
+        tangent = mover.deriv(np.linspace(0, 1, num_points))
+        u = mover.velocity.real + mover.angular_velocity * tangent.real
+        v = mover.velocity.imag + mover.angular_velocity * tangent.imag
+        self.boundary_conditions[side] = None
+        self.add_boundary_condition(side, f"u[{side}]", u)
+        self.add_boundary_condition(side, f"v[{side}]", v)
+
     def add_point(self, point):
         """Add an expression and value for a point to boundary conditions."""
         self.domain.boundary_points = np.append(
