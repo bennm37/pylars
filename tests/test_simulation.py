@@ -83,7 +83,7 @@ def test_simulation():
 
 
 def test_mover_simulation():
-    from pylars import Problem
+    from pylars import Problem, Analysis
     from pylars.simulation import LowDensityMoverSimulation, Mover
     import numpy as np
     import matplotlib.pyplot as plt
@@ -97,13 +97,18 @@ def test_mover_simulation():
         deg_poly=20,
         spacing="linear",
     )
-    init_prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
-    init_prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
-    init_prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
-    init_prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
+    # init_prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
+    # init_prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
+    # init_prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
+    # init_prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
+
+    init_prob.add_boundary_condition("0", "u[0]", 0)
+    init_prob.add_boundary_condition("0", "v[0]", 0)
+    init_prob.add_boundary_condition("2", "u[2]", 0)
+    init_prob.add_boundary_condition("2", "v[2]", 0)
     init_prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
     init_prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
-    init_prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 2)
+    init_prob.add_boundary_condition("3", "p[1]-p[3][::-1]", -2)
     init_prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 
     centroid = 0.0 + 0.0j
@@ -122,8 +127,18 @@ def test_mover_simulation():
     )
     movers = [cell]
     ldms = LowDensityMoverSimulation(init_prob, movers)
-    results = ldms.run(0, 0.05, 0.01)
+    results = ldms.run(0, 0.5, 0.1)
+    solutions = results["solution_data"]
+    for solution in solutions:
+        an = Analysis(solution)
+        fig, ax = an.plot()
+        plt.show()
     print(results)
+    plt.plot(results["mover_data"]["positions"].real)
+    plt.plot(results["mover_data"]["velocities"].real)
+    plt.plot(results["mover_data"]["angles"])
+    plt.plot(results["mover_data"]["angular_velocities"])
+    plt.show()
 
 
 if __name__ == "__main__":

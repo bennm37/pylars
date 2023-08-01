@@ -65,10 +65,18 @@ class Mover:
         )
 
     def translate(self, disp):
-        pass
+        """Translate the mover."""
+        self.centroid += disp
+        self.curve = lambda t: self.centroid + self.initial_curve(t) * np.exp(
+            1j * self.angle
+        )
 
     def rotate(self, angle):
-        pass
+        """Rotate the mover."""
+        self.angle += angle
+        self.curve = lambda t: self.centroid + self.initial_curve(t) * np.exp(
+            1j * self.angle
+        )
 
     def copy(self):
         """Create a deepcopy."""
