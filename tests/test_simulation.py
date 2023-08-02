@@ -146,7 +146,7 @@ def test_simulation():
 #     plt.show()
 
 
-if __name__ == "__main__":
-    # test_import_simulation()
-    # test_simulation()
-    test_mover_simulation()
+# if __name__ == "__main__":
+# test_import_simulation()
+# test_simulation()
+# test_mover_simulation()

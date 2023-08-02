@@ -1,7 +1,7 @@
+"""Test running and animating a LowDensityMoverSimulation."""
 from pylars import Problem, SimulationAnalysis
 from pylars.simulation import LowDensityMoverSimulation, Mover
 import numpy as np
-import matplotlib.pyplot as plt
 
 init_prob = Problem()
 corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
@@ -13,11 +13,6 @@ init_prob.add_exterior_polygon(
     spacing="linear",
 )
 init_prob.add_point(-1.0 - 1.0j)
-# init_prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
-# init_prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
-# init_prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
-# init_prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
-
 init_prob.add_boundary_condition("0", "u[0]", 0)
 init_prob.add_boundary_condition("0", "v[0]", 0)
 init_prob.add_boundary_condition("2", "u[2]", 0)
@@ -29,7 +24,7 @@ init_prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 init_prob.add_boundary_condition("4", "p[4]", 0)
 init_prob.add_boundary_condition("4", "psi[4]", 0)
 
-centroid = 0.0 + 0.01j
+centroid = -0.5 + 0.01j
 angle = 0.0
 velocity = 0.0 + 0.0j
 angular_velocity = 0.0
@@ -46,7 +41,7 @@ cell = Mover(
 )
 movers = [cell]
 ldms = LowDensityMoverSimulation(init_prob, movers)
-results = ldms.run(0, 1.5, 0.1)
+results = ldms.run(0, 3.8, 0.1)
 an = SimulationAnalysis(results)
-fig, ax, anim = an.animate(interval=100, vmax=0.4)
-anim.save("media/ldms.mp4")
+fig, ax, anim = an.animate_fast(interval=50)
+anim.save("media/ldms_fast.mp4")

@@ -91,7 +91,7 @@ class Domain:
         side = self._generate_interior_curve_points(f, num_points)
         self._generate_laurent_series(side, deg_laurent, centroid)
         self._update_polygon()
-        self.movers += side
+        self.movers += [side]
         return side
 
     def translate(self, side, disp):

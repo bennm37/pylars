@@ -40,13 +40,7 @@ class Analysis:
         quiver=False,
     ):
         """Plot the contours and velocity magnitude of the solution."""
-        corners = self.domain.corners
-        xmin, xmax = np.min(corners.real), np.max(corners.real)
-        ymin, ymax = np.min(corners.imag), np.max(corners.imag)
-        x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
-        y = np.linspace(ymin + epsilon, ymax - epsilon, resolution)
-        self.X, self.Y = np.meshgrid(x, y, indexing="ij")
-        self.Z = self.X + 1j * self.Y
+        self.get_Z(resolution, epsilon)
         psi, uv, p, omega, eij = self.solution.functions
         self.Z[~self.domain.mask_contains(self.Z)] = np.nan
         self.psi_values = psi(self.Z.flatten()).reshape(resolution, resolution)
@@ -99,6 +93,17 @@ class Analysis:
             )
         ax.set_aspect("equal")
         return fig, ax
+
+    def get_Z(self, resolution=100, epsilon=1e-3):
+        """Get the Z array for plotting contours and velocity magnitude."""
+        corners = self.domain.corners
+        xmin, xmax = np.min(corners.real), np.max(corners.real)
+        ymin, ymax = np.min(corners.imag), np.max(corners.imag)
+        x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
+        y = np.linspace(ymin + epsilon, ymax - epsilon, resolution)
+        self.X, self.Y = np.meshgrid(x, y, indexing="ij")
+        self.Z = self.X + 1j * self.Y
+        return self.X, self.Y, self.Z
 
     def plot_periodic(
         self,
