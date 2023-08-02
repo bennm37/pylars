@@ -21,6 +21,7 @@ class Simulation:
         # create a progress bar for loop
         for k, time in enumerate(tqdm(self.times, desc=self.name)):
             self.update(k, dt)
+        self.results["time_data"] = self.times
         return self.results
 
     def update(self):

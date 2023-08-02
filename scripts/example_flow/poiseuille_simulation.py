@@ -122,7 +122,6 @@ def update(i):
         vmin=vmin,
         vmax=vmax,
     )
-    t = 0.0
     ax.title.set_text(f"t = {t:.2f}")
     ax.quiver(
         position_data[i, 0],

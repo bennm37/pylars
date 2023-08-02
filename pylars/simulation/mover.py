@@ -17,10 +17,10 @@ class Mover:
         angular_velocity=0,
         density=1,
     ):
-        self.initial_curve = curve
-        self.initial_deriv = deriv
-        self.initial_angle = angle
-        self.initial_centroid = centroid
+        self.initial_curve = lambda t: (curve(t) - centroid) * np.exp(
+            -1j * angle
+        )
+        self.initial_deriv = lambda t: deriv(t) * np.exp(-1j * angle)
         self.curve = curve
         self.deriv = deriv
         self.angle = angle

@@ -5,3 +5,4 @@ from .problem import Problem
 from .solver import Solver
 from .solution import Solution
 from .analysis import Analysis
+from .simulation_analysis import SimulationAnalysis
