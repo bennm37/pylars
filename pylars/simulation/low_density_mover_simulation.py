@@ -31,8 +31,8 @@ class LowDensityMoverSimulation(Simulation):
         super().run(start, end, dt)
         self.mover_data["positions"] = self.mover_array[0, :, :]
         self.mover_data["velocities"] = self.mover_array[1, :, :]
-        self.mover_data["angles"] = self.mover_array[2, :, :]
-        self.mover_data["angular_velocities"] = self.mover_array[3, :, :]
+        self.mover_data["angles"] = self.mover_array[2, :, :].real
+        self.mover_data["angular_velocities"] = self.mover_array[3, :, :].real
         return self.results
 
     def update(self, k, dt):

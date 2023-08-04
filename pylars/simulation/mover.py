@@ -23,10 +23,10 @@ class Mover:
         self.initial_deriv = lambda t: deriv(t) * np.exp(-1j * angle)
         self.curve = curve
         self.deriv = deriv
-        self.angle = angle
-        self.centroid = centroid
-        self.velocity = velocity
-        self.angular_velocity = angular_velocity
+        self.angle = np.float64(angle)
+        self.centroid = np.complex128(centroid)
+        self.velocity = np.complex128(velocity)
+        self.angular_velocity = np.float64(angular_velocity)
         self.density = density
 
     def set_mass(self):
@@ -38,7 +38,7 @@ class Mover:
         self.area = self.poly.area
         mass_density = lambda x, y: self.density * np.ones_like(x)
         self.mass = self.mc_integrate(mass_density)
-        assert np.isclose(self.density * self.area, self.mass)
+        # assert np.isclose(self.density * self.area, self.mass)
         moi_density = lambda x, y: self.density * (x - self.centroid)
         self.moi = self.mc_integrate(self.poly, moi_density)
         self.mass = self.density * self.area

@@ -9,6 +9,7 @@ import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number, Integral
 from collections.abc import Sequence
+from collections import Counter
 from pylars.numerics import cart, cluster
 from shapely import Point, Polygon, LineString
 import matplotlib.patches as patches
@@ -93,6 +94,40 @@ class Domain:
         self._update_polygon()
         self.movers += [side]
         return side
+
+    def remove(self, indices):
+        """Remove the points at the given indices and adjust the indices."""
+        n = len(self.boundary_points)
+        if isinstance(indices, Sequence) or isinstance(indices, np.ndarray):
+            indices = np.array(indices).astype(int)
+        elif isinstance(indices, Integral):
+            indices = np.array([indices]).astype(int)
+        else:
+            raise TypeError("indices must be a sequence of integers")
+        if np.any(indices < 0):
+            raise ValueError("indices must be non negative")
+        if np.any(indices >= n):
+            raise ValueError("indices must be less than the number of points")
+        self.boundary_points = np.delete(self.boundary_points, indices, axis=0)
+        indices_start_values = [val[0] for val in self.indices.values()]
+        # sort the sides so they are in increasing order
+        self.sides = np.array(self.sides)[np.argsort(indices_start_values)]
+        indices_start_values = np.sort(indices_start_values)
+        indices_end_values = np.append(indices_start_values[1:], n)
+        index_bins = (
+            np.digitize(indices, indices_start_values) - 1
+        )  # so that 0 is the first bin
+        d_dict = Counter(index_bins)
+        decreases = np.zeros(len(self.sides))
+        for j, decrease in zip(list(d_dict.keys()), list(d_dict.values())):
+            decreases[j] = decrease
+        cum_decrease = [0] + np.cumsum(decreases).tolist()
+        for i, side in enumerate(self.sides):
+            self.indices[side] = np.arange(
+                indices_start_values[i] - cum_decrease[i],
+                indices_end_values[i] - cum_decrease[i + 1],
+                dtype=int,
+            )
 
     def translate(self, side, disp):
         """Translate a side of the domain."""
