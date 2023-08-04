@@ -60,8 +60,8 @@ for i, t in enumerate(ts):
     solutions += [sol]
     force = sol.force(circle, cicle_deriv)
     torque = sol.torque(circle, cicle_deriv, centroid)
-    acceleration = - force / mass
-    angular_acceleration = - torque / mass
+    acceleration = -force / mass
+    angular_acceleration = -torque / mass
     velocity += acceleration * dt
     angular_velocity += angular_acceleration * dt
     position += velocity * dt
