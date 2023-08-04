@@ -49,10 +49,10 @@ def test_get_nnic():
     R = 0.5
     centroid = 0.75 + 0.75j
     circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
-    dom.add_periodic_curve(circle)
+    dom.add_periodic_curve(circle, centroid)
     assert dom.periodic_curves[0] == "4"
-    dom.get_nn_image_centroids(centroid)
-    assert Counter(dom.nnic) == Counter(
+    nnic = dom.get_nn_image_centroids(centroid)
+    assert Counter(nnic) == Counter(
         [
             centroid - 2,
             centroid - 2 - 2j,
@@ -91,7 +91,7 @@ def test_generate_periodic_curve():
 
 
 if __name__ == "__main__":
-    # test_remove_points()
-    # test_remove_points_2()
-    # test_get_nnic()
+    test_remove_points()
+    test_remove_points_2()
+    test_get_nnic()
     test_generate_periodic_curve()

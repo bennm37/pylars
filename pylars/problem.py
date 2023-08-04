@@ -1,5 +1,5 @@
 """Module defining the Problem Class."""
-from pylars import Domain
+from pylars import Domain, PeriodicDomain
 from collections.abc import Sequence
 import numpy as np
 import copy
@@ -15,6 +15,7 @@ class Problem:
     def __init__(self, domain=None, boundary_conditons=None):
         self.domain = domain
         self.boundary_conditions = boundary_conditons
+        self.domain_type = None
 
     def add_exterior_polygon(
         self,
@@ -38,6 +39,33 @@ class Problem:
             deg_poly=deg_poly,
             spacing=spacing,
         )
+        self.domain_type = "polygon"
+
+    def add_periodic_domain(
+        self,
+        length,
+        height,
+        num_edge_points=100,
+        length_scale=0,
+        sigma=0,
+        deg_poly=20,
+        num_poles=0,
+        spacing="linear",
+    ):
+        """Create a PeriodicDomain object from its aspect ratio."""
+        if self.domain is not None:
+            raise Warning("Deleting old domain object and creating a new one.")
+        self.domain = PeriodicDomain(
+            length=length,
+            height=height,
+            num_edge_points=num_edge_points,
+            num_poles=num_poles,
+            length_scale=length_scale,
+            sigma=sigma,
+            deg_poly=deg_poly,
+            spacing=spacing,
+        )
+        self.domain_type = "periodic"
 
     def add_interior_curve(
         self,
@@ -46,12 +74,18 @@ class Problem:
         deg_laurent=10,
         centroid=None,
         aaa=False,
+        mirror_laurents=False,
     ):
         """Create an interior curve from a parametric function.
 
         f(t) should be a closed simply connected parametric curve
         defined on t in [0,1].
         """
+        if self.domain_type == "periodic":
+            raise ValueError(
+                """Can't add interior curve to periodic domain.
+                Use add_periodic_curve instead."""
+            )
         if aaa:
             return NotImplemented
         if self.domain is None:
@@ -61,6 +95,40 @@ class Problem:
             num_points=num_points,
             deg_laurent=deg_laurent,
             centroid=centroid,
+            mirror_laurents=mirror_laurents,
+        )
+
+    def add_periodic_curve(
+        self,
+        f,
+        num_points=100,
+        deg_laurent=10,
+        centroid=None,
+        aaa=False,
+        mirror_laurents=False,
+        image_laurents=False,
+    ):
+        """Create an interior curve from a parametric function.
+
+        f(t) should be a closed simply connected parametric curve
+        defined on t in [0,1].
+        """
+        if self.domain_type == "polygon":
+            raise ValueError(
+                """Can't add periodic curve to polygonal domain.
+                Use add_interior_curve instead."""
+            )
+        if aaa:
+            return NotImplemented
+        if self.domain is None:
+            raise ValueError("Periodic domain must be set first.")
+        self.domain.add_periodic_curve(
+            f=f,
+            num_points=num_points,
+            deg_laurent=deg_laurent,
+            centroid=centroid,
+            mirror_laurents=mirror_laurents,
+            image_laurents=image_laurents,
         )
 
     def add_mover(

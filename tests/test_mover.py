@@ -5,7 +5,6 @@ def test_intialise_mover():
     """Test that the Mover class can be initialised."""
     from pylars.simulation import Mover
     import numpy as np
-    from numbers import Number
 
     centroid = 0.0 + 0.0j
     R = 0.3

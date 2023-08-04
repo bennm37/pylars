@@ -45,9 +45,11 @@ class Domain:
             np.array([self.corners.real, self.corners.imag]).T
         )
         self.interior_curves = []
+        self.centroids = {}
         self.movers = []
         self.laurents = []
-        self.laurent_index = {}
+        self.laurent_indices = {}
+        self.mirror_indices = {}
 
     def check_input(self):
         """Check that the input is valid."""
@@ -72,11 +74,13 @@ class Domain:
         deg_laurent=10,
         centroid=None,
         aaa=False,
-        mirror=False,
+        mirror_laurents=False,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
         self._generate_laurent_series(side, deg_laurent, centroid)
+        if mirror_laurents:
+            self._generate_mirrors(side, deg_laurent, centroid)
         self._update_polygon()
 
     def add_mover(
@@ -136,9 +140,11 @@ class Domain:
         if not isinstance(disp, Number):
             raise TypeError("disp must be a complex number")
         self.boundary_points[self.indices[side]] += disp
-        old_centroid, degree = self.laurents[self.laurent_index[side]]
-        new_laurent = (old_centroid + disp, degree)
-        self.laurents[self.laurent_index[side]] = new_laurent
+        self.centroids[side] += disp
+        for index in self.laurent_indices[side]:
+            old_centroid, degree = self.laurents[index]
+            new_laurent = (old_centroid + disp, degree)
+            self.laurents[index] = new_laurent
         self._update_polygon()
 
     def rotate(self, side, angle):
@@ -149,7 +155,7 @@ class Domain:
             raise TypeError("angle must be a complex number")
         points = self.boundary_points[self.indices[side]]
         # should maybe store centroids as well?
-        centroid = self.laurents[self.laurent_index[side]][0]
+        centroid = self.centroids[side]
         new_points = centroid + (points - centroid) * np.exp(1j * angle)
         self.boundary_points[self.indices[side]] = new_points
         self._update_polygon()
@@ -276,8 +282,37 @@ class Domain:
         interior_points = self.boundary_points[self.indices[side]]
         if centroid is None:
             centroid = np.mean(interior_points)
+        self.centroids[side] = centroid
         self.laurents.append((centroid, degree))
-        self.laurent_index[side] = len(self.laurents) - 1
+        if side not in self.laurent_indices.keys():
+            self.laurent_indices[side] = [len(self.laurents) - 1]
+        else:
+            self.laurent_indices[side] += [len(self.laurents) - 1]
+
+    def _generate_mirrors(self, side, degree, centroid, tol=1):
+        """Generate mirror images of the Laurent series."""
+        # for each side of the polygon, calculate the inwards
+        # facing unit normal vector
+        n_corners = len(self.corners)
+        corners = np.array(self.corners)
+        normals = np.zeros((n_corners), dtype=np.complex128)
+        tangents = self.corners - np.roll(self.corners, 1)
+        normals = 1j * tangents
+        normals = normals / np.abs(normals)
+        x2, y2 = corners.real, corners.imag
+        x1, y1 = np.roll(corners, 1).real, np.roll(corners, 1).imag
+        x0, y0 = centroid.real, centroid.imag
+        distances = np.abs(
+            (x2 - x1) * (y1 - y0) + (x1 - x0) * (y2 - y1)
+        ) / np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        mirrors = centroid - 2 * normals * distances
+        for mirror in mirrors:
+            if np.abs(mirror - centroid) < tol:
+                self._generate_laurent_series(side, degree, mirror)
+                if side not in self.mirror_indices.keys():
+                    self.mirror_indices[side] = [len(self.laurents) - 1]
+                else:
+                    self.mirror_indices[side] += [len(self.laurents) - 1]
 
     def _update_polygon(self, buffer=0):
         """Update the polygon."""
@@ -300,30 +335,31 @@ class Domain:
         """Enlarge the holes in the polygon."""
         for interior_curve in self.interior_curves:
             points = self.boundary_points[self.indices[interior_curve]]
-            centroid = self.laurents[self.laurent_index[interior_curve]][0]
+            centroid = self.laurents[self.laurent_indices[interior_curve]][0]
             enlarged_points = (points - centroid) * scale_factor + centroid
             self.boundary_points[self.indices[interior_curve]] = (
                 enlarged_points
             ).reshape(-1, 1)
         self._update_polygon()
 
-    def plot(self, figax=None):
+    def plot(self, figax=None, set_lims=True):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
         flat_poles = self.poles.flatten()
-        try:
-            x_min = min(flat_poles.real)
-            x_max = max(flat_poles.real)
-            y_min = min(flat_poles.imag)
-            y_max = max(flat_poles.imag)
-        except ValueError:
-            x_min = min(self.corners.real)
-            x_max = max(self.corners.real)
-            y_min = min(self.corners.imag)
-            y_max = max(self.corners.imag)
-        ax.set_xlim(x_min - 0.1, x_max + 0.1)
-        ax.set_ylim(y_min - 0.1, y_max + 0.1)
+        if set_lims:
+            try:
+                x_min = min(flat_poles.real)
+                x_max = max(flat_poles.real)
+                y_min = min(flat_poles.imag)
+                y_max = max(flat_poles.imag)
+            except ValueError:
+                x_min = min(self.corners.real)
+                x_max = max(self.corners.real)
+                y_min = min(self.corners.imag)
+                y_max = max(self.corners.imag)
+            ax.set_xlim(x_min - 0.1, x_max + 0.1)
+            ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
         for side in self.sides:
             print(side)
@@ -378,7 +414,7 @@ class Domain:
             loc="upper center",
         )
         ax.set_aspect("equal")
-        plt.tight_layout()
+        # plt.tight_layout()
         return fig, ax
 
     def plot_polygon(self, ax, poly):

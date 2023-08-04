@@ -25,12 +25,15 @@ class PeriodicDomain(Domain):
         # anticlockwise from top left
         self.length = length
         self.height = height
-        corners = [
-            length / 2 + 1j * height / 2,
-            -length / 2 + 1j * height / 2,
-            -length / 2 - 1j * height / 2,
-            length / 2 - 1j * height / 2,
-        ]
+        corners = np.array(
+            [
+                length / 2 + 1j * height / 2,
+                -length / 2 + 1j * height / 2,
+                -length / 2 - 1j * height / 2,
+                length / 2 - 1j * height / 2,
+            ]
+        )
+        self.rect = Polygon(np.array([corners.real, corners.imag]).T)
         super().__init__(
             corners,
             num_edge_points,
@@ -40,6 +43,7 @@ class PeriodicDomain(Domain):
             deg_poly,
             spacing,
         )
+        self.image_indices = {}
         self.periodicity = periodicity
         self.periodic_curves = []
 
@@ -49,6 +53,8 @@ class PeriodicDomain(Domain):
         centroid,
         num_points=100,
         deg_laurent=10,
+        image_laurents=False,
+        mirror_laurents=False,
     ):
         """Create a periodic curve from a parametric function."""
         if self.periodicity is None:
@@ -59,9 +65,13 @@ class PeriodicDomain(Domain):
         self._generate_intersecting_images(
             side, f, num_points, centroid, deg_laurent
         )
+        if mirror_laurents:
+            self._generate_mirror_laurents(side, deg_laurent, centroid)
+        if image_laurents:
+            self._generate_image_laurents(side, deg_laurent, centroid)
         self._update_polygon()
 
-    def get_nn_image_centroids(self, centroid):
+    def get_nn_image_centroids(self, centroid, original=True):
         """Generate the nearest neighbour image centroids."""
         l, h = self.length, self.height
         disp = np.array(
@@ -71,7 +81,22 @@ class PeriodicDomain(Domain):
                 [-l + 1j * h, 1j * h, l + 1j * h],
             ]
         ).flatten()
-        self.nnic = centroid + disp
+        if not original:
+            disp = np.delete(disp, 4)
+        nnic = centroid + disp
+        return nnic
+
+    def _generate_image_laurents(self, side, deg_laurent, centroid, tol=1):
+        """Generate the image laurents."""
+        nnic = self.get_nn_image_centroids(centroid, original=False)
+        for image in nnic:
+            point = Point(np.array([image.real, image.imag]))
+            if self.rect.exterior.distance(point) < tol:
+                self._generate_laurent_series(side, deg_laurent, image)
+                if side not in self.image_indices.keys():
+                    self.image_indices[side] = [len(self.laurents) - 1]
+                else:
+                    self.image_indices[side] += [len(self.laurents) - 1]
 
     def _generate_intersecting_images(
         self, side, curve, num_points, centroid, deg_laurent
@@ -80,20 +105,20 @@ class PeriodicDomain(Domain):
         # TODO make sure the remaining rectangle points are the
         # same on each side
         # TODO fix case before points are added.
-        self.get_nn_image_centroids(centroid)
+        nnic = self.get_nn_image_centroids(centroid)
         centered_points = curve(np.linspace(0, 1, num_points)) - centroid
         n_bp = len(self.boundary_points)
         original = n_bp - 1
         self.indices[side] = [original]
-        for c in self.nnic:
-            translated_points = centered_points + c
+        for image in nnic:
+            translated_points = centered_points + image
             intersecting_inds = np.where(
                 (np.abs(translated_points.real) < self.length / 2)
                 & (np.abs(translated_points.imag) < self.height / 2)
             )
-            if len(intersecting_inds) > 0:
+            if len(intersecting_inds[0]) > 0:
                 # get the rectangle points inside the curve
-                self.laurents.append((c, deg_laurent))
+                self.laurents.append((image, deg_laurent))
                 rect_inds = np.concatenate(
                     [self.indices[str(i)] for i in range(4)]
                 )
@@ -108,7 +133,8 @@ class PeriodicDomain(Domain):
                     for ind, rect_point in enumerate(rect_points)
                     if poly.contains(Point([rect_point.real, rect_point.imag]))
                 ]
-                self.remove(in_curve_indices)
+                if in_curve_indices:
+                    self.remove(in_curve_indices)
                 # add the intersecting points to the side
                 intersecting_points = np.array(
                     translated_points[intersecting_inds]
