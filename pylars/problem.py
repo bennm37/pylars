@@ -153,9 +153,12 @@ class Problem:
             deg_laurent=deg_laurent,
             centroid=mover.centroid,
         )
-        tangent = mover.deriv(np.linspace(0, 1, num_points))
-        u = mover.velocity.real + mover.angular_velocity * tangent.real
-        v = mover.velocity.imag + mover.angular_velocity * tangent.imag
+        diff = mover.curve(np.linspace(0, 1, num_points)) - mover.centroid
+        rs = np.abs(diff)
+        thetas = np.angle(diff)
+
+        u = mover.velocity.real - rs * mover.angular_velocity * np.sin(thetas)
+        v = mover.velocity.imag + rs * mover.angular_velocity * np.cos(thetas)
         self.boundary_conditions[side] = None
         self.add_boundary_condition(side, f"u[{side}]", u)
         self.add_boundary_condition(side, f"v[{side}]", v)
@@ -205,6 +208,15 @@ class Problem:
                 self.boundary_conditions[side].append((expression, value))
         else:
             self.boundary_conditions[side] = [(expression, value)]
+
+    def get_homogenous_problem(self):
+        """Get the homogenous problem."""
+        homogeneous_problem = self.copy()
+        for side in homogeneous_problem.boundary_conditions.keys():
+            side_bcs = homogeneous_problem.boundary_conditions[side]
+            homog_bcs = [(expression, 0) for expression, value in side_bcs]
+            homogeneous_problem.boundary_conditions[side] = homog_bcs
+        return homogeneous_problem
 
     def check_boundary_conditions(self):
         """Check that the boundary conditions are valid."""

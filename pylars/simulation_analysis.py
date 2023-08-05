@@ -84,7 +84,13 @@ class SimulationAnalysis:
         )
         return fig, ax, anim
 
-    def animate_fast(self, resolution=100, interval=100, n_levels=20):
+    def animate_fast(
+        self,
+        resolution=100,
+        interval=100,
+        n_levels=20,
+        streamline_type="starting_points",
+    ):
         """Animate Solution Data."""
         parula.set_bad("white")
         self.generate_array_data(resolution, n_levels=n_levels)
@@ -103,12 +109,16 @@ class SimulationAnalysis:
         )
         plt.colorbar(pc)
         global contours
+        if streamline_type == "starting_points":
+            levels = self.levels[0]
+        else:
+            levels = n_levels
         contours = ax.contour(
             self.X,
             self.Y,
             self.psi_data[0, :, :],
             colors="k",
-            levels=self.levels[0],
+            levels=levels,
             linestyles="solid",
             linewidths=0.5,
         )
@@ -154,12 +164,17 @@ class SimulationAnalysis:
             for coll in contours.collections:
                 coll.remove()
             pc.set_array(self.speed[i, :, :].flatten())
+            if streamline_type == "starting_points":
+                levels = self.levels[i]
+            else:
+                levels = n_levels
             contours = ax.contour(
                 self.X,
                 self.Y,
                 self.psi_data[i, :, :],
                 colors="k",
-                levels=self.levels[i],
+                levels=levels,
+                # levels=20,
                 linestyles="solid",
                 linewidths=0.5,
             )

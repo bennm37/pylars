@@ -33,7 +33,7 @@ class Analysis:
         self,
         resolution=100,
         n_streamlines=20,
-        streamline_type="starting_points",
+        streamline_type="linear",
         interior_patch=False,
         epsilon=1e-3,
         figax=None,
@@ -77,9 +77,13 @@ class Analysis:
         if streamline_type == "starting_points":
             stride = int(resolution / n_streamlines)
             levels = self.psi_values[0, ::stride]
-            leveles = levels.sort()
-        if streamline_type == "linear":
+            levels.sort()
+        elif streamline_type == "linear":
             levels = n_streamlines
+        else:
+            raise ValueError(
+                "streamline_type must be 'starting_points' or 'linear'"
+            )
         ax.contour(
             self.X,
             self.Y,
@@ -111,6 +115,17 @@ class Analysis:
             )
         ax.set_aspect("equal")
         return fig, ax
+
+    def get_Z(self, resolution=100, epsilon=1e-3):
+        """Get the Z array for plotting contours and velocity magnitude."""
+        corners = self.domain.corners
+        xmin, xmax = np.min(corners.real), np.max(corners.real)
+        ymin, ymax = np.min(corners.imag), np.max(corners.imag)
+        x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
+        y = np.linspace(ymin + epsilon, ymax - epsilon, resolution)
+        self.X, self.Y = np.meshgrid(x, y, indexing="ij")
+        self.Z = self.X + 1j * self.Y
+        return self.X, self.Y, self.Z
 
     def plot_periodic(
         self,

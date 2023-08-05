@@ -289,7 +289,7 @@ class Domain:
         else:
             self.laurent_indices[side] += [len(self.laurents) - 1]
 
-    def _generate_mirrors(self, side, degree, centroid, tol=1):
+    def _generate_mirrors(self, side, degree, centroid, tol=2):
         """Generate mirror images of the Laurent series."""
         # for each side of the polygon, calculate the inwards
         # facing unit normal vector
@@ -335,7 +335,7 @@ class Domain:
         """Enlarge the holes in the polygon."""
         for interior_curve in self.interior_curves:
             points = self.boundary_points[self.indices[interior_curve]]
-            centroid = self.laurents[self.laurent_indices[interior_curve]][0]
+            centroid = self.centroids[interior_curve]
             enlarged_points = (points - centroid) * scale_factor + centroid
             self.boundary_points[self.indices[interior_curve]] = (
                 enlarged_points

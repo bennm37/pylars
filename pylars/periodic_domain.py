@@ -62,11 +62,12 @@ class PeriodicDomain(Domain):
         side = str(len(self.sides))
         self.sides = np.concatenate([self.sides, [side]])
         self.periodic_curves += [side]
+        self.interior_curves += [side]
         self._generate_intersecting_images(
             side, f, num_points, centroid, deg_laurent
         )
         if mirror_laurents:
-            self._generate_mirror_laurents(side, deg_laurent, centroid)
+            self._generate_mirrors(side, deg_laurent, centroid)
         if image_laurents:
             self._generate_image_laurents(side, deg_laurent, centroid)
         self._update_polygon()
@@ -86,7 +87,7 @@ class PeriodicDomain(Domain):
         nnic = centroid + disp
         return nnic
 
-    def _generate_image_laurents(self, side, deg_laurent, centroid, tol=1):
+    def _generate_image_laurents(self, side, deg_laurent, centroid, tol=0.8):
         """Generate the image laurents."""
         nnic = self.get_nn_image_centroids(centroid, original=False)
         for image in nnic:

@@ -140,11 +140,20 @@ class Solver:
             self.weight_rows()
         if normalize:
             self.normalize()
-        self.coefficients = linalg.lstsq(self.A, self.b)[0]
+        results = linalg.lstsq(self.A, self.b)
+        self.coefficients = results[0]
+        if results[1]:
+            self.max_residual = np.sqrt(np.max(results[1]))
+        else:
+            self.max_residual = np.max(
+                np.abs(self.A @ self.coefficients - self.b)
+            )
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
-        return Solution(self.problem.copy(), *self.functions)
+        return Solution(
+            self.problem.copy(), *self.functions, self.max_residual
+        )
 
     def construct_linear_system(self):
         """Use the basis functions to construct the linear system.

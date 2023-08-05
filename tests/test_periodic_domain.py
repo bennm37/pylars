@@ -76,13 +76,12 @@ def test_generate_periodic_curve():
     from pylars import PeriodicDomain
     import matplotlib.pyplot as plt
     import numpy as np
-    from collections import Counter
 
     dom = PeriodicDomain(2, 2)
     R = 0.5
-    # centroid = 0.75 + 0.75j
-    # circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
-    # dom.add_periodic_curve(circle, centroid)
+    centroid = 0.75 + 0.75j
+    circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
+    dom.add_periodic_curve(circle, centroid)
     centroid = 0.0 - 0.9j
     circle = lambda t: centroid + 0.01 * np.exp(2j * np.pi * t)
     dom.add_periodic_curve(circle, centroid)

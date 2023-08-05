@@ -7,7 +7,7 @@ from scipy.integrate import quad
 class Solution:
     """Solution class to store the solution to a problem."""
 
-    def __init__(self, problem, psi, uv, p, omega, eij):
+    def __init__(self, problem, psi, uv, p, omega, eij, max_residual=None):
         self.problem = problem
         self.psi = psi
         self.uv = uv
@@ -15,6 +15,7 @@ class Solution:
         self.omega = omega
         self.eij = eij
         self.functions = [psi, uv, p, omega, eij]
+        self.max_residual = max_residual
 
     def stress_discrete(self, z, dx=1e-6):
         """Calculate the total stress using finite differences."""
