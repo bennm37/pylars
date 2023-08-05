@@ -4,26 +4,47 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 prob = Problem()
-corners = [-2 - 1j, 2 - 1j, 2 + 1j, -2 + 1j]
-prob.add_exterior_polygon(
-    corners,
-    num_edge_points=600,
-    num_poles=0,
-    deg_poly=75,
-    spacing="linear",
-)
+periodic = True
+if not periodic:
+    corners = [2 + 1j, -2 + 1j, -2 - 1j, 2 - 1j]
+    prob.add_exterior_polygon(
+        corners=corners,
+        num_edge_points=600,
+        num_poles=0,
+        deg_poly=75,
+        spacing="linear",
+    )
+else:
+    prob.add_periodic_domain(
+        length=4,
+        height=2,
+        num_edge_points=600,
+        num_poles=0,
+        deg_poly=75,
+        spacing="linear",
+    )
 centroid = -1.85 + 0.0j
 radius = 0.1
 circle = lambda t: centroid + radius * np.exp(2j * np.pi * t)  # noqa: E731
 circle_deriv = lambda t: 1j * np.pi * np.exp(2j * np.pi * t)  # noqa: E731
 num_points = 100
-prob.add_interior_curve(
-    circle,
-    num_points=num_points,
-    deg_laurent=20,
-    centroid=centroid,
-    mirror_laurents=False,
-)
+if not periodic:
+    prob.add_interior_curve(
+        circle,
+        num_points=num_points,
+        deg_laurent=20,
+        centroid=centroid,
+        mirror_laurents=False,
+    )
+else:
+    prob.add_periodic_curve(
+        circle,
+        num_points=num_points,
+        deg_laurent=20,
+        centroid=centroid,
+        mirror_laurents=False,
+        image_laurents=True,
+    )
 prob.domain.plot(set_lims=False)
 plt.show()
 prob.add_boundary_condition("0", "u[0]", 0)
@@ -34,14 +55,6 @@ prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
 prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
 prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 1)
 prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
-# prob.add_boundary_condition("0", "v[0]", 0)
-# prob.add_boundary_condition("0", "u[0]", 1)
-# prob.add_boundary_condition("2", "v[2]", 0)
-# prob.add_boundary_condition("2", "u[2]", 0)
-# prob.add_boundary_condition("1", "p[1]", 1)
-# prob.add_boundary_condition("1", "v[1]", 0)
-# prob.add_boundary_condition("3", "p[3]", 0)
-# prob.add_boundary_condition("3", "v[3]", 0)
 rot_speed = 1.0 / np.pi
 trans_speed = 0.0
 prob.add_boundary_condition(

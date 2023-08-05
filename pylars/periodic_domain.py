@@ -123,6 +123,18 @@ class PeriodicDomain(Domain):
                 (np.abs(translated_points.real) < self.length / 2)
                 & (np.abs(translated_points.imag) < self.height / 2)
             )
+            if len(intersecting_inds[0]) == len(translated_points):
+                self._generate_interior_laurent_series(
+                    side, deg_laurent, image
+                )
+                self.indices[side] = [
+                    i for i in range(n_bp, n_bp + num_points)
+                ]
+                self.boundary_points = np.concatenate(
+                    [self.boundary_points, translated_points.reshape(-1, 1)],
+                    axis=0,
+                )
+                break
             if len(intersecting_inds[0]) > 0:
                 # get the rectangle points inside the curve
                 self._generate_exterior_laurent_series(

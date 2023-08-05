@@ -4,23 +4,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 prob = Problem()
-# prob.add_periodic_domain(
-#     length=2,
-#     height=2,
-#     num_edge_points=600,
-#     num_poles=0,
-#     deg_poly=75,
-#     spacing="linear",
-# )
-corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
-prob.add_exterior_polygon(
-    corners=corners,
+prob.add_periodic_domain(
+    length=2,
+    height=2,
     num_edge_points=600,
     num_poles=0,
     deg_poly=75,
     spacing="linear",
 )
-prob.domain._generate_interior_laurent_series("3", 20, 1.1 + 0.1j)
+# corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
+# prob.add_exterior_polygon(
+#     corners=corners,
+#     num_edge_points=600,
+#     num_poles=0,
+#     deg_poly=75,
+#     spacing="linear",
+# )
+# if this is interior, then branch cut. If exterior, then no branch cut.
+# prob.domain._generate_interior_laurent_series("3", 20, 1.1 + 0.1j)
+prob.domain._generate_exterior_laurent_series("3", 20, 1.1 + 0.1j)
 prob.domain.plot(set_lims=False)
 # plt.show()
 prob.add_point(-1 - 1j)

@@ -210,7 +210,7 @@ class Domain:
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
         side = str(len(self.sides))
-        self.sides += [side]
+        self.sides = list(self.sides) + [side]
         self.interior_curves += [side]
         n_bp = len(self.boundary_points)
         self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
