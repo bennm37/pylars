@@ -67,7 +67,7 @@ class PeriodicDomain(Domain):
             side, f, num_points, centroid, deg_laurent
         )
         if mirror_laurents:
-            self._generate_mirrors(side, deg_laurent, centroid)
+            self._generate_mirror_laurents(side, deg_laurent, centroid)
         if image_laurents:
             self._generate_image_laurents(side, deg_laurent, centroid)
         self._update_polygon()
@@ -93,11 +93,17 @@ class PeriodicDomain(Domain):
         for image in nnic:
             point = Point(np.array([image.real, image.imag]))
             if self.rect.exterior.distance(point) < tol:
-                self._generate_laurent_series(side, deg_laurent, image)
+                self._generate_exterior_laurent_series(
+                    side, deg_laurent, image
+                )
                 if side not in self.image_indices.keys():
-                    self.image_indices[side] = [len(self.laurents) - 1]
+                    self.image_indices[side] = [
+                        len(self.exterior_laurents) - 1
+                    ]
                 else:
-                    self.image_indices[side] += [len(self.laurents) - 1]
+                    self.image_indices[side] += [
+                        len(self.exterior_laurents) - 1
+                    ]
 
     def _generate_intersecting_images(
         self, side, curve, num_points, centroid, deg_laurent
@@ -119,7 +125,9 @@ class PeriodicDomain(Domain):
             )
             if len(intersecting_inds[0]) > 0:
                 # get the rectangle points inside the curve
-                self.laurents.append((image, deg_laurent))
+                self._generate_exterior_laurent_series(
+                    side, deg_laurent, image
+                )
                 rect_inds = np.concatenate(
                     [self.indices[str(i)] for i in range(4)]
                 )

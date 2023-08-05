@@ -152,7 +152,7 @@ def test_small_laurent_second_va_evaluate():
     H1 = np.array([[1], [1]])
     hessenbergs = [H, H, H1]
     basis, basis_deriv, basis_second_deriv = va_evaluate(
-        Z, hessenbergs, laurents=laurents, second_deriv=True
+        Z, hessenbergs, interior_laurents=laurents, second_deriv=True
     )
     # polynomial part
     poly0 = lambda z: np.ones_like(z)
@@ -428,13 +428,15 @@ def test_laurent_va_evaluate():
     hessenbergs, Q = va_orthogonalise(
         prob.domain.boundary_points.reshape(-1, 1),
         deg_poly,
-        laurents=prob.domain.laurents,
+        interior_laurents=prob.domain.interior_laurents,
     )
     for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
         assert np.allclose(hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(Q, Q_answer, atol=ATOL, rtol=RTOL)
     basis, basis_deriv = va_evaluate(
-        prob.domain.boundary_points, hessenbergs, laurents=prob.domain.laurents
+        prob.domain.boundary_points,
+        hessenbergs,
+        interior_laurents=prob.domain.interior_laurents,
     )
     # check all the basis functions are the same
     assert np.allclose(basis, basis_answer, atol=ATOL, rtol=RTOL)

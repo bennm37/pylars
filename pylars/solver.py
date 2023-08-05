@@ -86,7 +86,8 @@ class Solver:
             self.boundary_points.reshape(-1, 1),
             self.degree,
             self.domain.poles,
-            self.domain.laurents,
+            self.domain.interior_laurents,
+            self.domain.exterior_laurents,
         )
         # TODO check if e12 in boundary conditions before evaluating
         # second derivative
@@ -98,7 +99,8 @@ class Solver:
             self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
-            self.domain.laurents,
+            self.domain.interior_laurents,
+            self.domain.exterior_laurents,
             second_deriv=True,
         )
         self.get_dependents()
@@ -121,7 +123,8 @@ class Solver:
             self.boundary_points,
             self.degree,
             self.domain.poles,
-            self.domain.laurents,
+            self.domain.interior_laurents,
+            self.domain.exterior_laurents,
         )
         (
             self.basis,
@@ -131,7 +134,8 @@ class Solver:
             self.boundary_points.reshape(-1, 1),
             self.hessenbergs,
             self.domain.poles,
-            self.domain.laurents,
+            self.domain.interior_laurents,
+            self.domain.exterior_laurents,
             second_deriv=True,
         )
         self.get_dependents()
@@ -163,13 +167,13 @@ class Solver:
         """
         m = len(self.boundary_points)
         n = self.basis.shape[1]
-        if not self.domain.laurents:
+        if not self.domain.interior_laurents:
             self.A1, self.A2 = np.zeros((m, 4 * n)), np.zeros((m, 4 * n))
             self.b1, self.b2 = np.zeros((m)), np.zeros((m))
         else:
-            num_laurent = len(self.domain.laurents)
-            self.A1 = np.zeros((m, 4 * (n + num_laurent)))
-            self.A2 = np.zeros((m, 4 * (n + num_laurent)))
+            num_log = len(self.domain.interior_laurents)
+            self.A1 = np.zeros((m, 4 * (n + num_log)))
+            self.A2 = np.zeros((m, 4 * (n + num_log)))
             self.b1, self.b2 = np.zeros((m)), np.zeros((m))
         self.apply_boundary_conditions()
         self.A = np.vstack((self.A1, self.A2))
@@ -193,7 +197,7 @@ class Solver:
 
     def normalize(self, a=0, b=1):
         """Normalize f and g so that they are unique."""
-        if self.domain.laurents:
+        if self.domain.interior_laurents:
             return NotImplementedError
             n_row, n_col = self.A.shape
             self.b = np.vstack([self.b, np.zeros((4, 1))])
@@ -309,7 +313,7 @@ class Solver:
         basis_deriv_2 = self.basis_derivatives_2
         conj_z = diags(z.conj().reshape(m))
 
-        if not self.domain.laurents:
+        if not self.domain.interior_laurents:
             u_1 = np.real(conj_z @ basis_deriv - basis)
             u_2 = np.real(basis_deriv)
             u_3 = -np.imag(conj_z @ basis_deriv - basis)
@@ -341,11 +345,14 @@ class Solver:
             self.E12 = np.hstack((e12_1, e12_2, e12_3, e12_4))
         else:
             centers = np.array(
-                [laurent_series[0] for laurent_series in self.domain.laurents]
+                [
+                    laurent_series[0]
+                    for laurent_series in self.domain.interior_laurents
+                ]
             ).reshape(1, -1)
-            num_laurent = centers.shape[1]
+            num_log = centers.shape[1]
             z_m_centers = z - centers
-            one_over_z = 1 / (z_m_centers)  # m x num_laurent array
+            one_over_z = 1 / (z_m_centers)  # m x num_log array
             log_z = np.log(z_m_centers)
             u_1 = np.real(conj_z @ basis_deriv - basis)
             u_2 = np.real(basis_deriv)
@@ -370,11 +377,11 @@ class Solver:
             p_1 = np.real(4 * basis_deriv)
             p_2 = np.zeros_like(p_1)
             p_3 = np.real(4 * one_over_z)
-            p_4 = np.zeros((m, num_laurent))
+            p_4 = np.zeros((m, num_log))
             p_5 = -np.imag(4 * basis_deriv)
             p_6 = np.zeros_like(p_1)
             p_7 = -np.imag(4 * one_over_z)
-            p_8 = np.zeros((m, num_laurent))
+            p_8 = np.zeros((m, num_log))
             self.P = np.hstack((p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8))
 
             psi_1 = np.imag(conj_z @ basis)
@@ -414,7 +421,8 @@ class Solver:
         coefficients = self.coefficients.copy()
         hessenbergs = self.hessenbergs.copy()
         poles = self.domain.poles.copy()
-        laurents = self.domain.laurents.copy()
+        interior_laurents = self.domain.interior_laurents.copy()
+        exterior_laurents = self.domain.exterior_laurents.copy()
 
         def psi(z):
             return make_function(
@@ -423,7 +431,8 @@ class Solver:
                 coefficients,
                 hessenbergs,
                 poles,
-                laurents,
+                interior_laurents,
+                exterior_laurents,
             )
 
         def uv(z):
@@ -433,7 +442,8 @@ class Solver:
                 coefficients,
                 hessenbergs,
                 poles,
-                laurents,
+                interior_laurents,
+                exterior_laurents,
             )
 
         def p(z):
@@ -443,7 +453,8 @@ class Solver:
                 coefficients,
                 hessenbergs,
                 poles,
-                laurents,
+                interior_laurents,
+                exterior_laurents,
             )
 
         def omega(z):
@@ -453,7 +464,8 @@ class Solver:
                 coefficients,
                 hessenbergs,
                 poles,
-                laurents,
+                interior_laurents,
+                exterior_laurents,
             )
 
         def eij(z):
@@ -463,7 +475,8 @@ class Solver:
                 coefficients,
                 hessenbergs,
                 poles,
-                laurents,
+                interior_laurents,
+                exterior_laurents,
             )
 
         return psi, uv, p, omega, eij

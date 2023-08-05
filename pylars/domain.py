@@ -47,8 +47,10 @@ class Domain:
         self.interior_curves = []
         self.centroids = {}
         self.movers = []
-        self.laurents = []
-        self.laurent_indices = {}
+        self.interior_laurents = []
+        self.exterior_laurents = []
+        self.interior_laurent_indices = {}
+        self.exterior_laurent_indices = {}
         self.mirror_indices = {}
 
     def check_input(self):
@@ -70,31 +72,33 @@ class Domain:
     def add_interior_curve(
         self,
         f,
+        centroid,
         num_points=100,
         deg_laurent=10,
-        centroid=None,
         aaa=False,
         mirror_laurents=False,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
-        self._generate_laurent_series(side, deg_laurent, centroid)
+        self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
-            self._generate_mirrors(side, deg_laurent, centroid)
+            self._generate_mirror_laurents(side, deg_laurent, centroid)
         self._update_polygon()
 
     def add_mover(
         self,
         f,
+        centroid,
         num_points=100,
         deg_laurent=10,
-        centroid=None,
         aaa=False,
-        mirror=False,
+        mirror_laurents=False,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
-        self._generate_laurent_series(side, deg_laurent, centroid)
+        self._generate_interior_laurent_series(side, deg_laurent, centroid)
+        if mirror_laurents:
+            self._generate_mirror_laurents(side, deg_laurent, centroid)
         self._update_polygon()
         self.movers += [side]
         return side
@@ -141,10 +145,11 @@ class Domain:
             raise TypeError("disp must be a complex number")
         self.boundary_points[self.indices[side]] += disp
         self.centroids[side] += disp
-        for index in self.laurent_indices[side]:
-            old_centroid, degree = self.laurents[index]
+        for index in self.interior_laurent_indices[side]:
+            old_centroid, degree = self.interior_laurents[index]
             new_laurent = (old_centroid + disp, degree)
-            self.laurents[index] = new_laurent
+            self.interior_laurents[index] = new_laurent
+        # TODO update mirror laurents
         self._update_polygon()
 
     def rotate(self, side, angle):
@@ -154,7 +159,6 @@ class Domain:
         if not isinstance(angle, Number):
             raise TypeError("angle must be a complex number")
         points = self.boundary_points[self.indices[side]]
-        # should maybe store centroids as well?
         centroid = self.centroids[side]
         new_points = centroid + (points - centroid) * np.exp(1j * angle)
         self.boundary_points[self.indices[side]] = new_points
@@ -278,18 +282,35 @@ class Domain:
             ]
         )
 
-    def _generate_laurent_series(self, side, degree, centroid):
+    def _generate_interior_laurent_series(self, side, degree, centroid):
+        """Generate Laurent series in a hole of the domain."""
         interior_points = self.boundary_points[self.indices[side]]
         if centroid is None:
             centroid = np.mean(interior_points)
         self.centroids[side] = centroid
-        self.laurents.append((centroid, degree))
-        if side not in self.laurent_indices.keys():
-            self.laurent_indices[side] = [len(self.laurents) - 1]
+        self.interior_laurents.append((centroid, degree))
+        if side not in self.interior_laurent_indices.keys():
+            self.interior_laurent_indices[side] = [
+                len(self.interior_laurents) - 1
+            ]
         else:
-            self.laurent_indices[side] += [len(self.laurents) - 1]
+            self.interior_laurent_indices[side] += [
+                len(self.interior_laurents) - 1
+            ]
 
-    def _generate_mirrors(self, side, degree, centroid, tol=2):
+    def _generate_exterior_laurent_series(self, side, degree, centroid):
+        """Generate Laurent series outside the domain."""
+        self.exterior_laurents.append((centroid, degree))
+        if side not in self.exterior_laurent_indices.keys():
+            self.exterior_laurent_indices[side] = [
+                len(self.exterior_laurents) - 1
+            ]
+        else:
+            self.exterior_laurent_indices[side] += [
+                len(self.exterior_laurents) - 1
+            ]
+
+    def _generate_mirror_laurents(self, side, degree, centroid, tol=2):
         """Generate mirror images of the Laurent series."""
         # for each side of the polygon, calculate the inwards
         # facing unit normal vector
@@ -308,11 +329,15 @@ class Domain:
         mirrors = centroid - 2 * normals * distances
         for mirror in mirrors:
             if np.abs(mirror - centroid) < tol:
-                self._generate_laurent_series(side, degree, mirror)
+                self._generate_exterior_laurent_series(side, degree, mirror)
                 if side not in self.mirror_indices.keys():
-                    self.mirror_indices[side] = [len(self.laurents) - 1]
+                    self.mirror_indices[side] = [
+                        len(self.exterior_laurents) - 1
+                    ]
                 else:
-                    self.mirror_indices[side] += [len(self.laurents) - 1]
+                    self.mirror_indices[side] += [
+                        len(self.exterior_laurents) - 1
+                    ]
 
     def _update_polygon(self, buffer=0):
         """Update the polygon."""
@@ -397,7 +422,18 @@ class Domain:
         handles = [lightning_poles]
         degrees = []
         degree_labels = []
-        for centroid, degree in self.laurents:
+        for centroid, degree in self.interior_laurents:
+            laruent = ax.scatter(
+                centroid.real,
+                centroid.imag,
+                c=[(0, (1 - np.exp(-degree / 10)), 0)],
+                s=10,
+            )
+            if degree not in degrees:
+                degrees.append(degree)
+                handles.append(laruent)
+                degree_labels.append(f"Laurent series ({degree}) with log")
+        for centroid, degree in self.exterior_laurents:
             laruent = ax.scatter(
                 centroid.real,
                 centroid.imag,
@@ -441,7 +477,7 @@ class Domain:
                     if poly.contains(Point([pole.real, pole.imag])):
                         indices.append(i)
                     i += 1
-            for laurents in self.laurents:
+            for laurents in self.interior_laurents:
                 centroid, degree = laurents
                 if poly.contains(Point([centroid.real, centroid.imag])):
                     indices.append(i)

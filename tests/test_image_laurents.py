@@ -21,7 +21,7 @@ def test_mirror_laurents():
     dom = prob.domain
     dom.plot(set_lims=False)
     assert np.allclose(
-        np.array(dom.laurents)[dom.mirror_indices["4"]],
+        np.array(dom.exterior_laurents)[dom.mirror_indices["4"]],
         np.array([[1.25 + 0.75j, deg_laurent], [0.75 + 1.25j, deg_laurent]]),
     )
 
@@ -51,7 +51,7 @@ def test_image_laurents():
             [-1.25 + 0.75j, deg_laurent],
         ]
     )
-    images = np.array(dom.laurents)[dom.image_indices["4"]]
+    images = np.array(dom.exterior_laurents)[dom.image_indices["4"]]
     assert np.allclose(images, image_answer)
 
 

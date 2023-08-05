@@ -165,7 +165,7 @@ def test_laurent_va_orthogonalise():
     hessenbergs, Q = va_orthogonalise(
         prob.domain.boundary_points.reshape(-1, 1),
         deg_poly,
-        laurents=prob.domain.laurents,
+        interior_laurents=prob.domain.interior_laurents,
     )
     for hessenberg, hessenberg_answer in zip(hessenbergs, hessenbergs_answer):
         assert np.allclose(hessenberg, hessenberg_answer, atol=ATOL, rtol=RTOL)

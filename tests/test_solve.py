@@ -79,22 +79,34 @@ def test_single_circle_make_functions():
     laurents = [(0.0 + 0.0j, deg_laurent)]
 
     def psi(z):
-        return make_function("psi", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "psi", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def p(z):
-        return make_function("p", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "p", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def uv(z):
-        return make_function("uv", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "uv", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def omega(z):
-        return make_function("omega", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "omega", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def f(z):
-        return make_function("f", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "f", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def g(z):
-        return make_function("g", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "g", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
@@ -148,22 +160,38 @@ def test_three_circles_make_functions():
     ]
 
     def psi(z):
-        return make_function("psi", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "psi",
+            z,
+            c,
+            hessenbergs,
+            interior_laurents=laurents,
+        )
 
     def p(z):
-        return make_function("p", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "p", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def uv(z):
-        return make_function("uv", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "uv", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def omega(z):
-        return make_function("omega", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "omega", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def f(z):
-        return make_function("f", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "f", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     def g(z):
-        return make_function("g", z, c, hessenbergs, laurents=laurents)
+        return make_function(
+            "g", z, c, hessenbergs, interior_laurents=laurents
+        )
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)

@@ -30,10 +30,10 @@ def split(coefficients):
     return cf, cg
 
 
-def split_laurent(coefficients, laurents):
+def split_laurent(coefficients, interior_laurents):
     """Split the coefficients for f and g for laurent series."""
     coefficients = np.array(coefficients)
-    num_logs = len(laurents)
+    num_logs = len(interior_laurents)
     num_coeff = (len(coefficients) - 4 * num_logs) // 4
     complex_coeff = (
         coefficients[: len(coefficients) // 2]
@@ -47,17 +47,30 @@ def split_laurent(coefficients, laurents):
 
 
 def make_function(
-    name, z, coefficients, hessenbergs, poles=None, laurents=None
+    name,
+    z,
+    coefficients,
+    hessenbergs,
+    poles=None,
+    interior_laurents=None,
+    exterior_laurents=None,
 ):
     """Make a function with the given name."""
     z = np.array([z]).reshape(-1, 1)
     if name == "eij":
         basis, basis_deriv, basis_deriv_2 = va_evaluate(
-            z, hessenbergs, poles, laurents, second_deriv=True
+            z,
+            hessenbergs,
+            poles,
+            interior_laurents,
+            exterior_laurents,
+            second_deriv=True,
         )
     else:
-        basis, basis_deriv = va_evaluate(z, hessenbergs, poles, laurents)
-    if not laurents:
+        basis, basis_deriv = va_evaluate(
+            z, hessenbergs, poles, interior_laurents, exterior_laurents
+        )
+    if not interior_laurents:
         cf, cg = split(coefficients)
         match name:
             case "f":
@@ -85,9 +98,9 @@ def make_function(
                 )
                 return np.moveaxis(eij, 2, 0)
     else:
-        cf, cg, clf, clg = split_laurent(coefficients, laurents)
+        cf, cg, clf, clg = split_laurent(coefficients, interior_laurents)
         centers = np.array(
-            [laurent_series[0] for laurent_series in laurents]
+            [laurent_series[0] for laurent_series in interior_laurents]
         ).reshape(1, -1)
         match name:
             case "f":
@@ -153,7 +166,9 @@ def make_function(
                 # return np.moveaxis(eij, 2, 0)
 
 
-def va_orthogonalise(z, n, poles=None, laurents=None):
+def va_orthogonalise(
+    z, n, poles=None, interior_laurents=None, exterior_laurents=None
+):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.
 
     The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
@@ -191,7 +206,12 @@ def va_orthogonalise(z, n, poles=None, laurents=None):
                 Qp[:, k + 1] = (qp / Hp[k + 1, k]).reshape(m)
             hessenbergs += [Hp]
             Q = np.concatenate((Q, Qp[:, 1:]), axis=1)
-    if laurents is not None:
+    laurents = []
+    if interior_laurents is not None:
+        laurents += interior_laurents
+    if exterior_laurents is not None:
+        laurents += exterior_laurents
+    if len(laurents) > 0:
         for laurent_series in laurents:
             deg_laurent = laurent_series[1]
             Hl = np.zeros((deg_laurent + 1, deg_laurent), dtype=np.complex128)
@@ -210,7 +230,14 @@ def va_orthogonalise(z, n, poles=None, laurents=None):
     return hessenbergs, Q
 
 
-def va_evaluate(z, hessenbergs, poles=None, laurents=None, second_deriv=False):
+def va_evaluate(
+    z,
+    hessenbergs,
+    poles=None,
+    interior_laurents=None,
+    exterior_laurents=None,
+    second_deriv=False,
+):
     """Construct the basis and its derivatives."""
     H = hessenbergs[0]
     n = H.shape[1]
@@ -302,7 +329,12 @@ def va_evaluate(z, hessenbergs, poles=None, laurents=None, second_deriv=False):
             D = np.concatenate((D, Dp[:, 1:]), axis=1)
             if second_deriv:
                 D2 = np.concatenate((D2, Dp2[:, 1:]), axis=1)
-    if laurents is not None:
+    laurents = []
+    if interior_laurents is not None:
+        laurents += interior_laurents
+    if exterior_laurents is not None:
+        laurents += exterior_laurents
+    if len(laurents) > 0:
         for i, laurent_series in enumerate(laurents):
             deg_laurent = laurent_series[1]
             if poles is not None:
