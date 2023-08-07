@@ -93,12 +93,15 @@ class Domain:
         deg_laurent=10,
         aaa=False,
         mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
         self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
-            self._generate_mirror_laurents(side, deg_laurent, centroid)
+            self._generate_mirror_laurents(
+                side, deg_laurent, centroid, mirror_tol
+            )
         self._update_polygon()
         self.movers += [side]
         return side
@@ -188,7 +191,9 @@ class Domain:
                 for i in range(len(self.corners))
             ]
         ).reshape(-1, 1)
-        self.sides = [str(i) for i in range(len(self.corners))]
+        self.sides = np.array(
+            [str(i) for i in range(len(self.corners))], dtype="<U50"
+        )
         self.indices = {
             side: [
                 i
@@ -210,7 +215,7 @@ class Domain:
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
         side = str(len(self.sides))
-        self.sides = list(self.sides) + [side]
+        self.sides = np.append(self.sides, side)
         self.interior_curves += [side]
         n_bp = len(self.boundary_points)
         self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
@@ -226,7 +231,7 @@ class Domain:
                 raise ValueError(f"Side {old} does not exist")
             if new in self.sides:
                 raise ValueError(f"Side {new} already exists")
-            self.sides[self.sides.index(old)] = new
+            self.sides[np.where(self.sides == old)] = new
             self.indices[new] = self.indices.pop(old)
         else:
             raise TypeError("Side names must be strings")
@@ -235,9 +240,9 @@ class Domain:
         """Rename a list of side labels as a single side label."""
         self.indices[str(new)] = []
         for side in old_sides:
-            self.sides.remove(side)
+            np.delete(self.sides, np.where(self.sides == side))
             self.indices[str(new)] += self.indices.pop(side)
-        self.sides.append(str(new))
+        self.sides = np.concatenate([self.sides, [str(new)]])
 
     def _generate_lightning_poles(self):
         """Generate exponentially clustered lightning poles.
@@ -444,11 +449,11 @@ class Domain:
                 degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
-        ax.legend(
-            handles=handles,
-            labels=["Lightning poles"] + degree_labels,
-            loc="upper center",
-        )
+        # ax.legend(
+        #     handles=handles,
+        #     labels=["Lightning poles"] + degree_labels,
+        #     loc="upper center",
+        # )
         ax.set_aspect("equal")
         # plt.tight_layout()
         return fig, ax
@@ -498,6 +503,9 @@ class Domain:
         """Check if a point is in the polygon."""
         if isinstance(point, complex):
             point = Point(np.array([point.real, point.imag]))
+            # return self.polygon.contains(
+            #     point
+            # ) or self.polygon.exterior.contains(point)
             return self.polygon.contains(point)
         if isinstance(point, np.ndarray):
             if point.dtype != complex or point.dtype != np.complex128:

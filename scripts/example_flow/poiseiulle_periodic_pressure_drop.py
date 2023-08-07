@@ -16,7 +16,6 @@ prob.add_boundary_condition("2", "v[2]", 0)
 prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
 prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
 prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 4)
-# periodicity of shear stress
 prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 solver = Solver(prob)
 sol = solver.solve(check=True, weight=False, normalize=False)

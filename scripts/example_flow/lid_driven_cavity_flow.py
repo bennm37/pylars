@@ -45,5 +45,5 @@ ax.scatter(
     s=1,
     c="r",
 )
-plt.savefig("media/lid_driven_cavity.pdf")
+# plt.savefig("media/lid_driven_cavity.pdf")
 plt.show()

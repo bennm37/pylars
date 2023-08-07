@@ -105,8 +105,10 @@ class Problem:
         deg_laurent=10,
         centroid=None,
         aaa=False,
-        mirror_laurents=False,
         image_laurents=False,
+        image_tol=0.5,
+        mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function.
 
@@ -128,7 +130,9 @@ class Problem:
             deg_laurent=deg_laurent,
             centroid=centroid,
             mirror_laurents=mirror_laurents,
+            mirror_tol=mirror_tol,
             image_laurents=image_laurents,
+            image_tol=image_tol,
         )
 
     def add_mover(
@@ -137,6 +141,8 @@ class Problem:
         num_points=100,
         deg_laurent=10,
         aaa=False,
+        mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Add a mover object.
 
@@ -152,6 +158,8 @@ class Problem:
             num_points=num_points,
             deg_laurent=deg_laurent,
             centroid=mover.centroid,
+            mirror_laurents=mirror_laurents,
+            mirror_tol=mirror_tol,
         )
         diff = mover.curve(np.linspace(0, 1, num_points)) - mover.centroid
         rs = np.abs(diff)
@@ -169,7 +177,7 @@ class Problem:
             self.domain.boundary_points, point
         ).reshape(-1, 1)
         point_name = f"{len(self.domain.sides)}"
-        self.domain.sides.append(point_name)
+        self.domain.sides = np.append(self.domain.sides, point_name)
         self.domain.indices[point_name] = len(self.domain.boundary_points) - 1
 
     def name_side(self, old, new):

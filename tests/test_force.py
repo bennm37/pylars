@@ -6,6 +6,7 @@ def test_poiseuille_force():
     from pylars import Problem, Solver
     import numpy as np
 
+    # TODO check signs
     # create a square domain
     corners = [2 + 1j, -2 + 1j, -2 - 1j, 2 - 1j]
     prob = Problem()
@@ -44,7 +45,7 @@ def test_poiseuille_force():
     assert np.allclose(
         sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL
     )
-    poiseuille_force = np.array([-8 - 4 * p_0 * 1j])
+    poiseuille_force = np.array([8 + 4 * p_0 * 1j])
     curve = lambda t: 4 * t - 2 + 1j  # noqa E731
     deriv = lambda t: 4  # noqa E731
     force = sol.force(curve, deriv)
@@ -56,7 +57,7 @@ def test_poiseuille_force():
             lambda t: 1j * np.pi * np.exp(2j * np.pi * t)
         )  # noqa E731
         torque = sol.torque(circle, circle_deriv, centroid=centroid)
-        assert np.isclose(torque, centroid.imag * np.pi, atol=ATOL, rtol=RTOL)
+        assert np.isclose(torque, -centroid.imag * np.pi, atol=ATOL, rtol=RTOL)
 
 
 def test_goursat_force():

@@ -5,9 +5,7 @@ Supports plotting of the contours and velocity magnitude of the solution.
 import numpy as np
 import matplotlib.pyplot as plt
 from pylars.colormaps import parula
-from matplotlib.animation import FuncAnimation
 from numbers import Integral
-from collections.abc import Sequence
 import matplotlib.patches as patches
 
 
@@ -116,7 +114,7 @@ class Analysis:
         ax.set_aspect("equal")
         return fig, ax
 
-    def get_Z(self, resolution=100, epsilon=1e-3):
+    def get_Z(self, resolution=100, epsilon=1e-3):  # noqa: N802
         """Get the Z array for plotting contours and velocity magnitude."""
         corners = self.domain.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
@@ -129,11 +127,11 @@ class Analysis:
 
     def plot_periodic(
         self,
-        a,
-        b,
-        gapa=2,
-        gapb=2,
         resolution=100,
+        interior_patch=True,
+        quiver=False,
+        n_streamlines=50,
+        vmax=None,
         n_tile=3,
         figax=None,
         colorbar=True,
@@ -143,171 +141,141 @@ class Analysis:
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
         length, height = xmax - xmin, ymax - ymin
-        x = np.array(
-            [np.linspace(xmin, xmax, resolution) for i in range(n_tile)]
-        ).flatten()
+        self.X, self.Y, self.Z = self.get_Z(resolution=resolution)
+        self.Z[~self.domain.mask_contains(self.Z)] = np.nan
         x_tiled = np.array(
             [
                 np.linspace(xmin, xmax, resolution) + i * length
-                for i in range(n_tile)
+                for i in range(-n_tile // 2 + 1, n_tile // 2 + 1)
             ]
         ).flatten()
         y_tiled = np.array(
             [
                 np.linspace(ymin, ymax, resolution) + i * length
-                for i in range(n_tile)
+                for i in range(-n_tile // 2 + 1, n_tile // 2 + 1)
             ]
         ).flatten()
-        y = np.array(
-            [np.linspace(ymin, ymax, resolution) for i in range(n_tile)]
-        ).flatten()
-        self.X, self.Y = np.meshgrid(x, y)
         self.X_tiled, self.Y_tiled = np.meshgrid(
             x_tiled, y_tiled, indexing="ij"
         )
-        self.Z = self.X + 1j * self.Y
+
         psi, uv, p, omega, eij = self.solution.functions
-        if gapa is None:
-            gapa = np.around(psi(ymax) - psi(ymin), 15)
-        if gapb is None:
-            gapb = np.around(psi(xmax) - psi(xmin), 15)
-        self.psi_values = psi(self.Z).reshape(
-            n_tile * resolution, n_tile * resolution
+        self.psi_values = psi(self.Z).reshape(resolution, resolution)
+        self.psi_values_tiled = np.tile(self.psi_values, (n_tile, n_tile))
+        dlr = np.mean(self.psi_values[:, -1] - self.psi_values[:, 0])
+        dtb = np.mean(self.psi_values[-1, :] - self.psi_values[0, :])
+        ones = np.ones((resolution, resolution))
+        psi_correction = np.block(
+            [
+                [-dlr * ones + dtb, 0 + dtb * ones, dlr * ones + dtb],
+                [-dlr * ones, 0 * ones, dlr * ones],
+                [-dlr * ones - dtb, 0 - dtb * ones, dlr * ones - dtb],
+            ]
         )
-        # need to add a for every x and y for every b
-        psi_correction = np.zeros((n_tile * resolution, n_tile * resolution))
-        for i in range(n_tile):
-            for j in range(n_tile):
-                psi_correction[
-                    resolution * i : resolution * (i + 1),
-                    resolution * j : resolution * (j + 1),
-                ] = (
-                    gapb * b * i + gapa * a * j
-                )
-        self.psi_values += psi_correction
-        self.uv_values = uv(self.Z).reshape(
-            n_tile * resolution, n_tile * resolution
-        )
+        self.psi_values_tiled += psi_correction
+        self.uv_values = uv(self.Z).reshape(resolution, resolution)
+        self.uv_values_tiled = np.tile(self.uv_values, (n_tile, n_tile))
         if figax is None:
             fig, ax = plt.subplots()
         else:
             fig, ax = figax
-        speed = np.abs(self.uv_values)
+        speed = np.abs(self.uv_values_tiled)
         parula.set_bad("white")
         pc = ax.pcolormesh(
-            self.X_tiled, self.Y_tiled, speed, cmap=parula, shading="gouraud"
+            self.X_tiled,
+            self.Y_tiled,
+            speed,
+            vmax=vmax,
+            cmap=parula,
+            shading="gouraud",
         )
         if colorbar:
             plt.colorbar(pc)
         ax.contour(
             self.X_tiled,
             self.Y_tiled,
-            self.psi_values,
+            self.psi_values_tiled,
             colors="k",
-            levels=30,
+            levels=n_streamlines,
             linestyles="solid",
             linewidths=0.5,
         )
+        disps = np.array(
+            [
+                [-length, height],
+                [0, height],
+                [length, height],
+                [-length, 0],
+                [0, 0],
+                [length, 0],
+                [-length, -height],
+                [0, -height],
+                [length, -height],
+            ]
+        )
+        if interior_patch:
+            if self.domain.interior_curves is not None:
+                for interior_curve in self.domain.interior_curves:
+                    points = self.domain.boundary_points[
+                        self.domain.indices[interior_curve]
+                    ].reshape(-1)
+                    points = np.array([points.real, points.imag]).T
+                    for disp in disps:
+                        translated_points = points + disp[np.newaxis, :]
+                        poly = patches.Polygon(
+                            translated_points, color="w", zorder=2
+                        )
+                        ax.add_patch(poly)
+        if quiver:
+            stride = 20
+            ax.quiver(
+                self.X_tiled[::stride, ::stride],
+                self.Y_tiled[::stride, ::stride],
+                self.uv_values_tiled.real[::stride, ::stride],
+                self.uv_values_tiled.imag[::stride, ::stride],
+                color="gray",
+                scale=10,
+                zorder=1,
+            )
         # add dashed lines to show the borders
         ax.vlines(
-            np.linspace(xmin, xmin + n_tile * length, n_tile + 1),
-            ymin,
-            ymin + n_tile * height,
+            np.linspace(xmin - length, xmax + length, n_tile + 1),
+            ymin - height,
+            ymax + height,
             color="k",
             linestyles="dashed",
             linewidths=1,
         )
         ax.hlines(
-            np.linspace(ymin, ymin + n_tile * height, n_tile + 1),
-            xmin,
-            xmin + n_tile * length,
+            np.linspace(ymin - height, ymax + height, n_tile + 1),
+            xmin - length,
+            xmax + length,
             color="k",
             linestyles="dashed",
             linewidths=1,
         )
         ax.set_aspect("equal")
-        # add text to the corners of the figure
-        padx = 0.5
-        pady = 1.5
-        ax.text(
-            xmin * padx,
-            ymin * pady,
-            f"$\psi = {psi(xmin+1j*ymin)[0][0]:.1e}$",
-            color="black",
-            fontsize=15,
-            horizontalalignment="right",
-            verticalalignment="top",
-        )
-        ax.text(
-            xmax * padx + (n_tile - 1) * length,
-            ymin * pady,
-            f"$\psi = {psi(xmax+1j*ymin)[0][0]:.1e}$",
-            color="black",
-            fontsize=15,
-            horizontalalignment="left",
-            verticalalignment="top",
-        )
-        ax.text(
-            xmax * padx + (n_tile - 1) * length,
-            ymax * pady + (n_tile - 1) * height,
-            f"$\psi = {psi(xmax+1j*ymax)[0][0]:.1e}$",
-            color="black",
-            fontsize=15,
-            horizontalalignment="left",
-            verticalalignment="bottom",
-        )
-        ax.text(
-            xmin * padx,
-            ymax * pady + (n_tile - 1) * height,
-            f"$\psi = {psi(xmin+1j*ymax)[0][0]:.1e}$",
-            color="black",
-            fontsize=15,
-            horizontalalignment="right",
-            verticalalignment="bottom",
-        )
-        ax.set(title=f"${a:.2}\psi_A+{b:.2}\psi_B$")
         # plt.tight_layout()
         return fig, ax
 
-    def animate_combination(
-        self, sol_2, a_values, b_values, gapa=2, gapb=2, n_tile=3
-    ):
-        """Animate a linear combination of the solutions."""
-        a, b = a_values[0], b_values[0]
-        sol_combined = a * self.solution + b * sol_2
-        an = Analysis(self.domain, sol_combined)
-        fig, ax = an.plot_periodic(
-            a=a, b=b, gapa=gapa, gapb=gapb, n_tile=n_tile, colorbar=False
-        )
-
-        def update(i):
-            if i % 10 == 0:
-                print(f"Animating frame {i}")
-            ax.clear()
-            a, b = a_values[i], b_values[i]
-            sol_combined = a * self.solution + b * sol_2
-            an = Analysis(self.domain, sol_combined)
-            fig1, ax1 = an.plot_periodic(
-                a=a,
-                b=b,
-                gapa=gapa,
-                gapb=gapb,
-                n_tile=n_tile,
-                resolution=30,
-                figax=(fig, ax),
-                colorbar=False,
-            )
-
-        anim = FuncAnimation(fig, update, frames=len(a_values), interval=200)
-        return fig, ax, anim
-
-    def plot_stream_boundary(self):
-        """Plot the stream function along the boundary."""
-        points = self.domain.boundary_points
+    def get_permeability(self, side, length, height, p_drop):
+        """Calculate the permeability of the domain at the outlet."""
+        # get the flow rate over the side
+        dom = self.domain
+        points = dom.boundary_points[dom.indices[side]]
         psi, uv, p, omega, eij = self.solution.functions
-        fig, ax = plt.subplots()
-        ax.plot(psi(points))
-        ax.plot(uv(points).real)
-        ax.plot(uv(points).imag)
-        ax.legend(["psi", "u", "v"])
-        return fig, ax
+        u = uv(points).real
+        # TODO use quadrature
+        flow_rate = np.mean(u)
+        # calculate the permeability
+        k = flow_rate * length / (p_drop * height)
+        return k
+
+    def non_dimensionalise(self, sol):
+        """Non-dimensionalise the solution."""
+        Z = self.get_Z(resolution=200)
+        U = np.max(np.abs(sol.uv(Z)))
+        # non-dimensionalise
+        nd_sol = self.sol / U
+        nd_sol.problem.scale_boundary_conditions(U)
+        return nd_sol

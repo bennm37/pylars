@@ -301,6 +301,8 @@ def test_lid_driven_cavity_solve():
 
 def test_single_circle_solve():
     """Tests the solver from BCs to solution."""
+    # TODO this test should probably be deleted -
+    # it tests against MATLAB code with the wrong BCs
     from pylars import Problem, Solver
     import numpy as np
     from scipy.io import loadmat
@@ -342,6 +344,9 @@ def test_single_circle_solve():
     prob.add_boundary_condition("2", "psi[2]", 1)
     prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
     prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    # These should be used but aren't in the MATLAB code
+    # prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 0)
+    # prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
     prob.add_boundary_condition("4", "u[4]", 0)
     prob.add_boundary_condition("4", "v[4]", 0)
     ATOL = 1e-12
@@ -356,6 +361,7 @@ def test_single_circle_solve():
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
     Z = X + 1j * Y
+
     psi_100_100 = sol.psi(Z).reshape(100, 100)
     p_100_100 = sol.p(Z).reshape(100, 100)
     uv_100_100 = sol.uv(Z).reshape(100, 100)

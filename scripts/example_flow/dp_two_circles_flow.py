@@ -62,7 +62,10 @@ print(f"Residual: {residual:.15e}")
 sol.problem.domain.enlarge_holes(1.1)
 an = Analysis(sol)
 fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
-plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
+fig, ax = an.plot_periodic(
+    interior_patch=True, resolution=200, n_streamlines=50
+)
+# plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
 
 # continuity checks
 dom = sol.problem.domain

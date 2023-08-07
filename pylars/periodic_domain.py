@@ -54,22 +54,28 @@ class PeriodicDomain(Domain):
         num_points=100,
         deg_laurent=10,
         image_laurents=False,
+        image_tol=0.5,
         mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Create a periodic curve from a parametric function."""
         if self.periodicity is None:
             raise ValueError("Periodicity must be specified")
         side = str(len(self.sides))
-        self.sides = np.concatenate([self.sides, [side]])
+        self.sides = np.append(self.sides, side)
         self.periodic_curves += [side]
         self.interior_curves += [side]
         self._generate_intersecting_images(
             side, f, num_points, centroid, deg_laurent
         )
         if mirror_laurents:
-            self._generate_mirror_laurents(side, deg_laurent, centroid)
+            self._generate_mirror_laurents(
+                side, deg_laurent, centroid, mirror_tol
+            )
         if image_laurents:
-            self._generate_image_laurents(side, deg_laurent, centroid)
+            self._generate_image_laurents(
+                side, deg_laurent, centroid, image_tol
+            )
         self._update_polygon()
 
     def get_nn_image_centroids(self, centroid, original=True):

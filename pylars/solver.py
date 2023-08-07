@@ -12,11 +12,11 @@ import pickle as pkl
 class Solver:
     """Solve lightning stokes problems on a given domain."""
 
-    def __init__(self, problem, least_squares="iterative"):
+    def __init__(self, problem, verbose=False):
         self.problem = problem
+        self.verbose = verbose
         self.domain = problem.domain
         self.boundary_conditions = problem.boundary_conditions
-        self.least_squares = least_squares
         self.num_edge_points = self.domain.num_edge_points
         self.boundary_points = self.domain.boundary_points
         self.num_poles = self.domain.num_poles
@@ -119,6 +119,8 @@ class Solver:
         """
         if check:
             self.problem.check_boundary_conditions()
+        if self.verbose:
+            print("Generating Basis ...")
         self.hessenbergs, self.Q = va_orthogonalise(
             self.boundary_points,
             self.degree,
@@ -138,20 +140,31 @@ class Solver:
             self.domain.exterior_laurents,
             second_deriv=True,
         )
+        if self.verbose:
+            print("Getting Dependents ...")
         self.get_dependents()
+        if self.verbose:
+            print("Constructing Linear System ...")
         self.construct_linear_system()
         if weight:
             self.weight_rows()
         if normalize:
             self.normalize()
+        if self.verbose:
+            print("A is of shape ", self.A.shape)
+            print("Solving ...")
         results = linalg.lstsq(self.A, self.b)
         self.coefficients = results[0]
         if results[1]:
             self.max_residual = np.sqrt(np.max(results[1]))
         else:
+            if self.verbose:
+                print("Evaluating Residual ...")
             self.max_residual = np.max(
                 np.abs(self.A @ self.coefficients - self.b)
             )
+        if self.verbose:
+            print("Constructing Functions ...")
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)

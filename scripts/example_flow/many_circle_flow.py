@@ -2,54 +2,7 @@
 from pylars import Problem, Solver, Analysis
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def generate_circles(n_circles, radius):
-    """Generate non-overlapping circles."""
-    L = 1.9
-    centroids = np.array(
-        L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
-    )
-    n_current = 1
-    i = 0
-    while n_current < n_circles:
-        i += 1
-        if i % 100000 == 0:
-            print(i)
-            print(f"{n_current=}")
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
-        if np.min(np.abs(centroid - centroids)) > 2 * radius:
-            centroids = np.append(centroids, centroid)
-            n_current += 1
-    return centroids
-
-
-def generate_normal_circles(n_circles, mean, std):
-    """Generate non-overlapping circles."""
-    L = 2 - 1.5 * (mean + 5 * std)
-    radii = np.array(np.random.normal(mean, std, 1))
-    centroids = np.array(
-        L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
-    )
-    n_current = 1
-    radius = np.random.normal(mean, std, 1)
-    while n_current < n_circles:
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
-        if np.min(np.abs(centroid - centroids) / (radii + radius)) > 1.5:
-            centroids = np.append(centroids, centroid)
-            radii = np.append(radii, radius)
-            n_current += 1
-            radius = np.random.normal(mean, std, 1)
-    return centroids, radii
-
+from circle_flow_2 import generate_normal_circles
 
 if __name__ == "__main__":
     prob = Problem()
@@ -62,8 +15,7 @@ if __name__ == "__main__":
         spacing="linear",
     )
     # centroids = [0.4 + 0.5j, 0.5 - 0.6j, -0.5 - 0.5j, -0.5 + 0.5j]
-    n_circles = 30
-    np.random.seed(0)
+    n_circles = 10
     centroids, radii = generate_normal_circles(n_circles, 0.03, 0.01)
     print("Circles generated")
     for centroid, radius in zip(centroids, radii):
@@ -97,5 +49,5 @@ if __name__ == "__main__":
     print(
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )
-    fig, ax = an.plot(resolution=100, interior_patch=False, epsilon=0.01)
+    fig, ax = an.plot(resolution=200, interior_patch=True, epsilon=0.01)
     plt.show()

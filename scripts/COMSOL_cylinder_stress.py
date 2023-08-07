@@ -39,7 +39,8 @@ sol = solver.solve(check=False, normalize=False)
 end = time.perf_counter()
 print(str(end - start) + " seconds")
 an = Analysis(sol)
-fig, ax = an.plot(resolution=100, interior_patch=True, buffer=1e-2)
+sol.problem.domain.enlarge_holes(1.0)
+fig, ax = an.plot(resolution=200, interior_patch=True)
 plt.savefig("media/circle_flow.pdf")
 plt.show()
 
@@ -86,5 +87,5 @@ ax.set(
     title="Normal Stress on Cylinder",
 )
 ax.legend()
-plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
+# plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
 plt.show()

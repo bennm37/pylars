@@ -1,7 +1,6 @@
 """Flow a domain with a circular interior curve.""" ""
 from pylars import Problem, Solver, Analysis
 import matplotlib.animation as animation
-import matplotlib.pyplot as plt
 import numpy as np
 
 prob = Problem()

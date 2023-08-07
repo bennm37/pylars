@@ -3,32 +3,40 @@ from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
 from circle_flow_2 import generate_normal_circles
+import time
 
 # create a square domain
 shift = 0.0 + 0.0j
 corners = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j])
 corners += shift
 prob = Problem()
-prob.add_exterior_polygon(
-    corners, num_edge_points=50, deg_poly=75, num_poles=0, spacing="linear"
+prob.add_periodic_domain(
+    length=2,
+    height=2,
+    num_edge_points=400,
+    deg_poly=50,
+    num_poles=0,
+    spacing="linear",
 )
 centroid = shift + 0.5 - 0.5j
 n_circles = 10
-np.random.seed(0)
+np.random.seed(14)
 centroids, radii = generate_normal_circles(n_circles, 0.03, 0.00)
 print("Circles generated")
 for centroid, radius in zip(centroids, radii):
-    prob.add_interior_curve(
+    prob.add_periodic_curve(
         lambda t: centroid + radius * np.exp(2j * np.pi * t),
-        num_points=50,
+        num_points=200,
         deg_laurent=10,
         centroid=centroid,
+        image_laurents=True,
+        image_tol=0.1,
+        mirror_laurents=False,
+        mirror_tol=0.1,
     )
-
-
 prob.add_point(shift + -1 - 1j)
-# prob.domain.plot()
-# plt.show()
+prob.domain.plot(set_lims=False)
+plt.show()
 
 # top and bottom periodicity
 p_drop = 2.0
@@ -48,20 +56,26 @@ for interior in interiors:
 prob.add_boundary_condition(f"{4+n_circles}", f"p[{4+n_circles}]", 2)
 prob.add_boundary_condition(f"{4+n_circles}", f"psi[{4+n_circles}]", 0)
 
-solver = Solver(prob)
+start = time.perf_counter()
+solver = Solver(prob, verbose=True)
 print("Solving the problem")
 sol = solver.solve(check=False, weight=False, normalize=False)
-residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
+abs_residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
+rel_residual = np.max(
+    np.abs(solver.A @ solver.coefficients - solver.b) / np.abs(solver.b)
+)
+end = time.perf_counter()
+print(f"Time taken: {end-start:.2f}s")
 # relatieve_
 # residual = np.max(
 #     np.abs(solver.A @ solver.coefficients - solver.b)
 #     / (np.abs(solver.b) + 1e-8)
 # )
-print(f"Residual: {residual:.15e}")
+print(f"Absolute Residual: {abs_residual:.15e}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
 sol.problem.domain.enlarge_holes(1.1)
 an = Analysis(sol)
-fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
+fig, ax = an.plot_periodic(interior_patch=True, quiver=True)
 plt.show()
 
 # continuity checks
