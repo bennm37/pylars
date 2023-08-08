@@ -1,4 +1,4 @@
-"""Solve Poiseiulle flow with stream function boundary conditions."""
+"""Solve poiseuille flow with stream function boundary conditions."""
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ corners = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j])
 corners += shift
 prob = Problem()
 prob.add_exterior_polygon(
-    corners, num_edge_points=50, deg_poly=50, num_poles=0, spacing="linear"
+    corners, num_edge_points=200, deg_poly=50, num_poles=0, spacing="linear"
 )
 centroid = shift + 0.5 - 0.5j
 R = 0.2j
@@ -49,7 +49,7 @@ prob.add_boundary_condition("5", "v[5]", 0)
 prob.add_boundary_condition("6", "p[6]", 0)
 prob.add_boundary_condition("6", "psi[6]", 0)
 
-solver = Solver(prob)
+solver = Solver(prob, verbose=True)
 sol = solver.solve(check=False, weight=False, normalize=False)
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 # relatieve_
@@ -59,7 +59,6 @@ residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 # )
 print(f"Residual: {residual:.15e}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
-sol.problem.domain.enlarge_holes(1.1)
 an = Analysis(sol)
 fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
 fig, ax = an.plot_periodic(

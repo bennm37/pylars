@@ -7,6 +7,7 @@ import scipy.linalg as linalg
 from scipy.sparse import diags
 import re
 import pickle as pkl
+import warnings
 
 
 class Solver:
@@ -153,6 +154,11 @@ class Solver:
         if self.verbose:
             print("A is of shape ", self.A.shape)
             print("Solving ...")
+        if self.A.shape[0] < 4 * self.A.shape[1]:
+            warnings.warn(
+                "A is not tall skinny enough, answers may be unreliable.",
+                Warning,
+            )
         results = linalg.lstsq(self.A, self.b)
         self.coefficients = results[0]
         if results[1]:

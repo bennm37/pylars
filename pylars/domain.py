@@ -361,17 +361,6 @@ class Domain:
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
 
-    def enlarge_holes(self, scale_factor):
-        """Enlarge the holes in the polygon."""
-        for interior_curve in self.interior_curves:
-            points = self.boundary_points[self.indices[interior_curve]]
-            centroid = self.centroids[interior_curve]
-            enlarged_points = (points - centroid) * scale_factor + centroid
-            self.boundary_points[self.indices[interior_curve]] = (
-                enlarged_points
-            ).reshape(-1, 1)
-        self._update_polygon()
-
     def plot(self, figax=None, set_lims=True):
         """Display the labelled polygon."""
         if figax is None:
@@ -392,10 +381,8 @@ class Domain:
             ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
         for side in self.sides:
-            print(side)
             centroid = np.mean(self.boundary_points[self.indices[side]])
             x, y = centroid.real, centroid.imag
-            print("using centroid")
             ax.text(
                 x,
                 y,

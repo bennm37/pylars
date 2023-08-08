@@ -33,15 +33,18 @@ class Analysis:
         n_streamlines=20,
         streamline_type="linear",
         interior_patch=False,
+        enlarge_patch=1.0,
         epsilon=1e-3,
         figax=None,
         colorbar=True,
         vmin=None,
         vmax=None,
         quiver=False,
+        imshow=False,
     ):
         """Plot the contours and velocity magnitude of the solution."""
-        corners = self.domain.corners
+        dom = self.domain
+        corners = dom.corners
         xmin, xmax = np.min(corners.real), np.max(corners.real)
         ymin, ymax = np.min(corners.imag), np.max(corners.imag)
         x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
@@ -49,7 +52,7 @@ class Analysis:
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")
         self.Z = self.X + 1j * self.Y
         psi, uv, p, omega, eij = self.solution.functions
-        self.Z[~self.domain.mask_contains(self.Z)] = np.nan
+        self.Z[~dom.mask_contains(self.Z)] = np.nan
         self.psi_values = psi(self.Z.flatten()).reshape(resolution, resolution)
         self.uv_values = uv(self.Z.flatten()).reshape(resolution, resolution)
         if figax is not None:
@@ -58,15 +61,26 @@ class Analysis:
             fig, ax = plt.subplots()
         speed = np.abs(self.uv_values)
         parula.set_bad("white")
-        pc = ax.pcolormesh(
-            self.X,
-            self.Y,
-            speed,
-            cmap=parula,
-            shading="gouraud",
-            vmin=vmin,
-            vmax=vmax,
-        )
+        if imshow:
+            pc = ax.imshow(
+                speed.T,
+                cmap=parula,
+                vmin=vmin,
+                vmax=vmax,
+                interpolation="quadric",
+                extent=[xmin, xmax, ymin, ymax],
+                origin="lower",
+            )
+        else:
+            pc = ax.pcolormesh(
+                self.X,
+                self.Y,
+                speed,
+                cmap=parula,
+                shading="gouraud",
+                vmin=vmin,
+                vmax=vmax,
+            )
 
         if colorbar:
             plt.colorbar(pc)
@@ -92,14 +106,19 @@ class Analysis:
             linewidths=0.5,
         )
         if interior_patch:
-            if self.domain.interior_curves is not None:
-                for interior_curve in self.domain.interior_curves:
-                    points = self.domain.boundary_points[
-                        self.domain.indices[interior_curve]
-                    ].reshape(-1)
-                    points = np.array([points.real, points.imag]).T
+            if dom.interior_curves is not None:
+                for interior_curve in dom.interior_curves:
+                    points = dom.boundary_points[dom.indices[interior_curve]]
+                    centroid = dom.centroids[interior_curve]
+                    enlarged_points = (
+                        points - centroid
+                    ) * enlarge_patch + centroid
+                    points = np.array(
+                        [enlarged_points.real, enlarged_points.imag]
+                    ).T.reshape(-1, 2)
                     poly = patches.Polygon(points, color="w", zorder=2)
                     ax.add_patch(poly)
+
         if quiver:
             stride = 20
             ax.quiver(
@@ -135,6 +154,7 @@ class Analysis:
         n_tile=3,
         figax=None,
         colorbar=True,
+        enlarge_patch=1.0,
     ):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
@@ -162,16 +182,16 @@ class Analysis:
         psi, uv, p, omega, eij = self.solution.functions
         self.psi_values = psi(self.Z).reshape(resolution, resolution)
         self.psi_values_tiled = np.tile(self.psi_values, (n_tile, n_tile))
-        dlr = np.mean(self.psi_values[:, -1] - self.psi_values[:, 0])
-        dtb = np.mean(self.psi_values[-1, :] - self.psi_values[0, :])
+        dlr = np.mean(self.psi_values[-1, :] - self.psi_values[0, :])
+        dtb = np.mean(self.psi_values[:, -1] - self.psi_values[:, 0])
         ones = np.ones((resolution, resolution))
         psi_correction = np.block(
             [
-                [-dlr * ones + dtb, 0 + dtb * ones, dlr * ones + dtb],
-                [-dlr * ones, 0 * ones, dlr * ones],
                 [-dlr * ones - dtb, 0 - dtb * ones, dlr * ones - dtb],
+                [-dlr * ones, 0 * dtb * ones, dlr * ones],
+                [-dlr * ones + dtb, 0 + dtb * ones, dlr * ones + dtb],
             ]
-        )
+        ).T
         self.psi_values_tiled += psi_correction
         self.uv_values = uv(self.Z).reshape(resolution, resolution)
         self.uv_values_tiled = np.tile(self.uv_values, (n_tile, n_tile))
@@ -213,13 +233,18 @@ class Analysis:
                 [length, -height],
             ]
         )
+        dom = self.domain
         if interior_patch:
             if self.domain.interior_curves is not None:
                 for interior_curve in self.domain.interior_curves:
-                    points = self.domain.boundary_points[
-                        self.domain.indices[interior_curve]
-                    ].reshape(-1)
-                    points = np.array([points.real, points.imag]).T
+                    points = dom.boundary_points[dom.indices[interior_curve]]
+                    centroid = dom.centroids[interior_curve]
+                    enlarged_points = (
+                        points - centroid
+                    ) * enlarge_patch + centroid
+                    points = np.array(
+                        [enlarged_points.real, enlarged_points.imag]
+                    ).T.reshape(-1, 2)
                     for disp in disps:
                         translated_points = points + disp[np.newaxis, :]
                         poly = patches.Polygon(
@@ -279,3 +304,17 @@ class Analysis:
         nd_sol = self.sol / U
         nd_sol.problem.scale_boundary_conditions(U)
         return nd_sol
+
+    def save_pgf(self, filename, fig, resolution=100):
+        """Save the solution to a pgf file."""
+        import matplotlib
+
+        matplotlib.rcParams.update(
+            {
+                "pgf.texsystem": "pdflatex",
+                "font.family": "serif",
+                "text.usetex": True,
+                "pgf.rcfonts": False,
+            }
+        )
+        plt.savefig(filename + ".pgf", backend="pgf")

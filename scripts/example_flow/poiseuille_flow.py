@@ -1,4 +1,4 @@
-"""Poiseiulle flow in a square domain.""" ""
+"""poiseuille flow in a square domain.""" ""
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,7 +38,7 @@ x_quiver = -np.ones_like(y_quiver)
 u = sol.uv(x_quiver + 1j * y_quiver).real
 v = sol.uv(x_quiver + 1j * y_quiver).imag
 ax.quiver(x_quiver, y_quiver, u, v, color="black", scale=2)
-plt.savefig("media/poiseiulle_flow.pdf", bbox_inches="tight")
+plt.savefig("media/poiseuille_flow.pdf", bbox_inches="tight")
 plt.show()
 
 # Figure 2: Plot profiles.

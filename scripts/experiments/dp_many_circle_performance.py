@@ -1,4 +1,4 @@
-"""Solve Poiseiulle flow with stream function boundary conditions."""
+"""Solve poiseuille flow with stream function boundary conditions."""
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib.pyplot as plt

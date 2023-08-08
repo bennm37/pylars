@@ -93,9 +93,8 @@ if __name__ == "__main__":
     solver = Solver(prob)
     sol = solver.solve(check=False, normalize=False, weight=False)
     an = Analysis(sol)
-    sol.problem.domain.enlarge_holes(1.0)
     print(
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )
-    fig, ax = an.plot(resolution=100, interior_patch=False, epsilon=0.01)
+    fig, ax = an.plot(resolution=100, interior_patch=False, enlarge_patch=1.1)
     plt.show()
