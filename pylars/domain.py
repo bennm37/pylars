@@ -77,13 +77,17 @@ class Domain:
         deg_laurent=10,
         aaa=False,
         mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
         self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
-            self._generate_mirror_laurents(side, deg_laurent, centroid)
+            self._generate_mirror_laurents(
+                side, deg_laurent, centroid, mirror_tol
+            )
         self._update_polygon()
+        return side
 
     def add_mover(
         self,
@@ -96,13 +100,15 @@ class Domain:
         mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function."""
-        side = self._generate_interior_curve_points(f, num_points)
-        self._generate_interior_laurent_series(side, deg_laurent, centroid)
-        if mirror_laurents:
-            self._generate_mirror_laurents(
-                side, deg_laurent, centroid, mirror_tol
-            )
-        self._update_polygon()
+        side = self.add_interior_curve(
+            f,
+            centroid,
+            num_points,
+            deg_laurent,
+            aaa,
+            mirror_laurents,
+            mirror_tol
+        )
         self.movers += [side]
         return side
 

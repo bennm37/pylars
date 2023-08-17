@@ -53,10 +53,11 @@ class PeriodicDomain(Domain):
         centroid,
         num_points=100,
         deg_laurent=10,
-        image_laurents=False,
-        image_tol=0.5,
+        aaa=False,
         mirror_laurents=False,
         mirror_tol=0.5,
+        image_laurents=False,
+        image_tol=0.5,
     ):
         """Create a periodic curve from a parametric function."""
         if self.periodicity is None:
@@ -77,6 +78,34 @@ class PeriodicDomain(Domain):
                 side, deg_laurent, centroid, image_tol
             )
         self._update_polygon()
+        return side
+
+    def add_mover(
+        self,
+        f,
+        centroid,
+        num_points=100,
+        deg_laurent=10,
+        aaa=False,
+        mirror_laurents=False,
+        mirror_tol=0.5,
+        image_laurents=False,
+        image_tol=0.5,
+    ):
+        """Create an interior curve from a parametric function."""
+        side = self.add_periodic_curve(
+            f,
+            centroid,
+            num_points,
+            deg_laurent,
+            aaa,
+            mirror_laurents,
+            mirror_tol,
+            image_laurents,
+            image_tol,
+        )
+        self.movers += [side]
+        return side
 
     def get_nn_image_centroids(self, centroid, original=True):
         """Generate the nearest neighbour image centroids."""

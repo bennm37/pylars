@@ -94,6 +94,8 @@ class LowDensityMoverSimulation(Simulation):
         prob.add_mover(
             mover,
             deg_laurent=self.deg_laurent,
+            image_laurents=True,
+            image_tol=1.0,
         )
         sol = Solver(prob).solve()
         force = sol.force(mover.curve, mover.deriv)

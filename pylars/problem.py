@@ -101,9 +101,9 @@ class Problem:
     def add_periodic_curve(
         self,
         f,
+        centroid,
         num_points=100,
         deg_laurent=10,
-        centroid=None,
         aaa=False,
         image_laurents=False,
         image_tol=0.5,
@@ -143,6 +143,8 @@ class Problem:
         aaa=False,
         mirror_laurents=False,
         mirror_tol=0.5,
+        image_laurents=False,
+        image_tol=0.5,
     ):
         """Add a mover object.
 
@@ -153,14 +155,26 @@ class Problem:
             return NotImplemented
         if self.domain is None:
             raise ValueError("Exterior polygon must be set first.")
-        side = self.domain.add_mover(
-            f=mover.curve,
-            num_points=num_points,
-            deg_laurent=deg_laurent,
-            centroid=mover.centroid,
-            mirror_laurents=mirror_laurents,
-            mirror_tol=mirror_tol,
-        )
+        if isinstance(self.domain, PeriodicDomain):
+            side = self.domain.add_mover(
+                f=mover.curve,
+                num_points=num_points,
+                deg_laurent=deg_laurent,
+                centroid=mover.centroid,
+                mirror_laurents=mirror_laurents,
+                mirror_tol=mirror_tol,
+                image_laurents=image_laurents,
+                image_tol=image_tol,
+            )
+        else:
+            side = self.domain.add_mover(
+                f=mover.curve,
+                num_points=num_points,
+                deg_laurent=deg_laurent,
+                centroid=mover.centroid,
+                mirror_laurents=mirror_laurents,
+                mirror_tol=mirror_tol,
+            )
         diff = mover.curve(np.linspace(0, 1, num_points)) - mover.centroid
         rs = np.abs(diff)
         thetas = np.angle(diff)
