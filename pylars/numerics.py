@@ -403,7 +403,6 @@ def aaa(F, Z, tol=1e-13, mmax=100):
     errvec = np.empty((0, 1))
     R = np.mean(F)
     for M in range(mmax - 1):
-        print("iteration")
         j = np.argmax(np.abs(F - R))  # select next support point
         z = np.vstack([z, Z[j]])  # update support points, data values'
         f = np.vstack([f, F[j]])  # update support points, data values

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from numbers import Number, Integral
 from collections.abc import Sequence
 from collections import Counter
-from pylars.numerics import cart, cluster
+from pylars.numerics import cart, cluster, aaa
 from shapely import Point, Polygon, LineString
 import matplotlib.patches as patches
 
@@ -76,17 +76,20 @@ class Domain:
         num_points=100,
         deg_laurent=10,
         aaa=False,
+        aaa_mmax=10,
         mirror_laurents=False,
         mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_curve_points(f, num_points)
+        self._update_polygon()
         self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
             self._generate_mirror_laurents(
                 side, deg_laurent, centroid, mirror_tol
             )
-        self._update_polygon()
+        if aaa:
+            self._generate_aaa_poles(side, mmax=aaa_mmax)
         return side
 
     def add_mover(
@@ -286,12 +289,10 @@ class Domain:
                 for i in range(len(self.corners))
             ]
         )
-        self.poles = np.array(
-            [
-                self.corners[i] + signs[i] * bisectors[i] * pole_spacing
-                for i in range(len(self.corners))
-            ]
-        )
+        self.poles = [
+            self.corners[i] + signs[i] * bisectors[i] * pole_spacing
+            for i in range(len(self.corners))
+        ]
 
     def _generate_interior_laurent_series(self, side, degree, centroid):
         """Generate Laurent series in a hole of the domain."""
@@ -350,6 +351,20 @@ class Domain:
                         len(self.exterior_laurents) - 1
                     ]
 
+    def _generate_aaa_poles(self, side, mmax=None):
+        """Generate aaa poles that lie outside the domain."""
+        z = self.boundary_points[self.indices[side]]
+        f = np.conj(z)
+        if mmax is None:
+            _, poles, _, _ = aaa(f, z)
+        else:
+            _, poles, _, _ = aaa(f, z, mmax=mmax)
+        exterior_poles = [
+            pole for pole in poles if not self.__contains__(pole)
+        ]
+
+        self.poles = list(self.poles) + [np.array(exterior_poles)]
+
     def _update_polygon(self, buffer=0):
         """Update the polygon."""
         holes = [
@@ -371,7 +386,9 @@ class Domain:
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
-        flat_poles = self.poles.flatten()
+        flat_poles = np.hstack(
+            [pole_group.flatten() for pole_group in self.poles]
+        )
         if set_lims:
             try:
                 x_min = min(flat_poles.real)

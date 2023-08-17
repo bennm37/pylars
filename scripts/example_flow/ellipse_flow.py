@@ -17,23 +17,25 @@ if __name__ == "__main__":
     corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=300,
+        num_edge_points=500,
         num_poles=0,
         deg_poly=100,
         spacing="linear",
     )
     a, b = 0.5, 0.18
-    theta = 0.0
+    theta = np.pi / 2
     prob.add_interior_curve(
         get_ellipse(a, b, theta),
         num_points=300,
-        deg_laurent=50,
+        deg_laurent=0,
         centroid=0.0 + 0.0j,
+        aaa=True,
+        aaa_mmax=None,
     )
     prob.add_point(-1 - 1j)
     prob.domain.plot()
     plt.tight_layout()
-    plt.savefig("media/circle_domain.pdf")
+    plt.show()
 
     prob.add_boundary_condition("0", "u[0]", 0)
     prob.add_boundary_condition("0", "v[0]", 0)

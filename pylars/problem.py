@@ -74,6 +74,7 @@ class Problem:
         deg_laurent=10,
         centroid=None,
         aaa=False,
+        aaa_mmax=None,
         mirror_laurents=False,
         mirror_tol=0.5,
     ):
@@ -87,8 +88,6 @@ class Problem:
                 """Can't add interior curve to periodic domain.
                 Use add_periodic_curve instead."""
             )
-        if aaa:
-            return NotImplemented
         if self.domain is None:
             raise ValueError("Exterior polygon must be set first.")
         self.domain.add_interior_curve(
@@ -96,6 +95,8 @@ class Problem:
             num_points=num_points,
             deg_laurent=deg_laurent,
             centroid=centroid,
+            aaa=aaa,
+            aaa_mmax=aaa_mmax,
             mirror_laurents=mirror_laurents,
             mirror_tol=mirror_tol,
         )
