@@ -3,6 +3,7 @@
 
 def test_poiseuille_force():
     """Test force calculation using the solution class."""
+    # TODO this is a bad test, the force and torque are always zero
     from pylars import Problem, Solver
     import numpy as np
 
@@ -51,13 +52,16 @@ def test_poiseuille_force():
     force = sol.force(curve, deriv)
     assert np.allclose(force, poiseuille_force, atol=ATOL, rtol=RTOL)
     centorids = np.arange(0, 0.5, 0.1) * 1j
+    R = 0.3
     for centroid in centorids:
-        circle = lambda t: centroid + 0.5 * np.exp(2j * np.pi * t)  # noqa E731
+        circle = lambda t: centroid + 0.3 * np.exp(2j * np.pi * t)  # noqa E731
         circle_deriv = (
             lambda t: 1j * np.pi * np.exp(2j * np.pi * t)
         )  # noqa E731
+        force = sol.force(circle, circle_deriv)
+        assert np.isclose(force, 0.0j, atol=ATOL, rtol=RTOL)
         torque = sol.torque(circle, circle_deriv, centroid=centroid)
-        assert np.isclose(torque, -centroid.imag * np.pi, atol=ATOL, rtol=RTOL)
+        assert np.isclose(torque, 0.0j, atol=ATOL, rtol=RTOL)
 
 
 def test_goursat_force():

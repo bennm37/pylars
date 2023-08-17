@@ -5,7 +5,7 @@ import numpy as np
 import copy
 
 OPERATIONS = ["[::-1]", "+", "-", "*", "/", "**", "(", ")"]
-DEPENDENT = ["psi", "u", "v", "p", "e12"]
+DEPENDENT = ["psi", "u", "v", "p", "e11", "e12"]
 INDEPENDENT = ["x", "y"]
 
 

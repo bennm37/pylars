@@ -25,7 +25,7 @@ init_prob.add_boundary_condition("4", "p[4]", 0)
 init_prob.add_boundary_condition("4", "psi[4]", 0)
 # init_prob.domain.plot()
 # plt.show()
-centroid = 0.0 + 0.2j
+centroid = -0.8 + 0.2j
 angle = 0.0
 R = 0.1
 curve = lambda t: centroid + R * np.exp(2j * np.pi * t)
@@ -38,8 +38,8 @@ cell = Mover(
 )
 movers = [cell]
 ldms = LowDensityMoverSimulation(init_prob, movers)
-results = ldms.run(0, 0.5, 0.05)
+results = ldms.run(0, 0.1, 0.05)
 print(results["residuals"])
 an = SimulationAnalysis(results)
 fig, ax, anim = an.animate_fast(interval=50, streamline_type="starting_points")
-anim.save("media/ldms_small.mp4")
+# anim.save(f"media/ldms_R_{R}.mp4")

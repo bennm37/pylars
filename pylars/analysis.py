@@ -4,6 +4,7 @@ Supports plotting of the contours and velocity magnitude of the solution.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
@@ -283,6 +284,47 @@ class Analysis:
         # plt.tight_layout()
         return fig, ax
 
+    def plot_relative_periodicity_error(
+        self, p_drop_lr=2, p_drop_tb=0, tol=1e-10
+    ):
+        """Plot the relative periodicity error."""
+        errors = self.get_relative_periodicity_errors(tol=tol)
+        fig, ax = plt.subplots()
+        for name, values in errors.items():
+            ax.plot(self.left.imag, values[0], label=f"{name} lr")
+            ax.plot(self.top.real, values[1], label=f"{name} tb")
+        ax.legend()
+        plt.show()
+
+    def plot_stress_torque(self, curve, deriv, centroid):
+        """Plot stress and torque."""
+        pass
+
+    def bar_relative_periodicity_error(
+        self, p_drop_lr=2, p_drop_tb=0, tol=1e-10
+    ):
+        """Barchart of the max relative periodicity error."""
+        errors = self.get_relative_periodicity_errors(tol=tol)
+        fig, ax = plt.subplots()
+        names = []
+        values = []
+        for name, value in errors.items():
+            names.append(name + " lr")
+            values.append(np.max(value[0]))
+            names.append(name + " tb")
+            values.append(np.max(value[1]))
+        indices = np.argsort(values)[::-1]
+        values = np.sort(values)[::-1]
+        names = np.array(names)[indices]
+        cmap = cm.get_cmap("bone")
+        # colors = np.log(values) - np.min(np.log(values))
+        colors = np.linspace(0, 1, len(values))
+        colors /= np.max(colors)
+        colors = cmap(colors)
+        ax.bar(names, values, color=colors)
+        ax.set(yscale="log")
+        plt.show()
+
     def get_permeability(self, side, length, height, p_drop):
         """Calculate the permeability of the domain at the outlet."""
         # get the flow rate over the side
@@ -295,6 +337,54 @@ class Analysis:
         # calculate the permeability
         k = flow_rate * length / (p_drop * height)
         return k
+
+    def get_relative_periodicity_errors(self, tol=1e-10):
+        """Calculate the relative periodicity errors for all variables."""
+        e11_error_lr, e11_error_tb = self.get_relative_periodicity_error(
+            lambda x: self.solution.eij(x)[:, 0, 0], tol=tol
+        )
+        e12_error_lr, e12_error_tb = self.get_relative_periodicity_error(
+            lambda x: self.solution.eij(x)[:, 0, 1], tol=tol
+        )
+        p_error_lr, p_error_tb = self.get_relative_periodicity_error(
+            lambda x: self.solution.eij(x)[:, 0, 1], tol=tol
+        )
+        u_error_lr, u_error_tb = self.get_relative_periodicity_error(
+            lambda x: self.solution.eij(x)[:, 0, 1], tol=tol
+        )
+        v_error_lr, v_error_tb = self.get_relative_periodicity_error(
+            lambda x: self.solution.eij(x)[:, 0, 1], tol=tol
+        )
+        return {
+            "e11": [e11_error_lr, e11_error_tb],
+            "e12": [e12_error_lr, e12_error_tb],
+            "p": [p_error_lr, p_error_tb],
+            "u": [u_error_lr, u_error_tb],
+            "v": [v_error_lr, v_error_tb],
+        }
+
+    def get_relative_periodicity_error(self, f, tol=1e-10):
+        """Calculate the relative periodicity error."""
+        if not hasattr(self, "left") or not hasattr(self, "top"):
+            self.get_left_top()
+        left_error = np.abs(f(self.left) - f(self.left + 2)) / np.max(
+            np.abs(f(self.left + 2))
+        )
+        top_error = np.abs(f(self.top) - f(self.top - 2j)) / np.max(
+            np.abs(f(self.top - 2j))
+        )
+        if np.max(np.abs(f(self.top - 2j))) < tol:
+            print("Warning: top error is rounded to zero")
+            top_error = np.zeros_like(top_error)
+        if np.max(np.abs(f(self.left + 2))) < tol:
+            print("Warning: left error is rounded to zero")
+            top_error = np.zeros_like(top_error)
+        return left_error, top_error
+
+    def get_left_top(self):
+        """Get points on left and bottom sides."""
+        self.top = self.domain.boundary_points[self.domain.indices["0"]]
+        self.left = self.domain.boundary_points[self.domain.indices["1"]]
 
     def non_dimensionalise(self, sol):
         """Non-dimensionalise the solution."""

@@ -6,7 +6,7 @@ import numpy as np
 
 def generate_circles(n_circles, radius):
     """Generate non-overlapping circles."""
-    L = 1.9
+    L = 1.8
     centroids = np.array(
         L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
     )
@@ -30,7 +30,7 @@ def generate_circles(n_circles, radius):
 
 def generate_normal_circles(n_circles, mean, std):
     """Generate non-overlapping circles."""
-    L = 2 - 1.5 * (mean + 5 * std)
+    L = 2 - 3 * (mean + 5 * std)
     radii = np.array(np.random.normal(mean, std, 1))
     centroids = np.array(
         L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
@@ -56,21 +56,21 @@ if __name__ == "__main__":
     corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=100,
+        num_edge_points=500,
         num_poles=0,
-        deg_poly=100,
+        deg_poly=50,
         spacing="linear",
     )
     # centroids = [0.4 + 0.5j, 0.5 - 0.6j, -0.5 - 0.5j, -0.5 + 0.5j]
-    n_circles = 30
+    n_circles = 20
     np.random.seed(0)
     centroids, radii = generate_normal_circles(n_circles, 0.03, 0.01)
     print("Circles generated")
     for centroid, radius in zip(centroids, radii):
         prob.add_interior_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=50,
-            deg_laurent=10,
+            num_points=150,
+            deg_laurent=8,
             centroid=centroid,
             mirror_laurents=True,
         )
@@ -90,11 +90,11 @@ if __name__ == "__main__":
         prob.add_boundary_condition(f"{interior}", f"u[{interior}]", 0)
         prob.add_boundary_condition(f"{interior}", f"v[{interior}]", 0)
 
-    solver = Solver(prob)
+    solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
     an = Analysis(sol)
     print(
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )
-    fig, ax = an.plot(resolution=100, interior_patch=False, enlarge_patch=1.1)
+    fig, ax = an.plot(resolution=100, interior_patch=True, enlarge_patch=1.1)
     plt.show()

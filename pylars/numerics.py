@@ -392,7 +392,7 @@ def aaa(F, Z, tol=1e-13, mmax=100):
     """Use the AAA algorithm to compute a rational approximation of f(z)."""
     M = len(Z)
     if hasattr(F, "__call__"):
-        F = F(z)
+        F = F(Z)
     Z = np.array(Z).reshape(-1, 1)
     F = np.array(F).reshape(-1, 1)
     SF = diags(F.flatten())

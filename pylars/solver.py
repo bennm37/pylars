@@ -7,7 +7,6 @@ import scipy.linalg as linalg
 from scipy.sparse import diags
 import re
 import pickle as pkl
-import warnings
 
 
 class Solver:
@@ -26,7 +25,14 @@ class Solver:
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
-        code_dependent = ["self.PSI", "self.U", "self.V", "self.P", "self.E12"]
+        code_dependent = [
+            "self.PSI",
+            "self.U",
+            "self.V",
+            "self.P",
+            "self.E11",
+            "self.E12",
+        ]
         for identifier, code in zip(DEPENDENT, code_dependent):
             identifier += "["
             code += "["
@@ -155,9 +161,8 @@ class Solver:
             print("A is of shape ", self.A.shape)
             print("Solving ...")
         if self.A.shape[0] < 4 * self.A.shape[1]:
-            warnings.warn(
-                "A is not tall skinny enough, answers may be unreliable.",
-                Warning,
+            raise ValueError(
+                "A is not tall skinny enough. Add more boundary points."
             )
         results = linalg.lstsq(self.A, self.b)
         self.coefficients = results[0]
@@ -357,6 +362,12 @@ class Solver:
             psi_4 = np.real(basis)
             self.PSI = np.hstack((psi_1, psi_2, psi_3, psi_4))
 
+            e11_1 = np.real(conj_z @ basis_deriv_2)
+            e11_2 = np.real(basis_deriv_2)
+            e11_3 = -np.imag(conj_z @ basis_deriv_2)
+            e11_4 = -np.imag(basis_deriv_2)
+            self.E11 = np.hstack((e11_1, e11_2, e11_3, e11_4))
+
             e12_1 = -np.imag(conj_z @ basis_deriv_2)
             e12_2 = -np.imag(basis_deriv_2)
             e12_3 = -np.real(conj_z @ basis_deriv_2)
@@ -415,7 +426,18 @@ class Solver:
                 (psi_1, psi_2, psi_3, psi_4, psi_5, psi_6, psi_7, psi_8)
             )
 
-            # TODO check e12_3 and e12_7 with Yidan.
+            e11_1 = np.real(conj_z @ basis_deriv_2)
+            e11_2 = np.real(basis_deriv_2)
+            e11_3 = np.real(-conj_z * one_over_z**2 - one_over_z)
+            e11_4 = np.real(-(one_over_z**2))
+            e11_5 = -np.imag(conj_z @ basis_deriv_2)
+            e11_6 = -np.imag(basis_deriv_2)
+            e11_7 = -np.imag(-conj_z * one_over_z**2 + one_over_z)
+            e11_8 = -np.imag(-(one_over_z**2))
+            self.E11 = np.hstack(
+                (e11_1, e11_2, e11_3, e11_4, e11_5, e11_6, e11_7, e11_8)
+            )
+
             e12_1 = -np.imag(conj_z @ basis_deriv_2)
             e12_2 = -np.imag(basis_deriv_2)
             e12_3 = -np.imag(-conj_z * one_over_z**2 - one_over_z)

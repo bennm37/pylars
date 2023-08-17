@@ -30,7 +30,6 @@ def test_lid_driven_cavity_get_dependents():
         deg_poly=24,
         num_poles=num_poles,
     )
-    # prob.show()
     solver = Solver(prob)
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer

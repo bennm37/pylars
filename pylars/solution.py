@@ -78,8 +78,8 @@ class Solution:
             normal = -1j * deriv(s)  # outward facing normal
             norm = np.array([normal.real, normal.imag])
             result = norm @ stress
-            force = result[0] + 1j * result[1]
-            torque = (z - centroid) * force
+            stress_vec = result[0] + 1j * result[1]
+            torque = np.conj(z - centroid) * stress_vec
             return torque.imag
 
         return quad(integrand, 0, 1)[0]

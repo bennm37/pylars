@@ -58,7 +58,7 @@ prob.domain.plot(set_lims=False)
 plt.show()
 
 # top and bottom periodicity
-p_drop = 60
+p_drop = 120
 prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
 prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
 prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
@@ -91,40 +91,7 @@ fig, ax = an.plot_periodic(interior_patch=True, enlarge_patch=1.0)
 plt.show()
 
 # continuity checks
-dom = sol.problem.domain
-points_0 = dom.boundary_points[dom.indices["0"]]
-points_1 = dom.boundary_points[dom.indices["1"]]
-fig, ax = plt.subplots()
-plt.plot(
-    points_0.real,
-    np.abs(sol.eij(points_0)[:, 0, 1] - sol.eij(points_0 - 2j)[:, 0, 1]),
-    label="e12 tb",
-)
-plt.plot(
-    points_1.imag,
-    np.abs(sol.eij(points_1)[:, 0, 1] - sol.eij(points_1 + 2)[:, 0, 1]),
-    label="e12 lr",
-)
-plt.plot(
-    points_0.real,
-    np.abs(sol.eij(points_0)[:, 0, 0] - sol.eij(points_0 - 2j)[:, 0, 0]),
-    label="e11 tb",
-)
-plt.plot(
-    points_1.imag,
-    np.abs(sol.eij(points_1)[:, 0, 0] - sol.eij(points_1 + 2)[:, 0, 0]),
-    label="e11 lr",
-)
-plt.plot(
-    points_0.real,
-    np.abs(sol.p(points_0) - sol.p(points_0 - 2j)),
-    label="p tb",
-)
-plt.plot(
-    points_1.imag,
-    np.abs(sol.p(points_1) - sol.p(points_1 + 2) - p_drop),
-    label="p lr",
-)
-
-plt.legend()
+an.plot_relative_periodicity_error()
+plt.show()
+an.bar_plot_relative_periodicity_error()
 plt.show()

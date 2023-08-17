@@ -92,7 +92,8 @@ class LowDensityMoverSimulation(Simulation):
         else:
             prob = self.base_problem.copy()
         prob.add_mover(
-            mover, deg_laurent=self.deg_laurent, mirror_laurents=True
+            mover,
+            deg_laurent=self.deg_laurent,
         )
         sol = Solver(prob).solve()
         force = sol.force(mover.curve, mover.deriv)
