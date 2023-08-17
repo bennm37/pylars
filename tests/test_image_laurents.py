@@ -17,6 +17,7 @@ def test_mirror_laurents():
         deg_laurent=deg_laurent,
         centroid=centroid,
         mirror_laurents=True,
+        mirror_tol=1,
     )
     dom = prob.domain
     dom.plot(set_lims=False)

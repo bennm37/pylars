@@ -75,6 +75,7 @@ class Problem:
         centroid=None,
         aaa=False,
         mirror_laurents=False,
+        mirror_tol=0.5,
     ):
         """Create an interior curve from a parametric function.
 
@@ -96,6 +97,7 @@ class Problem:
             deg_laurent=deg_laurent,
             centroid=centroid,
             mirror_laurents=mirror_laurents,
+            mirror_tol=mirror_tol,
         )
 
     def add_periodic_curve(

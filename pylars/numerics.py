@@ -2,8 +2,7 @@
 import numpy as np
 from numbers import Number
 from scipy.sparse import diags
-from scipy.linalg import svd
-from numpy.linalg import eig
+from scipy.linalg import svd, eig
 
 
 def cart(z):
@@ -394,31 +393,34 @@ def aaa(F, Z, tol=1e-13, mmax=100):
     if hasattr(F, "__call__"):
         F = F(Z)
     Z = np.array(Z).reshape(-1, 1)
+    M = len(Z)
     F = np.array(F).reshape(-1, 1)
     SF = diags(F.flatten())
-    J = np.array(range(m))
+    J = np.array(range(M))
     z = np.empty((0, 1))
     f = np.empty((0, 1))
     C = np.empty((M, 0))
     errvec = np.empty((0, 1))
     R = np.mean(F)
-    for m in range(mmax):
+    for M in range(mmax - 1):
+        print("iteration")
         j = np.argmax(np.abs(F - R))  # select next support point
         z = np.vstack([z, Z[j]])  # update support points, data values'
         f = np.vstack([f, F[j]])  # update support points, data values
-        J = np.delete(J, j)  # update index vector
+        J = np.delete(J, np.where(J == j))  # update index vector
         C = np.hstack([C, 1 / (Z - Z[j])])  # next column of Cauchy matrix
         Sf = diags(f.flatten())  # right scaling matrix
         A = SF @ C - C @ Sf  # Loewner matrix
         _, _, V = svd(A[J, :])  # SVD
-        w = V[:, m]  # weight vector = min sing vector
+        V = np.conj(V.T)
+        w = V[:, M].reshape(-1, 1)  # weight vector = min sing vector
         N = C @ (w * f)
         D = C @ w  # numerator and denominator
-        R = F
+        R = F.copy()
         R[J] = N[J] / D[J]  # rational approximation
-        err = np.max(F - R)
+        err = np.max(np.abs(F - R))
         errvec = np.vstack([errvec, err])  # max error at sample points
-        if err <= tol * np.max(F):
+        if err <= np.abs(tol * np.max(F)):
             break  # stop if converged
 
     def r(zz):
@@ -428,34 +430,30 @@ def aaa(F, Z, tol=1e-13, mmax=100):
     return r, poles, residues, zeros
 
 
-def prz(r, z, f, w):  # compute poles, residues, zeros
+def prz(r, z, f, w):
     """Compute poles, residues, zeros for aaa."""
-    m = len(w)
-    B = np.eye(m + 1)
+    M = len(w)
+    B = np.eye(M + 1)
     B[0, 0] = 0
-    E = np.array([[0] + list(w), np.ones(m), np.diag(z)])
+    E = np.hstack([np.ones((M, 1)), np.diag(z.flatten())])
+    E = np.vstack([np.append(0, w.T), E])
     pol = eig(E, B)[0]
     pol = pol[~np.isinf(pol)]  # poles
     dz = 1e-5 * np.exp(2j * np.pi * np.arange(1, 5) / 4)
     res = r(pol[:, None] + dz) @ dz.T / 4  # residues
-    E = np.array([[0] + list(w * f), np.ones(m), np.diag(z)])
+    E = np.hstack([np.ones((M, 1)), np.diag(z.flatten())])
+    E = np.vstack([np.append(0, (w * f).T), E])
     zer = eig(E, B)[0]
     zer = zer[~np.isinf(zer)]  # zeros
     return pol, res, zer
 
 
-# function [pol, res, zer] = prz(r, z, f, w) % compute poles, residues, zeros
-#     m = length(w);
-#     B = eye(m + 1);
-#     B(1, 1) = 0
-#     E = [0 w.'; ones(m, 1) diag(z)];
-#     pol = eig(E, B); pol = pol(~isinf(pol)); % poles
-#     dz = 1e-5 * exp(2i * pi * (1:4) / 4);
-#     res = r(bsxfun(@plus, pol, dz)) * dz.' / 4; % residues
-#     E = [0 (w .* f).'; ones(m, 1) diag(z)];
-#     zer = eig(E, B); zer = zer(~isinf(zer)); % zeros
-# end
-
-
 def rhandle(zz, z, f, w):
-    pass
+    """Create the function for r."""
+    zv = zz.reshape(-1, 1)
+    CC = 1 / (zv - z.T)
+    r = (CC @ (w * f)) / (CC @ w)
+    ii = np.where(np.isnan(r))
+    for i in ii:
+        r[i] = f[np.where(z[i] == z)]
+    return r.reshape(zz.shape)

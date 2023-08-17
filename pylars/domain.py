@@ -107,7 +107,7 @@ class Domain:
             deg_laurent,
             aaa,
             mirror_laurents,
-            mirror_tol
+            mirror_tol,
         )
         self.movers += [side]
         return side
