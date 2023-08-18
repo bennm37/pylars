@@ -2,7 +2,8 @@
 import numpy as np
 from numbers import Number
 from scipy.sparse import diags
-from scipy.linalg import svd, eig
+from scipy.linalg import eig
+from numpy.linalg import svd
 
 
 def cart(z):
@@ -403,6 +404,8 @@ def aaa(F, Z, tol=1e-13, mmax=100):
     errvec = np.empty((0, 1))
     R = np.mean(F)
     for M in range(mmax - 1):
+        if M % 5 == 0:
+            print(f"AAA iteration {M}")
         j = np.argmax(np.abs(F - R))  # select next support point
         z = np.vstack([z, Z[j]])  # update support points, data values'
         f = np.vstack([f, F[j]])  # update support points, data values
@@ -410,7 +413,17 @@ def aaa(F, Z, tol=1e-13, mmax=100):
         C = np.hstack([C, 1 / (Z - Z[j])])  # next column of Cauchy matrix
         Sf = diags(f.flatten())  # right scaling matrix
         A = SF @ C - C @ Sf  # Loewner matrix
-        _, _, V = svd(A[J, :])  # SVD
+        _, _, V = svd(
+            A[J, :],
+            full_matrices=False,
+        )  # SVD
+        # _, _, V = svd(
+        #     A[J, :],
+        #     full_matrices=False,
+        #     check_finite=False,
+        #     overwrite_a=True,
+        #     lapack_driver="gesdd",
+        # )  # SVD
         V = np.conj(V.T)
         w = V[:, M].reshape(-1, 1)  # weight vector = min sing vector
         N = C @ (w * f)

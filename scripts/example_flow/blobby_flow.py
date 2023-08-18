@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_ellipse(a, b, theta):
+def get_blob(R, a=0.1, f=10, theta=0.0):
     """Return a parametric function for an ellipse."""
-    ellipse = lambda t: (
-        a * np.cos(2 * np.pi * t) + b * 1j * np.sin(2 * np.pi * t)
-    ) * np.exp(1j * theta)
-    return ellipse
+    blob = (
+        lambda t: R
+        * (1 + a * np.sin(f * np.pi * t))
+        * np.exp(2j * np.pi * t + 1j * theta)
+    )
+    return blob
 
 
 if __name__ == "__main__":
@@ -17,20 +19,26 @@ if __name__ == "__main__":
     corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=500,
+        num_edge_points=1000,
         num_poles=0,
         deg_poly=100,
         spacing="linear",
     )
-    a, b = 0.5, 0.1
+    R, a, f = 0.5, 0.4, 10
     theta = 0.0
+    t = np.linspace(0, 1, 1000)
+    blob = get_blob(R, a, f, theta)
+    plt.plot(blob(t).real, blob(t).imag)
+    plt.gca().set_aspect("equal")
+    plt.show()
+
     prob.add_interior_curve(
-        get_ellipse(a, b, theta),
-        num_points=300,
-        deg_laurent=0,
+        get_blob(R, a, f, theta),
+        num_points=500,
+        deg_laurent=100,
         centroid=0.0 + 0.0j,
         aaa=True,
-        aaa_mmax=None,
+        aaa_mmax=150,
     )
     prob.add_point(-1 - 1j)
     prob.domain.plot()

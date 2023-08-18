@@ -39,7 +39,7 @@ cell = Mover(
 )
 movers = [cell]
 ldms = LowDensityMoverSimulation(init_prob, movers)
-results = ldms.run(0, 2.0, 0.1)
+results = ldms.run(0, 3.0, 0.1)
 print(results["residuals"])
 an = SimulationAnalysis(results)
 fig, ax, anim = an.animate_fast(interval=50, streamline_type="starting_points")

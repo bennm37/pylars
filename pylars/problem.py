@@ -104,10 +104,11 @@ class Problem:
     def add_periodic_curve(
         self,
         f,
-        centroid,
+        centroid=None,
         num_points=100,
         deg_laurent=10,
         aaa=False,
+        aaa_mmax=None,
         image_laurents=False,
         image_tol=0.5,
         mirror_laurents=False,
@@ -123,8 +124,6 @@ class Problem:
                 """Can't add periodic curve to polygonal domain.
                 Use add_interior_curve instead."""
             )
-        if aaa:
-            return NotImplemented
         if self.domain is None:
             raise ValueError("Periodic domain must be set first.")
         self.domain.add_periodic_curve(
@@ -132,6 +131,8 @@ class Problem:
             num_points=num_points,
             deg_laurent=deg_laurent,
             centroid=centroid,
+            aaa=aaa,
+            aaa_mmax=aaa_mmax,
             mirror_laurents=mirror_laurents,
             mirror_tol=mirror_tol,
             image_laurents=image_laurents,

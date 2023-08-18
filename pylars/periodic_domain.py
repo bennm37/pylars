@@ -54,6 +54,7 @@ class PeriodicDomain(Domain):
         num_points=100,
         deg_laurent=10,
         aaa=False,
+        aaa_mmax=None,
         mirror_laurents=False,
         mirror_tol=0.5,
         image_laurents=False,
@@ -69,6 +70,7 @@ class PeriodicDomain(Domain):
         self._generate_intersecting_images(
             side, f, num_points, centroid, deg_laurent
         )
+        self._update_polygon()
         if mirror_laurents:
             self._generate_mirror_laurents(
                 side, deg_laurent, centroid, mirror_tol
@@ -77,7 +79,8 @@ class PeriodicDomain(Domain):
             self._generate_image_laurents(
                 side, deg_laurent, centroid, image_tol
             )
-        self._update_polygon()
+        if aaa:
+            self._generate_aaa_poles(side, mmax=aaa_mmax)
         return side
 
     def add_mover(
@@ -124,6 +127,8 @@ class PeriodicDomain(Domain):
 
     def _generate_image_laurents(self, side, deg_laurent, centroid, tol=0.8):
         """Generate the image laurents."""
+        if centroid is None:
+            centroid = self._get_centroid(side)
         nnic = self.get_nn_image_centroids(centroid, original=False)
         for image in nnic:
             point = Point(np.array([image.real, image.imag]))
@@ -147,6 +152,9 @@ class PeriodicDomain(Domain):
         # TODO make sure the remaining rectangle points are the
         # same on each side
         # TODO fix case before points are added.
+        if centroid is None:
+            points = curve(np.linspace(0, 1, num_points))
+            centroid = np.mean(points)
         nnic = self.get_nn_image_centroids(centroid)
         centered_points = curve(np.linspace(0, 1, num_points)) - centroid
         n_bp = len(self.boundary_points)

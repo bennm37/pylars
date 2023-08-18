@@ -294,11 +294,15 @@ class Domain:
             for i in range(len(self.corners))
         ]
 
+    def _get_centroid(self, side):
+        """Calculate the centroid of a side."""
+        points = self.boundary_points[self.indices[side]]
+        return np.mean(points)
+
     def _generate_interior_laurent_series(self, side, degree, centroid):
         """Generate Laurent series in a hole of the domain."""
-        interior_points = self.boundary_points[self.indices[side]]
         if centroid is None:
-            centroid = np.mean(interior_points)
+            centroid = self._get_centroid(side)
         self.centroids[side] = centroid
         self.interior_laurents.append((centroid, degree))
         if side not in self.interior_laurent_indices.keys():
@@ -326,6 +330,8 @@ class Domain:
         """Generate mirror images of the Laurent series."""
         # for each side of the polygon, calculate the inwards
         # facing unit normal vector
+        if centroid is None:
+            centroid = self._get_centroid(side)
         n_corners = len(self.corners)
         corners = np.array(self.corners)
         normals = np.zeros((n_corners), dtype=np.complex128)
@@ -353,7 +359,7 @@ class Domain:
 
     def _generate_aaa_poles(self, side, mmax=None):
         """Generate aaa poles that lie outside the domain."""
-        z = self.boundary_points[self.indices[side]]
+        z = self.boundary_points[self.indices[side]][:-1]
         f = np.conj(z)
         if mmax is None:
             _, poles, _, _ = aaa(f, z)
@@ -362,7 +368,6 @@ class Domain:
         exterior_poles = [
             pole for pole in poles if not self.__contains__(pole)
         ]
-
         self.poles = list(self.poles) + [np.array(exterior_poles)]
 
     def _update_polygon(self, buffer=0):
@@ -400,6 +405,10 @@ class Domain:
                 x_max = max(self.corners.real)
                 y_min = min(self.corners.imag)
                 y_max = max(self.corners.imag)
+            x_min = min(min(self.corners.real), x_min)
+            x_max = max(max(self.corners.real), x_max)
+            y_min = min(min(self.corners.imag), y_min)
+            y_max = max(max(self.corners.imag), y_max)
             ax.set_xlim(x_min - 0.1, x_max + 0.1)
             ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
