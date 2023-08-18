@@ -3,10 +3,17 @@ from pylars.numerics import va_orthogonalise, va_evaluate, make_function
 from pylars.problem import DEPENDENT, INDEPENDENT
 from pylars.solution import Solution
 import numpy as np
-import scipy.linalg as linalg
+
+# import scipy.linalg as linalg
+# import numpy.linalg as linalg
+import jax
+from jax.numpy import linalg
 from scipy.sparse import diags
+from time import perf_counter
 import re
 import pickle as pkl
+
+jax.config.update("jax_enable_x64", True)
 
 
 class Solver:
@@ -22,6 +29,7 @@ class Solver:
         self.num_poles = self.domain.num_poles
         self.poles = self.domain.poles
         self.degree = self.domain.deg_poly
+        self.creation_time = perf_counter()
 
     def evaluate(self, expression, points):
         """Evaluate the given expression."""
@@ -164,7 +172,8 @@ class Solver:
             raise ValueError(
                 "A is not tall skinny enough. Add more boundary points."
             )
-        results = linalg.lstsq(self.A, self.b)
+        # results = linalg.lstsq(self.A, self.b, rcond=None)
+        results = linalg.lstsq(self.A, self.b, rcond=None)
         self.coefficients = results[0]
         if results[1]:
             self.max_residual = np.sqrt(np.max(results[1]))
@@ -179,6 +188,8 @@ class Solver:
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
+        self.run_time = perf_counter() - self.creation_time
+        print(f"Run Time: {self.run_time}")
         return Solution(
             self.problem.copy(), *self.functions, self.max_residual
         )
