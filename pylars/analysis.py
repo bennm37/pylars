@@ -8,6 +8,7 @@ from matplotlib import cm
 from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
+import re
 
 
 class Analysis:
@@ -395,7 +396,7 @@ class Analysis:
         nd_sol.problem.scale_boundary_conditions(U)
         return nd_sol
 
-    def save_pgf(self, filename, fig, resolution=100):
+    def save_pgf(self, filename, image_root=None):
         """Save the solution to a pgf file."""
         import matplotlib
 
@@ -408,3 +409,7 @@ class Analysis:
             }
         )
         plt.savefig(filename + ".pgf", backend="pgf")
+        if image_root is not None:
+            raise NotImplementedError
+        if image_root is None:
+            image_root = "figures/python_figures/pgf_files"

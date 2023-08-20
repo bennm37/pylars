@@ -125,8 +125,8 @@ class Solver:
         pickle=False,
         filename="solution.pickle",
         check=True,
-        normalize=True,
-        weight=True,
+        normalize=False,
+        weight=False,
     ):
         """Set up the solver and solve the least squares problem.
 

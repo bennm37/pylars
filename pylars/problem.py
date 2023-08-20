@@ -159,6 +159,10 @@ class Problem:
             return NotImplemented
         if self.domain is None:
             raise ValueError("Exterior polygon must be set first.")
+        if self.boundary_conditions is None:
+            self.boundary_conditions = {
+                side: None for side in self.domain.sides
+            }
         if isinstance(self.domain, PeriodicDomain):
             side = self.domain.add_mover(
                 f=mover.curve,

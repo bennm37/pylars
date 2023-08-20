@@ -1,5 +1,7 @@
-scipy
 matplotlib
-shapely
-pytest
 numba
+pytest
+pandas
+scipy
+shapely
+tqdm
