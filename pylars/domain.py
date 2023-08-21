@@ -104,13 +104,13 @@ class Domain:
     ):
         """Create an interior curve from a parametric function."""
         side = self.add_interior_curve(
-            f,
-            centroid,
-            num_points,
-            deg_laurent,
-            aaa,
-            mirror_laurents,
-            mirror_tol,
+            f=f,
+            centroid=centroid,
+            num_points=num_points,
+            deg_laurent=deg_laurent,
+            aaa=aaa,
+            mirror_laurents=mirror_laurents,
+            mirror_tol=mirror_tol,
         )
         self.movers += [side]
         return side
