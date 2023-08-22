@@ -1,10 +1,8 @@
-cff-version: 0.1
+cff-version: 1.0.0
 message: "If you use this software, please cite it as below."
 authors:
-  - family-names: Druskat
-    given-names: Stephan
-    orcid: https://orcid.org/1234-5678-9101-1121
+- family-names: "Nicholls-Mindlin"
+  given-names: "Ben"
 title: "PyLARS"
 version: 0.1
-// doi: 10.5281/zenodo.1234
-date-released: 2023 - 08 - 22
+url: "https://github.com/bennm37/pylars"
