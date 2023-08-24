@@ -257,7 +257,7 @@ def test_lid_driven_cavity_solve():
     prob.add_boundary_condition("3", "v[3]", 0)
     prob.check_boundary_conditions()
     solver = Solver(prob)
-    sol = solver.solve()
+    sol = solver.solve(check=True, weight=True, normalize=True)
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
     Z = X + 1j * Y

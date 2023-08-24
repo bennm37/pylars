@@ -8,7 +8,7 @@ import numpy as np
 np.random.seed(0)
 shape = (500, 500)
 dp_noise = generate_noise(
-    shape=shape, sigma=20, iter=1, porosity=0.95, clear=True
+    shape=shape, sigma=10, iter=1, porosity=0.95, clear=True
 )
 num_points = 100
 tcks = get_boundary_curves(dp_noise, 0.00)
@@ -36,7 +36,7 @@ corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
 prob.add_periodic_domain(
     2,
     2,
-    num_edge_points=3000,
+    num_edge_points=1500,
     num_poles=0,
     deg_poly=100,
     spacing="linear",
@@ -46,7 +46,7 @@ n_curves = len(tcks)
 for tck in tcks:
     prob.add_periodic_curve(
         lambda t: comp_evaluate_curve(t, tck),
-        num_points=500,
+        num_points=600,
         deg_laurent=50,
         aaa=True,
         aaa_mmax=50,

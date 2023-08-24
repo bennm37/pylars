@@ -26,6 +26,10 @@ prob.add_boundary_condition("0", "u[0]", 0)
 prob.add_boundary_condition("0", "v[0]", 0)
 prob.add_boundary_condition("2", "u[2]", 0)
 prob.add_boundary_condition("2", "v[2]", 0)
+# prob.add_boundary_condition("3", "u[3]", "1-y**2")
+# prob.add_boundary_condition("3", "v[3]", 0)
+# prob.add_boundary_condition("1", "p[1]", 0)
+# prob.add_boundary_condition("1", "v[1]", 0)
 prob.add_boundary_condition("3", "p[3]", 1)
 prob.add_boundary_condition("3", "v[3]", 0)
 prob.add_boundary_condition("1", "p[1]", -1)
@@ -61,30 +65,48 @@ stress_y_df = pd.read_csv("tests/data/COMSOL_cylinder_stress_y.csv")
 theta = stress_x_df["theta"]
 stress_x = stress_x_df["stress_x"]
 stress_y = stress_y_df["stress_y"]
-fig, ax = plt.subplots()
-sample = 10
+fig, ax = plt.subplots(1, 2)
+sample = 1
 sf = 1
-ax.plot(theta[::sample], stress_x[::sample], label="COMSOL Stress X")
-ax.plot(theta[::sample], stress_y[::sample], label="COMSOL Stress Y")
-ax.plot(
+ax[0].plot(theta[::sample], stress_x[::sample], label="COMSOL Stress X")
+ax[0].plot(theta[::sample], stress_y[::sample], label="COMSOL Stress Y")
+ax[0].plot(
     theta,
     normal_stress[:, 0] / sf,
     linestyle="--",
     c="k",
     label="PyLARS Stress X",
 )
-ax.plot(
+ax[0].plot(
     theta,
     normal_stress[:, 1] / sf,
     linestyle="--",
     c="darkgreen",
     label="PyLARS Stress Y",
 )
-ax.set(
+ax[0].set(
     xlabel=" $\Theta$ ",
     ylabel="Normal Stress Components",
     title="Normal Stress on Cylinder",
 )
-ax.legend()
+ax[0].legend()
+sample = 15
+offset = 7
+ax[1].plot(
+    theta[offset::sample],
+    stress_x[offset::sample] - normal_stress[offset::sample, 0] / sf,
+    label="Error X",
+)
+ax[1].plot(
+    theta[offset::sample],
+    stress_y[offset::sample] - normal_stress[offset::sample, 1] / sf,
+    label="Error Y",
+)
+ax[1].set(
+    xlabel=" $\Theta$ ",
+    ylabel="Error",
+    title="Error in Normal Stress on Cylinder",
+)
+ax[1].legend()
 # plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
 plt.show()

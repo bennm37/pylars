@@ -387,7 +387,7 @@ class Domain:
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
 
-    def plot(self, figax=None, set_lims=True):
+    def plot(self, figax=None, set_lims=True, point_color="indices"):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
@@ -425,7 +425,10 @@ class Domain:
             )
 
         total_points = len(self.boundary_points)
-        color = np.arange(total_points)
+        if point_color == "indices":
+            color = np.arange(total_points)
+        else:
+            color = "k"
         print(f"Total number of boundary points: {total_points}")
         print(f"Shape of boundary_points: {self.boundary_points.shape}")
         ax.scatter(
@@ -468,12 +471,13 @@ class Domain:
                 degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
-        # ax.legend(
-        #     handles=handles,
-        #     labels=["Lightning poles"] + degree_labels,
-        #     loc="upper center",
-        # )
+        ax.legend(
+            handles=handles,
+            labels=["Lightning poles"] + degree_labels,
+            loc="upper center",
+        )
         ax.set_aspect("equal")
+        ax.axis("off")
         # plt.tight_layout()
         return fig, ax
 

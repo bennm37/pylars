@@ -409,7 +409,7 @@ class Analysis:
             }
         )
         plt.savefig(filename + ".pgf", backend="pgf")
-        if image_root is not None:
-            raise NotImplementedError
-        if image_root is None:
-            image_root = "figures/python_figures/pgf_files"
+        # if image_root is not None:
+        #     raise NotImplementedError
+        # if image_root is None:
+        #     image_root = "figures/python_figures/pgf_files"

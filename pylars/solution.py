@@ -2,6 +2,7 @@
 from numbers import Number
 import numpy as np
 from scipy.integrate import quad
+import pickle as pkl
 
 
 class Solution:
@@ -83,6 +84,10 @@ class Solution:
             return torque.imag
 
         return quad(integrand, 0, 1)[0]
+
+    # def pickle(self, filename):
+    #     """Pickle the solution."""
+    #     pkl.dump(self, open(filename, "wb"))
 
     def __add__(self, other):
         """Add two solutions together."""

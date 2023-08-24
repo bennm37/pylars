@@ -1,6 +1,7 @@
 """Module defining the Problem Class."""
 from pylars import Domain, PeriodicDomain
 from collections.abc import Sequence
+from time import perf_counter
 import numpy as np
 import copy
 
@@ -13,6 +14,7 @@ class Problem:
     """Class for setting up Domains and Boundary conditions."""
 
     def __init__(self, domain=None, boundary_conditons=None):
+        self.creation_time = perf_counter()
         self.domain = domain
         self.boundary_conditions = boundary_conditons
         self.domain_type = None

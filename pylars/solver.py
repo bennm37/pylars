@@ -188,7 +188,7 @@ class Solver:
         self.functions = self.construct_functions()
         if pickle:
             self.pickle_solution(filename)
-        self.run_time = perf_counter() - self.creation_time
+        self.run_time = perf_counter() - self.problem.creation_time
         print(f"Run Time: {self.run_time}")
         return Solution(
             self.problem.copy(), *self.functions, self.max_residual
