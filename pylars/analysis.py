@@ -8,6 +8,7 @@ from matplotlib import cm
 from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
+from scipy.integrate import quad
 import re
 
 
@@ -330,8 +331,8 @@ class Analysis:
         """Calculate the permeability of the domain at the outlet."""
         # get the flow rate over the side
         dom = self.domain
-        points = dom.boundary_points[dom.indices[side]]
         psi, uv, p, omega, eij = self.solution.functions
+        points = dom.boundary_points[dom.indices[side]]
         u = uv(points).real
         # TODO use quadrature
         flow_rate = np.mean(u)

@@ -1,7 +1,8 @@
 """Solve stokes flow problems using the lightning stokes method."""
 from .numerics import va_orthogonalise
-from .domain import Domain
-from .periodic_domain import PeriodicDomain
+from .domain.domain import Domain
+from .domain.periodic_domain import PeriodicDomain
+from .domain.curved_domain import CurvedDomain
 from .problem import Problem
 from .solver import Solver
 from .solution import Solution

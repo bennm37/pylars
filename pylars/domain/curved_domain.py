@@ -1,9 +1,9 @@
 """Class for creating curved domains."""
 import numpy as np
 from pylars import Domain
-from pylars.numerics import aaa as aaa_func
-from shapely import Polygon, LineString
+from shapely import LineString
 
+# from pylars.numerics import aaa as aaa_func
 # from numbers import Number, Integral
 # import matplotlib.patches as patches
 

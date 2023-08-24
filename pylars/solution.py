@@ -2,13 +2,27 @@
 from numbers import Number
 import numpy as np
 from scipy.integrate import quad
-import pickle as pkl
+
+# import pickle as pkl
 
 
 class Solution:
     """Solution class to store the solution to a problem."""
 
-    def __init__(self, problem, psi, uv, p, omega, eij, max_residual=None):
+    def __init__(
+        self,
+        problem,
+        psi,
+        uv,
+        p,
+        omega,
+        eij,
+        L=1,
+        U=1,
+        mu=1,
+        status="nd",
+        max_residual=None,
+    ):
         self.problem = problem
         self.psi = psi
         self.uv = uv
@@ -17,6 +31,10 @@ class Solution:
         self.eij = eij
         self.functions = [psi, uv, p, omega, eij]
         self.max_residual = max_residual
+        self.L = L
+        self.U = U
+        self.mu = mu
+        self.status = status
 
     def stress_discrete(self, z, dx=1e-6):
         """Calculate the total stress using finite differences."""
@@ -36,6 +54,7 @@ class Solution:
         u_y, v_y = U_y.real, U_y.imag
         deviatoric = np.array([[2 * u_x, u_y + v_x], [u_y + v_x, 2 * v_y]])
         deviatoric = np.moveaxis(deviatoric, (2), (0)).reshape(zshape + (2, 2))
+        deviatoric *= self.mu
         stress = isotropic + deviatoric
         return stress
 
@@ -48,7 +67,9 @@ class Solution:
         isotropic = np.array([-np.eye(2) * p for p in pressures]).reshape(
             zshape + (2, 2)
         )
-        deviatoric = 2 * self.eij(z).reshape(zshape + (2, 2))
+        # TODO this is a bit of a mess.
+        # eij and p are dimensionalized by dimensionalize, but stress isn't.
+        deviatoric = 2 * self.mu * self.eij(z).reshape(zshape + (2, 2))
         stress = isotropic + deviatoric
         return stress
 
@@ -84,6 +105,46 @@ class Solution:
             return torque.imag
 
         return quad(integrand, 0, 1)[0]
+
+    def dimensionalize(self, L, U, mu):  # noqa N803
+        """Dimensionalize all physical quantities.
+
+        Units are assumed to be [L] = m, [U] = m/s, [mu] = Pa s.
+        """
+        # TODO should this return a new solution object?
+        if self.status == "d":
+            raise ValueError("Solution is already dimensionalized.")
+        self.L = L
+        self.U = U
+        self.mu = mu
+
+        def dim_psi(z):
+            return self.psi(z) * U * L
+
+        def dim_uv(z):
+            return self.uv(z) * U
+
+        def dim_p(z):
+            return self.p(z) * mu * U / L
+
+        def dim_omega(z):
+            return self.omega(z) * U / L
+
+        def dim_eij(z):
+            return self.eij(z) * U / L
+
+        return Solution(
+            self.problem,
+            dim_psi,
+            dim_uv,
+            dim_p,
+            dim_omega,
+            dim_eij,
+            L=L,
+            U=U,
+            mu=mu,
+            status="d",
+        )
 
     # def pickle(self, filename):
     #     """Pickle the solution."""
