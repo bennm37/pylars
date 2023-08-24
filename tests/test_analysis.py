@@ -38,6 +38,58 @@ def test_save_pgf():
     analysis.save_pgf("media/pgf_test", fig)
 
 
+def test_curve_length():
+    from pylars import Problem, Solution, Analysis
+    import numpy as np
+    from test_linear_combination import tensorify
+
+    prob = Problem()
+    sol = Solution(
+        prob,
+        psi=lambda z: z - z.imag**3 / 3,
+        uv=lambda z: 1 - z.imag**2,
+        p=lambda z: z,
+        omega=lambda z: z,
+        eij=lambda z: tensorify(z),
+    )
+    curve = lambda t: 1 - 1j + 2j * t
+    curve_deriv = lambda t: 2j
+    an = Analysis(sol)
+    length = an.get_length(curve_deriv)
+    assert np.isclose(length, 2)
+    curve = lambda t: np.exp(2j * np.pi * t)
+    curve_deriv = lambda t: 2j * np.pi * np.exp(2j * np.pi * t)
+    length = an.get_length(curve_deriv)
+    assert np.isclose(length, 2 * np.pi)
+
+
+def test_volume_flux():
+    from pylars import Problem, Solution, Analysis
+    import numpy as np
+    from test_linear_combination import tensorify
+
+    prob = Problem()
+    sol = Solution(
+        prob,
+        psi=lambda z: z - z.imag**3 / 3,
+        uv=lambda z: 1 - z.imag**2,
+        p=lambda z: z,
+        omega=lambda z: z,
+        eij=lambda z: tensorify(z),
+    )
+    curve = lambda t: 1 - 1j + 2j * t
+    curve_deriv = lambda t: 2j
+    an = Analysis(sol)
+    vf = an.get_volume_flux(curve, curve_deriv)
+    assert np.isclose(vf, 4 / 3)
+    curve = lambda t: np.exp(2j * np.pi * t)
+    curve_deriv = lambda t: 2j * np.pi * np.exp(2j * np.pi * t)
+    vf = an.get_volume_flux(curve, curve_deriv)
+    assert np.isclose(vf, 0)
+
+
 if __name__ == "__main__":
     test_import_analysis()
     test_save_pgf()
+    test_curve_length()
+    test_volume_flux()

@@ -327,18 +327,31 @@ class Analysis:
         ax.set(yscale="log")
         plt.show()
 
-    def get_permeability(self, side, length, height, p_drop):
+    def get_permeability(self, curve, curve_deriv, delta_x, delta_p):
         """Calculate the permeability of the domain at the outlet."""
-        # get the flow rate over the side
-        dom = self.domain
-        psi, uv, p, omega, eij = self.solution.functions
-        points = dom.boundary_points[dom.indices[side]]
-        u = uv(points).real
-        # TODO use quadrature
-        flow_rate = np.mean(u)
+        volume_flux = self.get_volume_flux(curve, curve_deriv)
+        curve_length = self.get_length(curve_deriv)
+        avg_volume_flux = volume_flux / curve_length
         # calculate the permeability
-        k = flow_rate * length / (p_drop * height)
+        k = avg_volume_flux * self.solution.mu * delta_x / (delta_p)
         return k
+
+    def get_volume_flux(self, curve, curve_deriv):
+        """Calculate the volume flux over a curve.
+
+        The curve should be parametrised by s in [0, 1].
+        """
+
+        def integrand(s):
+            dx = np.abs(curve_deriv(s))
+            normal = (-curve_deriv(s) * 1j) / dx
+            return np.real(np.conj(self.solution.uv(curve(s))) * normal) * dx
+
+        return quad(integrand, 0, 1)[0]
+
+    def get_length(self, curve_deriv):
+        """Calculate the length of a curve."""
+        return quad(lambda s: np.abs(curve_deriv(s)), 0, 1)[0]
 
     def get_relative_periodicity_errors(self, tol=1e-10):
         """Calculate the relative periodicity errors for all variables."""
