@@ -15,9 +15,14 @@ sampleKeys = [key for key in radii_df.keys() if key.endswith(".csv")]
 sampleNames = [
     key.split("_")[0] for key in radii_df.keys() if key.endswith(".csv")
 ]
+sampleNames = list(dict.fromkeys(sampleNames))
+nameKeys = [
+    [key for key in sampleKeys if sampleName in key]
+    for sampleName in sampleNames
+]
 r_squared_dict = {}
-# sampleNames = list(dict.fromkeys(sampleNames)) # workaround to drop duplicates
-aggregate
+gamma_params_dict = {}
+
 axis_dict = {
     "225AMA": [0, 0],
     "225AMB": [1, 0],
@@ -38,16 +43,20 @@ axis_dict = {
 }
 
 radii = radii_df.pop("Radius")
-histogramData = radii_df[sampleKeys]
+nameData = [radii_df[keys] for keys in nameKeys]
 binCenters = np.array(radii)
 maxHist = binCenters[-1]
 binWidth = binCenters[1] - binCenters[0]
 plotCutoff = 20
-for key, col in histogramData.items():
+maxNormHist = 0
+for keys, cols in zip(nameKeys, nameData):
+    key = keys[0]
+    if "PV16-481SB" in key:
+        print("here")
     sampleName, magnification, locName, _, _ = tuple(key.split("_"))
     # to choose in which axis to plot
     ax = axs[axis_dict[sampleName][0]][axis_dict[sampleName][1]]
-
+    col = cols.sum(axis=1)
     if magnification == "1500x":
         isToPlot = True
         pixelSize = 10.0 / 150.0  # um/px
@@ -66,24 +75,19 @@ for key, col in histogramData.items():
     else:
         pixelSize = 1.0
         color = "darkgray"
-
-    if locName == "i1":
-        linestyle = "--"
-    elif locName == "i2":
-        linestyle = "-."
-    elif locName == "i3":
-        linestyle = ":"
-    else:
-        linestyle = "-"
-
+    linestyle = "-"
     hist = np.array(col)
     area = hist.sum() * binWidth
     normHist = hist / area
+    if normHist.max() > maxNormHist:
+        maxNormHist = normHist.max()
 
-    # f = lambda x, s, loc, scale: lognorm.pdf(x, s=s, loc=loc, scale=scale)
-    f = lambda x, a, loc, scale: gamma.pdf(x, a=a, loc=loc, scale=scale)
-    a, loc, scale = curve_fit(f, binCenters, normHist, maxfev=5000)[0]
-    residuals = normHist - f(binCenters, a, loc, scale)
+    loc = 0.0
+    f = lambda x, a, scale: gamma.pdf(x, a=a, scale=scale)
+    p0 = [1.1, 0.2]
+    a, scale = curve_fit(f, binCenters, normHist, maxfev=10000, p0=p0)[0]
+    gamma_params_dict[sampleName] = [a, loc, scale]
+    residuals = normHist - f(binCenters, a, scale)
     ss_res = np.sum((residuals) ** 2)
     ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
     r_squared_dict[sampleName] = 1 - (ss_res / ss_tot)
@@ -109,19 +113,22 @@ for key, col in histogramData.items():
             alpha=1.0,
             linestyle=linestyle,
             # marker='.',
-            label=magnification + " " + locName,
+            label=magnification + " " + "agg",
         )
 
 
 for sampleName, index in axis_dict.items():
     ax = axs[index[0]][index[1]]  # to choose in which axis to plot
     ax.grid()
-    ax.set_ylabel("Abs. Count ()", fontsize=8)
     ax.set_title(sampleName, fontsize=8, pad=-14)
+    ax.set(ylim=(0, maxNormHist * 110))
     ax.legend(loc="upper right", fontsize=4)
 
+axs[4, 0].set_ylabel("              Abs. Count ()", fontsize=8)
+axs[4, 1].set_ylabel("              Abs. Count ()", fontsize=8)
 axs[7, 0].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
 axs[7, 1].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
+fig.suptitle("Fiber radii distribution", fontsize=12)
 plt.savefig("media/fiber_radii_gamma_fit.pdf")
 plt.show()
 
@@ -133,3 +140,8 @@ ax.set_xlim(np.min(r2Data) - 0.1, np.max(r2Data) + 0.02)
 plt.tight_layout()
 plt.savefig("media/fiber_radii_gamma_fit_r2.pdf")
 plt.show()
+
+gamma_parms_df = pd.DataFrame.from_dict(gamma_params_dict)
+gamma_parms_df.to_csv("data/fiber_radii_gamma_params.csv", index=False)
+r_squared_df = pd.DataFrame.from_dict(r_squared_dict, orient="index")
+r_squared_df.to_csv("data/fiber_radii_gamma_r2.csv")
