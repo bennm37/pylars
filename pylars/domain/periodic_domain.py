@@ -66,7 +66,6 @@ class PeriodicDomain(Domain):
         side = str(len(self.sides))
         self.sides = np.append(self.sides, side)
         self.periodic_curves += [side]
-        self.interior_curves += [side]
         self._generate_intersecting_images(
             side, f, num_points, centroid, deg_laurent
         )
@@ -159,7 +158,7 @@ class PeriodicDomain(Domain):
         centered_points = curve(np.linspace(0, 1, num_points)) - centroid
         n_bp = len(self.boundary_points)
         original = n_bp - 1
-        self.indices[side] = [original]
+        self.indices[side] = None
         for image in nnic:
             translated_points = centered_points + image
             intersecting_inds = np.where(
@@ -167,6 +166,7 @@ class PeriodicDomain(Domain):
                 & (np.abs(translated_points.imag) < self.height / 2)
             )
             if len(intersecting_inds[0]) == len(translated_points):
+                # add the whole curve if fully contained
                 self._generate_interior_laurent_series(
                     side, deg_laurent, image
                 )
@@ -177,9 +177,9 @@ class PeriodicDomain(Domain):
                     [self.boundary_points, translated_points.reshape(-1, 1)],
                     axis=0,
                 )
+                self.interior_curves += [side]
                 break
             if len(intersecting_inds[0]) > 0:
-                # get the rectangle points inside the curve
                 self._generate_exterior_laurent_series(
                     side, deg_laurent, image
                 )
@@ -187,31 +187,41 @@ class PeriodicDomain(Domain):
                     [self.indices[str(i)] for i in range(4)]
                 )
                 rect_points = self.boundary_points[rect_inds]
-                # remove the boundary points inside the curve
                 trans_poly_points = np.array(
                     [translated_points.real, translated_points.imag]
                 ).T
                 poly = Polygon(trans_poly_points)
-                in_curve_indices = [
-                    ind
-                    for ind, rect_point in enumerate(rect_points)
-                    if poly.contains(Point([rect_point.real, rect_point.imag]))
-                ]
-                if in_curve_indices:
-                    self.remove(in_curve_indices)
-                # add the intersecting points to the side
+                in_curve_indices = np.array(
+                    [
+                        ind
+                        for ind, rect_point in enumerate(rect_points)
+                        if poly.contains(
+                            Point([rect_point.real, rect_point.imag])
+                        )
+                    ]
+                )
+                # intersecting points may indices may jump over the end
+                # of the array, fixing this
+                if not np.all(np.diff(intersecting_inds) == 1):
+                    jump = (
+                        np.where(np.diff(intersecting_inds)[0] != 1)[0][0] + 1
+                    )
+                    intersecting_inds = np.concatenate(
+                        [
+                            intersecting_inds[0][jump:] - num_points,
+                            intersecting_inds[0][:jump],
+                        ]
+                    )
                 intersecting_points = np.array(
                     translated_points[intersecting_inds]
                 ).reshape(-1, 1)
+
                 n_bp = len(self.boundary_points)
                 new_indices = [
                     int(i)
                     for i in range(n_bp, n_bp + len(intersecting_points))
                 ]
-                if (
-                    len(self.indices[side]) == 1
-                    and self.indices[side][0] == original
-                ):
+                if self.indices[side] is None:
                     self.indices[side] = new_indices
                 else:
                     self.indices[side] = np.concatenate(
@@ -223,3 +233,41 @@ class PeriodicDomain(Domain):
                         intersecting_points,
                     ]
                 )
+                if not np.all(np.diff(in_curve_indices) == 1):
+                    jump = np.where(np.diff(in_curve_indices) != 1)[0][0] + 1
+                    in_curve_indices = np.concatenate(
+                        [
+                            in_curve_indices[jump:] - len(rect_points),
+                            in_curve_indices[:jump],
+                        ]
+                    )
+                first_rect_point = rect_points[in_curve_indices[0]]
+                first_rect_ind = np.where(
+                    self.exterior_points == first_rect_point
+                )[0][0]
+                last_rect_point = rect_points[
+                    (in_curve_indices[-1]) % len(rect_points)
+                ]
+                last_rect_ind = np.where(
+                    self.exterior_points == last_rect_point
+                )[0][0]
+                if first_rect_ind >= last_rect_ind:
+                    after = self.exterior_points[last_rect_ind:first_rect_ind]
+                    self.exterior_points = np.concatenate(
+                        [intersecting_points[::-1], after]
+                    )
+                else:
+                    before = self.exterior_points[:first_rect_ind]
+                    after = self.exterior_points[last_rect_ind:]
+                    self.exterior_points = np.concatenate(
+                        [before, intersecting_points[::-1], after]
+                    )
+                # TODO this assumes that the curve is convex?
+                # only intersects once.
+                # intersecting_points must be inverted as non-convex segments
+                # move clockwise
+                if np.any(in_curve_indices):
+                    in_curve_indices = np.sort(
+                        in_curve_indices % len(rect_points)
+                    )
+                    self.remove(in_curve_indices)

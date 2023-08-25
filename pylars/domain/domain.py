@@ -41,8 +41,14 @@ class Domain:
         self.check_input()
         self._generate_exterior_polygon_points()
         self._generate_lightning_poles()
+        self.exterior_points = self.boundary_points.copy()
         self.polygon = Polygon(
-            np.array([self.corners.real, self.corners.imag]).T
+            np.array(
+                [
+                    self.exterior_points.real.reshape(-1),
+                    self.exterior_points.imag.reshape(-1),
+                ]
+            ).T
         )
         self.interior_curves = []
         self.centroids = {}
@@ -400,7 +406,13 @@ class Domain:
             for curve in self.interior_curves
         ]
         self.polygon = Polygon(
-            np.array([self.corners.real, self.corners.imag]).T, holes=holes
+            np.array(
+                [
+                    self.exterior_points.real.reshape(-1),
+                    self.exterior_points.imag.reshape(-1),
+                ]
+            ).T,
+            holes=holes,
         )
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
@@ -533,7 +545,6 @@ class Domain:
         else:
             raise TypeError("polygon must be a sequence of complex numbers")
 
-        
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""
         mask = np.zeros(z.shape, dtype=bool)
@@ -541,7 +552,7 @@ class Domain:
         for z in it:
             mask[it.multi_index] = self.__contains__(z)
         return mask
-    
+
     def __contains__(self, point):
         """Check if a point is in the polygon."""
         if isinstance(point, complex):

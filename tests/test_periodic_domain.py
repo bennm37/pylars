@@ -77,15 +77,63 @@ def test_generate_periodic_curve():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    dom = PeriodicDomain(2, 2)
+    dom = PeriodicDomain(2, 2, num_edge_points=300)
     R = 0.5
     centroid = 0.75 + 0.75j
     circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
-    dom.add_periodic_curve(circle, centroid)
+    dom.add_periodic_curve(circle, centroid, num_points=200)
     centroid = 0.0 - 0.9j
-    circle = lambda t: centroid + 0.01 * np.exp(2j * np.pi * t)
+    circle = lambda t: centroid + 0.2 * np.exp(2j * np.pi * t)
     dom.add_periodic_curve(circle, centroid)
-    fig, ax = dom.plot()
+    plt.close("all")
+    fig, ax = dom.plot(set_lims=False)
+    # plt.show()
+    assert np.allclose(
+        dom.boundary_points[dom.indices["0"]].real,
+        dom.boundary_points[dom.indices["2"]][::-1].real,
+    )
+    assert np.allclose(
+        dom.boundary_points[dom.indices["1"]].imag,
+        dom.boundary_points[dom.indices["3"]][::-1].imag,
+    )
+
+
+def test_flow_periodic_curve():
+    from pylars import Problem, Solver, Analysis
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    prob = Problem()
+    prob.add_periodic_domain(2, 2, num_edge_points=300)
+    R = 0.5
+    centroid = 0.75 + 0.75j
+    circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
+    prob.add_periodic_curve(circle, centroid, num_points=200)
+    R = 0.2
+    centroid = -0.2 - 0.9j
+    circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
+    prob.add_periodic_curve(circle, centroid, num_points=200)
+    prob.domain.plot(set_lims=False)
+    prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
+    prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
+    prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
+    prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
+    prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+    prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 2)
+    prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
+    prob.add_boundary_condition("4", "u[4]", 0)
+    prob.add_boundary_condition("4", "v[4]", 0)
+    prob.add_boundary_condition("5", "u[5]", 0)
+    prob.add_boundary_condition("5", "v[5]", 0)
+    solver = Solver(prob, verbose=True)
+    sol = solver.solve(normalize=False, weight=False)
+
+    print(
+        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
+    )
+    an = Analysis(sol)
+    fig, ax = an.plot_periodic(resolution=501)
     # plt.show()
 
 
@@ -94,3 +142,4 @@ if __name__ == "__main__":
     test_remove_points_2()
     test_get_nnic()
     test_generate_periodic_curve()
+    test_flow_periodic_curve()
