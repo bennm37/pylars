@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import gamma
+from scipy.stats import gamma, lognorm
 from scipy.optimize import curve_fit
 import numpy as np
 
@@ -20,8 +20,6 @@ nameKeys = [
     [key for key in sampleKeys if sampleName in key]
     for sampleName in sampleNames
 ]
-r_squared_dict = {}
-gamma_params_dict = {}
 
 axis_dict = {
     "225AMA": [0, 0],
@@ -49,6 +47,18 @@ maxHist = binCenters[-1]
 binWidth = binCenters[1] - binCenters[0]
 plotCutoff = 20
 maxNormHist = 0
+fitLognorm = True
+fitGamma = True
+colorGamma = "black"
+colorLognorm = "blue"
+if fitGamma:
+    gammaParamsDict = {}
+    gammaRSquaredDict = {}
+    p0 = [1.1, 0.2]
+if fitLognorm:
+    lognormParamsDict = {}
+    lognormRSquaredDict = {}
+    p0 = [1.1, 0.2]
 for keys, cols in zip(nameKeys, nameData):
     key = keys[0]
     if "PV16-481SB" in key:
@@ -83,16 +93,30 @@ for keys, cols in zip(nameKeys, nameData):
         maxNormHist = normHist.max()
 
     loc = 0.0
-    f = lambda x, a, scale: gamma.pdf(x, a=a, scale=scale)
-    p0 = [1.1, 0.2]
-    a, scale = curve_fit(f, binCenters, normHist, maxfev=10000, p0=p0)[0]
-    gamma_params_dict[sampleName] = [a, loc, scale]
-    residuals = normHist - f(binCenters, a, scale)
-    ss_res = np.sum((residuals) ** 2)
-    ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
-    r_squared_dict[sampleName] = 1 - (ss_res / ss_tot)
-    print(r_squared_dict[sampleName])
-    print(a, loc, scale)
+    if fitGamma:
+        f = lambda x, a, scale: gamma.pdf(x, a=a, scale=scale)
+        a_gamma, scale_gamma = curve_fit(
+            f, binCenters, normHist, maxfev=10000, p0=p0
+        )[0]
+        gammaParamsDict[sampleName] = [a_gamma, loc, scale_gamma]
+        residuals = normHist - f(binCenters, a_gamma, scale_gamma)
+        print(f"Gamma parmaeters are {a_gamma=}, {loc=}, {scale_gamma=}")
+        ss_res = np.sum((residuals) ** 2)
+        ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
+        gammaRSquaredDict[sampleName] = 1 - (ss_res / ss_tot)
+        print(gammaRSquaredDict[sampleName])
+    if fitLognorm:
+        f = lambda x, s, scale: lognorm.pdf(x, s=s, scale=scale)
+        s_lognorm, scale_lognorm = curve_fit(
+            f, binCenters, normHist, maxfev=10000, p0=p0
+        )[0]
+        lognormParamsDict[sampleName] = [s_lognorm, loc, scale_lognorm]
+        residuals = normHist - f(binCenters, s_lognorm, scale_lognorm)
+        print(f"Lognorm parmaeters are {s_lognorm=}, {loc=}, {scale_lognorm=}")
+        ss_res = np.sum((residuals) ** 2)
+        ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
+        lognormRSquaredDict[sampleName] = 1 - (ss_res / ss_tot)
+        print(lognormRSquaredDict[sampleName])
 
     if isToPlot:
         ax.plot(
@@ -106,15 +130,27 @@ for keys, cols in zip(nameKeys, nameData):
         )
 
         D = np.linspace(0, binCenters[plotCutoff], 1000)
-        ax.plot(
-            D,
-            gamma.pdf(D, a=a, loc=loc, scale=scale) * 100,
-            color=color,
-            alpha=1.0,
-            linestyle=linestyle,
-            # marker='.',
-            label=magnification + " " + "agg",
-        )
+        if fitGamma:
+            ax.plot(
+                D,
+                gamma.pdf(D, a=a_gamma, loc=loc, scale=scale_gamma) * 100,
+                color=colorGamma,
+                alpha=1.0,
+                linestyle=linestyle,
+                # marker='.',
+                label=magnification + " gamma " + "agg",
+            )
+        if fitLognorm:
+            ax.plot(
+                D,
+                lognorm.pdf(D, s=s_lognorm, loc=loc, scale=scale_lognorm)
+                * 100,
+                color=colorLognorm,
+                alpha=1.0,
+                linestyle=linestyle,
+                # marker='.',
+                label=magnification + " lognorm " + "agg",
+            )
 
 
 for sampleName, index in axis_dict.items():
@@ -128,20 +164,36 @@ axs[4, 0].set_ylabel("              Abs. Count ()", fontsize=8)
 axs[4, 1].set_ylabel("              Abs. Count ()", fontsize=8)
 axs[7, 0].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
 axs[7, 1].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
-fig.suptitle("Fiber radii distribution", fontsize=12)
-plt.savefig("media/fiber_radii_gamma_fit.pdf")
+dist = "gamma" if fitGamma else " "
+dist += " and " if fitGamma and fitLognorm else " "
+dist += "lognorm" if fitLognorm else " "
+fig.suptitle(f"Fiber radii distribution with {dist} fit", fontsize=12)
+plt.savefig(f"media/fiber_radii_{dist}_fit.pdf")
 plt.show()
+
+if fitGamma:
+    gammaParamsDf = pd.DataFrame.from_dict(gammaParamsDict)
+    gammaParamsDf.to_csv("data/fiber_radii_gamma_params.csv", index=False)
+if fitLognorm:
+    lognormParamsDf = pd.DataFrame.from_dict(lognormParamsDict)
+    lognormParamsDf.to_csv("data/fiber_radii_lognorm_params.csv", index=False)
+if fitGamma:
+    gammaRSquaredDf = pd.DataFrame.from_dict(gammaRSquaredDict, orient="index")
+    gammaRSquaredDf.to_csv("data/fiber_radii_gamma_r2.csv", index=True)
+if fitLognorm:
+    lognormRSquaredDf = pd.DataFrame.from_dict(
+        lognormRSquaredDict, orient="index"
+    )
+    lognormRSquaredDf.to_csv("data/fiber_radii_lognorm_r2.csv", index=True)
+
+rSquaredDf = pd.concat([lognormRSquaredDf, gammaRSquaredDf], axis=1)
+rSquaredDf.columns = ["lognorm", "gamma"]
 
 fig, ax = plt.subplots()
-r2Data = [r_squared_dict[sampleName] for sampleName in sampleNames]
-ax.barh(sampleNames, r2Data)
-ax.set_title("R-squared values for gamma fit")
-ax.set_xlim(np.min(r2Data) - 0.1, np.max(r2Data) + 0.02)
+rSquaredDf.plot(kind="barh", ax=ax)
+ax.set_title(f"R-squared values for {dist} fit")
+rSquaredData = rSquaredDf.to_numpy()
+ax.set_xlim(np.min(rSquaredData) - 0.1, np.max(rSquaredData) + 0.02)
 plt.tight_layout()
-plt.savefig("media/fiber_radii_gamma_fit_r2.pdf")
+plt.savefig(f"media/fiber_radii_{dist}_fit_r2.pdf")
 plt.show()
-
-gamma_parms_df = pd.DataFrame.from_dict(gamma_params_dict)
-gamma_parms_df.to_csv("data/fiber_radii_gamma_params.csv", index=False)
-r_squared_df = pd.DataFrame.from_dict(r_squared_dict, orient="index")
-r_squared_df.to_csv("data/fiber_radii_gamma_r2.csv")

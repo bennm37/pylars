@@ -18,6 +18,7 @@ class Problem:
         self.domain = domain
         self.boundary_conditions = boundary_conditons
         self.domain_type = None
+        self.status = "nd"
 
     def add_exterior_polygon(
         self,

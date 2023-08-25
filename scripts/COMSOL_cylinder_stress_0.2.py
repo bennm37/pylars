@@ -154,3 +154,5 @@ for size in mesh_sizes:
     # plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
     plt.tight_layout()
     plt.show()
+
+    fig, ax = plt.subplots(1, 2)

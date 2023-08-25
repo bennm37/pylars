@@ -14,19 +14,20 @@ def run_case(centers, radii, bound, p_drop):
         -bound - bound * 1j,
         bound - bound * 1j,
     ]
+    prob = Problem()
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=125 * n_circles,
+        num_edge_points=100 * n_circles,
         num_poles=0,
-        deg_poly=75,
+        deg_poly=50,
         spacing="linear",
     )
 
     for centroid, radius in zip(centroids, radii):
         prob.add_interior_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=150,
-            deg_laurent=40,
+            num_points=125,
+            deg_laurent=30,
             centroid=centroid,
             mirror_laurents=True,
             mirror_tol=bound / 2,
@@ -68,21 +69,20 @@ def analayse_case(sol, length=2, p_drop=0.25):
 
 def plot_pdf(rv, rv_args):
     """Plot the PDF of the random variable."""
-    x = np.linspace(rv.ppf(0.01, **rv_args), rv.ppf(0.99, **rv_args), 100)
+    x = np.linspace(rv.ppf(0.001, **rv_args), rv.ppf(0.999, **rv_args), 100)
     y = rv.pdf(x=x, **rv_args)
     plt.plot(x, y)
     plt.show()
 
 
 if __name__ == "__main__":
-    prob = Problem()
-    length = 20
+    length = 10
     porosity = 0.95
-    p_drop = 1
+    p_drop = 30
     rv = gamma.rvs
-    rv_args = {"a": 0.05, "scale": 5.0, "loc": 0.0}
-    plot_pdf(gamma, rv_args)
-    np.random.seed(0)
+    rv_args = {"a": 5.0, "scale": 0.05, "loc": 0.0}
+    # plot_pdf(gamma, rv_args)
+    np.random.seed(1)
     centroids, radii = generate_rv_circles(
         porosity=porosity, rv=rv, rv_args=rv_args, length=length, min_dist=0.05
     )
@@ -91,5 +91,6 @@ if __name__ == "__main__":
     print(f"Porosity: {1 - np.sum(np.pi * radii**2) / length**2}")
     bound = length / 2
     sol = run_case(centroids, radii, bound, p_drop)
-    permeability = analayse_case(sol, length, p_drop)
+    sol.dimensionalize(U=1e-6, L=1e-6, mu=1e-3)
+    permeability, wss_distribution = analayse_case(sol, length, p_drop)
     print(f"Permeability: {permeability}")

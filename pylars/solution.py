@@ -119,19 +119,21 @@ class Solution:
         self.mu = mu
 
         def dim_psi(z):
-            return self.psi(z) * U * L
+            return self.psi(z / L) * U * L
 
         def dim_uv(z):
-            return self.uv(z) * U
+            return self.uv(z / L) * U
 
         def dim_p(z):
-            return self.p(z) * mu * U / L
+            return self.p(z / L) * mu * U / L
 
         def dim_omega(z):
-            return self.omega(z) * U / L
+            return self.omega(z / L) * U / L
 
         def dim_eij(z):
-            return self.eij(z) * U / L
+            return self.eij(z / L) * U / L
+
+        self.problem.domain.dimensionalize(L)
 
         return Solution(
             self.problem,

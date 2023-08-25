@@ -15,15 +15,12 @@ prob.add_boundary_condition("0", "u[0]", 0)
 prob.add_boundary_condition("0", "v[0]", 0)
 prob.add_boundary_condition("2", "u[2]", 0)
 prob.add_boundary_condition("2", "v[2]", 0)
-# parabolic inlet
 prob.add_boundary_condition("1", "p[1]", 2)
 prob.add_boundary_condition("1", "v[1]", 0)
-# outlet
 prob.add_boundary_condition("3", "p[3]", -2)
 prob.add_boundary_condition("3", "v[3]", 0)
 solver = Solver(prob)
 sol = solver.solve(weight=False, normalize=False)
-
 residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 analysis = Analysis(sol)

@@ -86,7 +86,7 @@ class Analysis:
             )
 
         if colorbar:
-            plt.colorbar(pc)
+            cb = plt.colorbar(pc)
         if not isinstance(n_streamlines, Integral):
             raise TypeError("n_streamlines must be an integer")
         if streamline_type == "starting_points":
@@ -134,6 +134,9 @@ class Analysis:
                 zorder=1,
             )
         ax.set_aspect("equal")
+        if self.solution.status == "d":
+            ax.set(xlabel="x (m)", ylabel="y (m)")
+            cb.set_label("Velocity magnitude (m/s)")
         return fig, ax
 
     def get_Z(self, resolution=100, epsilon=1e-3):  # noqa: N802
@@ -213,7 +216,7 @@ class Analysis:
             shading="gouraud",
         )
         if colorbar:
-            plt.colorbar(pc)
+            cb = plt.colorbar(pc)
         ax.contour(
             self.X_tiled,
             self.Y_tiled,
@@ -326,6 +329,9 @@ class Analysis:
         ax.bar(names, values, color=colors)
         ax.set(yscale="log")
         plt.show()
+
+    def get_wss_data(self, curves, samples):
+        return np.array([1])
 
     def get_permeability(self, curve, curve_deriv, delta_x, delta_p):
         """Calculate the permeability of the domain at the outlet."""

@@ -7,6 +7,7 @@ def test_dimensionalize():
     import numpy as np
 
     prob = Problem()
+    prob.add_exterior_polygon([0, 1, 1j])
 
     def psi(z):
         return z
@@ -34,11 +35,11 @@ def test_dimensionalize():
     y = np.linspace(-1, 2, 100)
     X, Y = np.meshgrid(x, y, indexing="ij")
     Z = X + 1j * Y
-    assert np.allclose(sol_dim.psi(Z), Z * 2 * 5)
-    assert np.allclose(sol_dim.uv(Z), Z**2 * 5)
-    assert np.allclose(sol_dim.p(Z), Z**3 * 0.1 * 5 / 2)
-    assert np.allclose(sol_dim.omega(Z), Z**4 * 5 / 2)
-    assert np.allclose(sol_dim.eij(Z), Z**5 * 5 / 2)
+    assert np.allclose(sol_dim.psi(Z * 2), Z * 2 * 5)
+    assert np.allclose(sol_dim.uv(Z * 2), Z**2 * 5)
+    assert np.allclose(sol_dim.p(Z * 2), Z**3 * 0.1 * 5 / 2)
+    assert np.allclose(sol_dim.omega(Z * 2), Z**4 * 5 / 2)
+    assert np.allclose(sol_dim.eij(Z * 2), Z**5 * 5 / 2)
 
 
 if __name__ == "__main__":

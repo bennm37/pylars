@@ -184,6 +184,24 @@ class Domain:
         poly = Polygon(np.array([points.real, points.imag]).T)
         return poly.area
 
+    def dimensionalize(self, L):
+        """Assumes domain is symmetric about the origin."""
+        self.boundary_points *= L
+        self.corners *= L
+        self.poles = [pole * L for pole in self.poles]
+        self.exterior_laurents = [
+            (centroid * L, degree)
+            for centroid, degree in self.exterior_laurents
+        ]
+        self.interior_laurents = [
+            (centroid * L, degree)
+            for centroid, degree in self.interior_laurents
+        ]
+        self.centroids = {
+            side: centroid * L for side, centroid in self.centroids.items()
+        }
+        self._update_polygon()
+
     def _generate_exterior_polygon_points(self):
         """Create a list of boundary points on each edge."""
         if self.spacing == "linear":
@@ -475,6 +493,7 @@ class Domain:
             handles=handles,
             labels=["Lightning poles"] + degree_labels,
             loc="upper center",
+            bbox_to_anchor=(0.5, 1),
         )
         ax.set_aspect("equal")
         ax.axis("off")
@@ -514,6 +533,7 @@ class Domain:
         else:
             raise TypeError("polygon must be a sequence of complex numbers")
 
+        
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""
         mask = np.zeros(z.shape, dtype=bool)
@@ -521,7 +541,7 @@ class Domain:
         for z in it:
             mask[it.multi_index] = self.__contains__(z)
         return mask
-
+    
     def __contains__(self, point):
         """Check if a point is in the polygon."""
         if isinstance(point, complex):

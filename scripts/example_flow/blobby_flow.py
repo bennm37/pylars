@@ -24,7 +24,7 @@ if __name__ == "__main__":
         deg_poly=100,
         spacing="linear",
     )
-    R, a, f = 0.5, 0.4, 10
+    R, a, f = 0.5, 0.5, 10
     theta = 0.0
     t = np.linspace(0, 1, 1000)
     blob = get_blob(R, a, f, theta)
