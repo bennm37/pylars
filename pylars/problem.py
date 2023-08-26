@@ -1,5 +1,5 @@
 """Module defining the Problem Class."""
-from pylars import Domain, PeriodicDomain
+from pylars import Domain, PeriodicDomain, CurvedDomain
 from collections.abc import Sequence
 from time import perf_counter
 import numpy as np
@@ -69,6 +69,28 @@ class Problem:
             spacing=spacing,
         )
         self.domain_type = "periodic"
+
+    def add_curved_domain(
+        self,
+        curve,
+        num_edge_points=100,
+        deg_poly=20,
+        aaa=False,
+        aaa_mmax=None,
+        spacing="linear",
+    ):
+        """Add a curved domain."""
+        if self.domain is not None:
+            raise Warning("Deleting old domain object and creating a new one.")
+        self.domain = CurvedDomain(
+            curve,
+            num_edge_points=500,
+            aaa=False,
+            aaa_mmax=None,
+            deg_poly=30,
+            spacing="linear",
+        )
+        self.domain_type = "curved"
 
     def add_interior_curve(
         self,

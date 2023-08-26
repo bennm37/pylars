@@ -47,9 +47,9 @@ class Analysis:
     ):
         """Plot the contours and velocity magnitude of the solution."""
         dom = self.domain
-        corners = dom.corners
-        xmin, xmax = np.min(corners.real), np.max(corners.real)
-        ymin, ymax = np.min(corners.imag), np.max(corners.imag)
+        exterior_points = dom.exterior_points
+        xmin, xmax = np.min(exterior_points.real), np.max(exterior_points.real)
+        ymin, ymax = np.min(exterior_points.imag), np.max(exterior_points.imag)
         x = np.linspace(xmin + epsilon, xmax - epsilon, resolution)
         y = np.linspace(ymin + epsilon, ymax - epsilon, resolution)
         self.X, self.Y = np.meshgrid(x, y, indexing="ij")

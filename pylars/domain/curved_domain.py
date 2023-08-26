@@ -1,6 +1,7 @@
 """Class for creating curved domains."""
 import numpy as np
 from pylars import Domain
+from pylars.numerics import aaa as aaa_func
 from shapely import LineString
 
 # from pylars.numerics import aaa as aaa_func
@@ -21,13 +22,16 @@ class CurvedDomain(Domain):
         spacing="linear",
     ):
         self.corners = np.array([])
+        self.curve = curve
         self.num_edge_points = num_edge_points
         self.deg_poly = deg_poly
         self.spacing = spacing
-        self.check_input()
-        self._generate_exterior_curve_points(num_edge_points)
-        self._generate_exterior_aaa_poles(aaa, aaa_mmax)
-
+        self._generate_exterior_curve_points(curve, num_edge_points)
+        if aaa:
+            self._generate_exterior_aaa_poles(aaa_mmax)
+        else:
+            self.poles = np.array([[]])
+            self.num_poles = len(self.poles)
         self.interior_curves = []
         self.centroids = {}
         self.movers = []
@@ -36,6 +40,7 @@ class CurvedDomain(Domain):
         self.interior_laurent_indices = {}
         self.exterior_laurent_indices = {}
         self.mirror_indices = {}
+        self._update_polygon()
 
     def _generate_exterior_curve_points(self, f, num_points):
         if not np.isclose(f(0), f(1)):
@@ -46,15 +51,23 @@ class CurvedDomain(Domain):
         line = LineString(np.array([points.real, points.imag]).T)
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
-        side = str(len(self.sides))
-        self.sides = np.append(self.sides, side)
-        self.exterior_curves += [side]
-        n_bp = len(self.boundary_points)
-        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
-        self.boundary_points = np.concatenate(
-            [self.boundary_points, points.reshape(-1, 1)], axis=0
-        )
+        side = "0"
+        self.sides = [side]
+        self.exterior_curves = [side]
+        self.indices = {side: [i for i in range(num_points)]}
+        self.boundary_points = points.reshape(-1, 1)
+        self.exterior_points = self.boundary_points.copy()
         return side
 
-    def _generate_exterior_aaa_poles(self):
-        pass
+    def _generate_exterior_aaa_poles(self, mmax=100):
+        z = self.exterior_points
+        f = np.conj(z)
+        if mmax is None:
+            _, poles, _, _ = aaa_func(f, z)
+        else:
+            _, poles, _, _ = aaa_func(f, z, mmax=mmax)
+        exterior_poles = [
+            pole for pole in poles if not self.__contains__(pole)
+        ]
+        self.poles = np.array(exterior_poles)
+        self.num_poles = len(self.poles)

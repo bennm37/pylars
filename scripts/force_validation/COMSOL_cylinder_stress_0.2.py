@@ -125,13 +125,14 @@ if __name__ == "__main__":
             theta,
             pylars_stress_x,
             c="k",
+            linestyle="--",
             label="PyLARS Stress X",
         )
         ax[0].plot(
             theta,
             pylars_stress_y,
-            linestyle="--",
-            c="darkgreen",
+            linestyle="-.",
+            c="k",
             label="PyLARS Stress Y",
         )
         ax[0].set(
@@ -143,12 +144,12 @@ if __name__ == "__main__":
         sample = 10
         ax[1].plot(
             theta[::sample],
-            stress_x[::sample] - pylars_stress_x[::sample],
+            np.abs(stress_x[::sample] - pylars_stress_x[::sample]),
             label="Error X",
         )
         ax[1].plot(
             theta[::sample],
-            stress_y[::sample] - pylars_stress_y[::sample],
+            np.abs(stress_y[::sample] - pylars_stress_y[::sample]),
             label="Error Y",
         )
         ax[1].set(
