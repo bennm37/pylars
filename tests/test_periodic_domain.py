@@ -4,7 +4,6 @@
 def test_remove_points():
     """Test the domain.remove method."""
     from pylars import Domain
-    import matplotlib.pyplot as plt
     import numpy as np
 
     corners = [0, 1, 1 + 1j, 1j]
@@ -22,7 +21,6 @@ def test_remove_points_2():
     """Test the domain.remove method."""
     from pylars import Domain
     import numpy as np
-    import matplotlib.pyplot as plt
 
     corners = [-1, 1, 1 + 1j, 1j]
     dom = Domain(corners, num_edge_points=10, spacing="linear")
@@ -33,13 +31,11 @@ def test_remove_points_2():
     assert np.all(dom.indices["2"] == np.array(np.array(range(18, 24))))
     assert np.all(dom.indices["3"] == np.array(np.array(range(24, 34))))
     dom.plot()
-    # plt.show()
 
 
 def test_get_nnic():
     """Test adding a circle over a corner."""
     from pylars import PeriodicDomain
-    import matplotlib.pyplot as plt
     import numpy as np
     from collections import Counter
 
@@ -68,7 +64,6 @@ def test_get_nnic():
     assert len(dom.indices["0"]) == len(dom.indices["2"])
     assert len(dom.indices["1"]) == len(dom.indices["3"])
     fig, ax = dom.plot()
-    # plt.show()
 
 
 def test_generate_periodic_curve():
@@ -99,6 +94,7 @@ def test_generate_periodic_curve():
 
 
 def test_flow_periodic_curve():
+    """Test solving flow past a circle over a corner."""
     from pylars import Problem, Solver, Analysis
     import matplotlib.pyplot as plt
     import numpy as np
@@ -134,7 +130,7 @@ def test_flow_periodic_curve():
     )
     an = Analysis(sol)
     fig, ax = an.plot_periodic(resolution=501)
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":

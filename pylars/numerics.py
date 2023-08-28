@@ -388,7 +388,7 @@ def va_evaluate(
     return Q, D
 
 
-def aaa(F, Z, tol=1e-13, mmax=100):
+def aaa(F, Z, tol=1e-13, mmax=100):  # noqa N803
     """Use the AAA algorithm to compute a rational approximation of f(z)."""
     M = len(Z)
     if hasattr(F, "__call__"):

@@ -118,7 +118,11 @@ class Solver:
             self.domain.exterior_laurents,
             second_deriv=True,
         )
+        if self.verbose:
+            print("Getting Dependents ...")
         self.get_dependents()
+        if self.verbose:
+            print("Constructing Linear System ...")
 
     def solve(
         self,
@@ -190,6 +194,7 @@ class Solver:
             self.pickle_solution(filename)
         self.run_time = perf_counter() - self.problem.creation_time
         print(f"Run Time: {self.run_time}")
+        print(f"Max Residual: {self.max_residual}")
         return Solution(
             self.problem.copy(), *self.functions, self.max_residual
         )

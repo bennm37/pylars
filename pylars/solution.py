@@ -17,7 +17,7 @@ class Solution:
         p,
         omega,
         eij,
-        L=1,
+        L=1,  # noqa N803
         U=1,
         mu=1,
         status="nd",

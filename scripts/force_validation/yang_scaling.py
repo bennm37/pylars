@@ -2,7 +2,17 @@
 from pylars import Problem, Solver, Analysis
 from pylars.simulation import Mover
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
+
+matplotlib.rcParams.update(
+    {
+        "pgf.texsystem": "pdflatex",
+        "font.family": "serif",
+        "text.usetex": True,
+        "pgf.rcfonts": False,
+    }
+)
 
 
 def get_force_torque(
@@ -17,6 +27,7 @@ def get_force_torque(
     l=1,
     plot=False,
 ):
+    """Calculate the force and torque on a circular interior curve."""
     prob = Problem()
     s = 8
     corners = [
@@ -86,11 +97,12 @@ def get_force_torque(
 
 
 def get_data(filename="yang_scaling.npz", n_samples=10):
-    l = 1
+    """Calculate the force and torque on a circular interior curve."""
+    length = 1
     omega = 1
     Rs = np.array([0.29, 0.6, 0.8, 0.9])
     tol = 1e-2
-    centroids = 0.0 + 1j * np.linspace(0, l - Rs - tol, n_samples).T
+    centroids = 0.0 + 1j * np.linspace(0, length - Rs - tol, n_samples).T
     force_results = np.zeros(centroids.shape, dtype=np.complex128)
     torque_results = np.zeros(centroids.shape, dtype=np.float64)
     for i, R in enumerate(Rs):
@@ -117,29 +129,30 @@ def get_data(filename="yang_scaling.npz", n_samples=10):
         centroids=centroids,
         Rs=Rs,
         omega=omega,
-        l=l,
+        l=length,
     )
 
 
 def plot_data(
     filename="data/yang_scaling.npz", plotname="media/yang_scaling.pdf"
 ):
+    """Recreate Figure 6 from Yang et. al."""
     data = np.load(filename)
     force_results = data["force_results"]
     torque_results = data["torque_results"]
     centroids = data["centroids"]
     Rs = data["Rs"]
-    l = data["l"]
+    length = data["l"]
     omega = data["omega"]
-    ks = Rs / l
+    ks = Rs / length
     # generate scaling solution data
     CF = -1.14
     CT = -np.pi * np.sqrt(2)
     eps_bs = np.array(
-        [(l - R + centroids[i].imag) / R for i, R in enumerate(Rs)]
+        [(length - R + centroids[i].imag) / R for i, R in enumerate(Rs)]
     )
     eps_ts = np.array(
-        [(l - R - centroids[i].imag) / R for i, R in enumerate(Rs)]
+        [(length - R - centroids[i].imag) / R for i, R in enumerate(Rs)]
     )
     force_scaling = np.array(
         [
@@ -166,7 +179,7 @@ def plot_data(
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     scaling_labels = [None, None, None, "scaling"]
     for i, k in enumerate(ks):
-        e_o_emax = centroids[i].imag / (l - Rs[i])
+        e_o_emax = centroids[i].imag / (length - Rs[i])
         ax[0].plot(
             e_o_emax,
             -((1 / k - 1) ** 1.5) * force_results[i].real / (omega * Rs[i]),
@@ -180,10 +193,10 @@ def plot_data(
             label=scaling_labels[i],
         )
     ax[0].set_xlabel("$e/e_{max}$")
-    ax[0].set_ylabel("$(1/k-1)^{3/2}) F_x/(\mu\omega R)$")
+    ax[0].set_ylabel("$(1/k-1)^{3/2} F_x/(\mu\omega R)$")
     ax[0].legend()
     for i, k in enumerate(ks):
-        e_o_emax = centroids[i].imag / (l - Rs[i])
+        e_o_emax = centroids[i].imag / (length - Rs[i])
         ax[1].plot(
             e_o_emax,
             -((1 / k - 1) ** 0.5)
@@ -201,13 +214,12 @@ def plot_data(
             label=scaling_labels[i],
         )
     ax[1].set_xlabel("$e/e_{max}$")
-    ax[1].set_ylabel("$(1/k-1)^{3/2}) F_x/(\mu\omega R)$")
+    ax[1].set_ylabel("$(1/k-1)^{1/2} T_x/(4\pi\mu\omega R^2)$")
     ax[1].legend()
     fig.suptitle(
         "Comparison of Force and Torque to Scaling Solution from Yang et. al."
     )
-    plt.savefig(plotname)
-    plt.show()
+    return fig, ax
 
 
 if __name__ == "__main__":
@@ -226,6 +238,8 @@ if __name__ == "__main__":
     #     filename="data/yang_scaling.npz",
     #     n_samples=20,
     # )
-    plot_data(
+    fig, ax = plot_data(
         filename="data/yang_scaling.npz", plotname="media/yang_scaling.pdf"
     )
+    plotname = "media/yang_scaling.pdf"
+    plt.savefig(plotname + ".pgf", backend="pgf")

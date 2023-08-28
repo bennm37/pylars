@@ -1,7 +1,26 @@
 """Solve poiseuille flow with stream function boundary conditions."""
 from pylars import Problem, Solver, Analysis
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.colors import LogNorm
+import pandas as pd
+from scipy.interpolate import griddata
+
+matplotlib.rcParams.update(
+    {
+        "pgf.texsystem": "pdflatex",
+        "font.family": "serif",
+        "text.usetex": True,
+        "pgf.rcfonts": False,
+    }
+)
+
+
+def fmt(x, pos):
+    return f"{x:.1e}"
+
 
 # create a square domain
 shift = 0.0 + 0.0j
@@ -60,10 +79,10 @@ residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
 print(f"Residual: {residual:.15e}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
 an = Analysis(sol)
-fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
-fig, ax = an.plot_periodic(
-    interior_patch=True, resolution=200, n_streamlines=50
-)
+# fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
+# fig, ax = an.plot_periodic(
+#     interior_patch=True, resolution=200, n_streamlines=50
+# )
 # plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
 
 # continuity checks
@@ -94,4 +113,79 @@ plt.plot(
 
 plt.legend()
 # plt.plot(points.imag, sol.p(points+2), label="p right")
-plt.show()
+# plt.show()
+
+# compare to COMSOL data
+CS_p_data = pd.read_csv("data/dp_two_circles/pressure.txt")
+CS_v_data = pd.read_csv("data/dp_two_circles/velocity.txt")
+CS_s_data = pd.read_csv("data/dp_two_circles/velocity_magnitude.txt")
+CS_p_x, CS_p_y = CS_p_data["x"].to_numpy(), CS_p_data["y"].to_numpy()
+CS_p_z = CS_p_x + 1j * CS_p_y
+CS_p = CS_p_data["Pressure"].to_numpy()
+CS_v_x, CS_v_y = CS_v_data["x"].to_numpy(), CS_v_data["y"].to_numpy()
+CS_v_z = CS_v_x + 1j * CS_v_y
+CS_u, CS_v = CS_v_data["u"].to_numpy(), CS_v_data["v"].to_numpy()
+CS_s_x, CS_s_y = CS_s_data["x"].to_numpy(), CS_s_data["y"].to_numpy()
+CS_s_z = CS_s_x + 1j * CS_s_y
+CS_s = CS_s_data["Velocity magnitude"].to_numpy()
+
+
+n_samples = 200
+fig, ax = plt.subplots(1, 2)
+# plotting pressure
+print("Plotting P")
+pylars_p = sol.p(CS_p_z).reshape(-1, 1)
+p_X, p_Y = np.meshgrid(
+    np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples)
+)
+p_Z = p_X + 1j * p_Y
+mask = prob.domain.mask_contains(p_Z)
+# mask P_X, P_Y using mask_contains
+p_diff = np.abs(pylars_p - CS_p.reshape(-1, 1))
+gd = griddata(np.array([CS_p_x, CS_p_y]).T, p_diff, (p_X, p_Y), method="cubic")
+gd = gd.reshape(n_samples, n_samples)
+gd[~mask] = np.nan
+im = ax[0].imshow(
+    gd,
+    extent=[-1, 1, -1, 1],
+    origin="lower",
+    alpha=0.4,
+    norm=LogNorm(vmin=np.min(p_diff), vmax=np.max(p_diff)),
+)
+scatter = ax[0].scatter(CS_p_x, CS_p_y, c=p_diff, s=1)
+plt.colorbar(
+    scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt)
+)
+ax[0].set_aspect("equal")
+ax[0].axis("off")
+ax[0].set_title("Difference in Pressure")
+
+# plotting difference in U
+print("Plotting U")
+pylars_s = np.abs(sol.uv(CS_s_z)).reshape(-1, 1)
+p_X, p_Y = np.meshgrid(
+    np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples)
+)
+p_Z = p_X + 1j * p_Y
+mask = prob.domain.mask_contains(p_Z)
+# mask P_X, P_Y using mask_contains
+s_diff = np.abs(pylars_s - CS_s.reshape(-1, 1))
+gd = griddata(np.array([CS_s_x, CS_s_y]).T, s_diff, (p_X, p_Y), method="cubic")
+gd = gd.reshape(n_samples, n_samples)
+gd[~mask] = np.nan
+im = ax[1].imshow(
+    gd,
+    extent=[-1, 1, -1, 1],
+    origin="lower",
+    alpha=0.4,
+    norm=LogNorm(vmin=np.min(s_diff), vmax=np.max(s_diff)),
+)
+scatter = ax[1].scatter(CS_s_x, CS_s_y, c=s_diff, s=1)
+plt.colorbar(
+    scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt)
+)
+ax[1].set_aspect("equal")
+ax[1].axis("off")
+ax[1].set_title("Difference in Velocity Magnitude")
+plt.tight_layout()
+plt.savefig("media/dp_two_circles_flow.pgf", bbox_inches="tight")

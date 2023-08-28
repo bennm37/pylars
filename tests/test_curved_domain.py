@@ -2,9 +2,9 @@
 
 
 def test_circle_in_circle():
+    """Test creating a circle in a circle."""
     from pylars import Problem, CurvedDomain
     import numpy as np
-    import matplotlib.pyplot as plt
 
     prob = Problem()
     outer_r = 1
@@ -27,6 +27,7 @@ def test_circle_in_circle():
 
 
 def test_solve_circle_in_circle():
+    """Test solving flow for a circle in a circle."""
     from pylars import Problem, Solver, Analysis
     from pylars.simulation import Mover
     import numpy as np
@@ -54,6 +55,8 @@ def test_solve_circle_in_circle():
     sol = solver.solve()
     analysis = Analysis(sol)
     analysis.plot(resolution=301)
+    plt.show()
+
     # TODO compare to williams results here
 
 

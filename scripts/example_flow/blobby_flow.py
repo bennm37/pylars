@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_blob(R, a=0.1, f=10, theta=0.0):
+def get_blob(R, a=0.1, f=10, theta=0.0):  # noqa N803
     """Return a parametric function for an ellipse."""
     blob = (
         lambda t: R
@@ -65,5 +65,4 @@ if __name__ == "__main__":
     )
     an = Analysis(sol)
     fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.0)
-    plt.savefig("media/circle_flow.pdf")
     plt.show()

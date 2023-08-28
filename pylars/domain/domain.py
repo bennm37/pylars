@@ -14,6 +14,8 @@ from pylars.numerics import cart, cluster, aaa
 from shapely import Point, Polygon, LineString
 import matplotlib.patches as patches
 
+BLUE = [0.36, 0.54, 0.66]
+
 
 class Domain:
     """Create a polygonal domain from a list of corners.
@@ -190,7 +192,7 @@ class Domain:
         poly = Polygon(np.array([points.real, points.imag]).T)
         return poly.area
 
-    def dimensionalize(self, L):
+    def dimensionalize(self, L):  # noqa N803
         """Assumes domain is symmetric about the origin."""
         self.boundary_points *= L
         self.corners *= L
@@ -417,7 +419,9 @@ class Domain:
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
 
-    def plot(self, figax=None, set_lims=True, point_color="indices"):
+    def plot(
+        self, figax=None, set_lims=True, point_color="indices", legend=True
+    ):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
@@ -431,26 +435,27 @@ class Domain:
                 y_min = min(flat_poles.imag)
                 y_max = max(flat_poles.imag)
             except ValueError:
-                x_min = min(self.corners.real)
-                x_max = max(self.corners.real)
-                y_min = min(self.corners.imag)
-                y_max = max(self.corners.imag)
-            x_min = min(min(self.corners.real), x_min)
-            x_max = max(max(self.corners.real), x_max)
-            y_min = min(min(self.corners.imag), y_min)
-            y_max = max(max(self.corners.imag), y_max)
+                x_min = min(self.exterior_points.real)
+                x_max = max(self.exterior_points.real)
+                y_min = min(self.exterior_points.imag)
+                y_max = max(self.exterior_points.imag)
+            x_min = min(min(self.exterior_points.real), x_min)
+            x_max = max(max(self.exterior_points.real), x_max)
+            y_min = min(min(self.exterior_points.imag), y_min)
+            y_max = max(max(self.exterior_points.imag), y_max)
             ax.set_xlim(x_min - 0.1, x_max + 0.1)
             ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
         for side in self.sides:
-            centroid = np.mean(self.boundary_points[self.indices[side]])
-            x, y = centroid.real, centroid.imag
+            bp = self.boundary_points[self.indices[side]]
+            mid_point = bp[len(bp) // 2]
+            x, y = mid_point.real, mid_point.imag
             ax.text(
                 x,
                 y,
                 str(side),
                 fontsize=20,
-                ha="center",
+                ha="left",
                 va="center",
             )
 
@@ -501,12 +506,13 @@ class Domain:
                 degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
-        ax.legend(
-            handles=handles,
-            labels=["Lightning poles"] + degree_labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, 1),
-        )
+        if legend:
+            ax.legend(
+                handles=handles,
+                labels=["Lightning poles"] + degree_labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1),
+            )
         ax.set_aspect("equal")
         ax.axis("off")
         # plt.tight_layout()

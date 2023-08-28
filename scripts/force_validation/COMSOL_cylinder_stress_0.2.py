@@ -1,11 +1,17 @@
 """Compare stress data to COMSOL."""
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 import time
 from pylars import Problem, Solver, Analysis
 import numpy as np
 
-plt.style.use("ggplot")
+# plt.style.use("ggplot")
+# plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern"})
+# matplotlib.rcParams["mathtext.fontset"] = "custom"
+# matplotlib.rcParams["mathtext.rm"] = "Bitstream Vera Sans"
+# matplotlib.rcParams["mathtext.it"] = "Bitstream Vera Sans:italic"
+# matplotlib.rcParams["mathtext.bf"] = "Bitstream Vera Sans:bold"
 
 
 def load_comsol_data(center=0.2):
@@ -105,9 +111,11 @@ if __name__ == "__main__":
             [S @ n for n, S in zip(normals, stress_tensor)]
         )
         pylars_data[size] = surface_stress
-
-    for size in mesh_sizes:
-        fig, ax = plt.subplots(1, 2)
+    size = "extremely_fine"
+    # for size in mesh_sizes:
+    for i in range(1):
+        fig, ax = plt.subplots(2, 2)
+        fig.set_size_inches(10, 5)
         sample = 1
         theta = np.array(data[size][0][:, 0])
         # theta = np.linspace(0, 2 * np.pi, 100)
@@ -115,68 +123,92 @@ if __name__ == "__main__":
         stress_y = np.array(data[size][1][:, 1])
         pylars_stress_x = pylars_data[size][:, 0]
         pylars_stress_y = pylars_data[size][:, 1]
-        ax[0].plot(
-            theta[::sample], stress_x[::sample], label="COMSOL Stress X"
-        )
-        ax[0].plot(
-            theta[::sample], stress_y[::sample], label="COMSOL Stress Y"
-        )
-        ax[0].plot(
+        ax[0, 0].plot(theta[::sample], stress_x[::sample], label="$T_x^C$")
+        ax[0, 0].plot(theta[::sample], stress_y[::sample], label="$T_y^C$")
+        ax[0, 0].plot(
             theta,
             pylars_stress_x,
             c="k",
             linestyle="--",
-            label="PyLARS Stress X",
+            label="$T_x^P$",
         )
-        ax[0].plot(
+        ax[0, 0].plot(
             theta,
             pylars_stress_y,
             linestyle="-.",
             c="k",
-            label="PyLARS Stress Y",
+            label="$T_y^P$",
         )
-        ax[0].set(
+        ax[0, 0].set(
             xlabel=" $\Theta$ ",
             ylabel="Traction",
             title="Traction on Cylinder",
         )
-        ax[0].legend()
+        ax[0, 0].legend(loc="upper right")
+        ax[0, 1].plot(theta[::sample], stress_x[::sample], label="$T_x^C$")
+        ax[0, 1].plot(theta[::sample], stress_y[::sample], label="$T_y^C$")
+        ax[0, 1].plot(
+            theta,
+            pylars_stress_x,
+            c="k",
+            linestyle="--",
+            label="$T_x^P$",
+        )
+        ax[0, 1].plot(
+            theta,
+            pylars_stress_y,
+            linestyle="-.",
+            c="k",
+            label="RS $T_y^P$",
+        )
+        ax[0, 1].set(
+            xlabel=" $\Theta$ ",
+            ylabel="Traction",
+            xlim=(-1.8, -1.3),
+            ylim=(-0.45, -0.3),
+            title="Traction on Cylinder",
+        )
+        ax[0, 1].legend(loc="upper right")
         sample = 10
-        ax[1].plot(
+        ax[1, 0].semilogy(
             theta[::sample],
             np.abs(stress_x[::sample] - pylars_stress_x[::sample]),
-            label="Error X",
+            label="$T_x$",
         )
-        ax[1].plot(
+        ax[1, 0].semilogy(
             theta[::sample],
             np.abs(stress_y[::sample] - pylars_stress_y[::sample]),
-            label="Error Y",
+            label="$T_y$",
         )
-        ax[1].set(
+        ax[1, 0].set(
             xlabel=" $\Theta$ ",
-            ylabel="Error",
-            title="Error in Traction on Cylinder",
+            ylabel="Difference",
+            title="Difference in Traction",
         )
-        ax[1].legend()
+        ax[1, 0].legend()
         # plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
+        # plot convergence of the max error
+        max_errors_x = [
+            np.max(
+                np.abs(np.array(data[size][0][:, 1]) - pylars_data[size][:, 0])
+            )
+            for size in mesh_sizes
+        ]
+        max_errors_y = [
+            np.max(
+                np.abs(np.array(data[size][1][:, 1]) - pylars_data[size][:, 1])
+            )
+            for size in mesh_sizes
+        ]
+        ax[1, 1].plot(max_errors_x, label="$T_x$")
+        ax[1, 1].plot(max_errors_y, label="$T_y$")
+        ax[1, 1].set_xlabel("Mesh Size")
+        ax[1, 1].set_ylabel("Max Difference")
+        ax[1, 1].set_xticks(range(len(mesh_sizes)))
+        labels = [f"{size.split('_')[0]}" for size in mesh_sizes]
+        ax[1, 1].set_xticklabels(labels)
+        ax[1, 1].set_title("Convergence of Max Difference")
+        ax[1, 1].legend()
         plt.tight_layout()
+        plt.savefig(f"media/COMSOL_vs_PyLARS_stress_{size}.pdf")
         plt.show()
-
-    # plot convergence of the max error
-    max_errors_x = [
-        np.max(np.abs(np.array(data[size][0][:, 1]) - pylars_data[size][:, 0]))
-        for size in mesh_sizes
-    ]
-    max_errors_y = [
-        np.max(np.abs(np.array(data[size][1][:, 1]) - pylars_data[size][:, 1]))
-        for size in mesh_sizes
-    ]
-    fig, ax = plt.subplots()
-    ax.plot(max_errors_x, label="Max Error X")
-    ax.plot(max_errors_y, label="Max Error Y")
-    ax.set_xlabel("Mesh Size")
-    ax.set_ylabel("Max Error")
-    ax.set_xticks(range(len(mesh_sizes)))
-    ax.set_xticklabels(mesh_sizes)
-    ax.legend()
-    plt.show()

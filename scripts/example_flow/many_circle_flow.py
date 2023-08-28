@@ -32,11 +32,9 @@ if __name__ == "__main__":
         )
 
     prob.add_boundary_condition("0", "u[0]", 0)
-    # prob.add_boundary_condition("0", "psi[0]", -2 / 3)
     prob.add_boundary_condition("0", "v[0]", 0)
     prob.add_boundary_condition("2", "u[2]", 0)
     prob.add_boundary_condition("2", "v[2]", 0)
-    # prob.add_boundary_condition("2", "psi[2]", 2 / 3)
     prob.add_boundary_condition("1", "u[1]", "1-y**2")
     prob.add_boundary_condition("1", "v[1]", 0)
     prob.add_boundary_condition("3", "p[3]", 0)

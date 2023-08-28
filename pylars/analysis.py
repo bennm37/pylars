@@ -9,7 +9,6 @@ from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
 from scipy.integrate import quad
-import re
 
 
 class Analysis:
@@ -86,7 +85,7 @@ class Analysis:
             )
 
         if colorbar:
-            cb = plt.colorbar(pc)
+            cb = plt.colorbar(pc, fraction=0.046, pad=0.04)
         if not isinstance(n_streamlines, Integral):
             raise TypeError("n_streamlines must be an integer")
         if streamline_type == "starting_points":
@@ -216,7 +215,7 @@ class Analysis:
             shading="gouraud",
         )
         if colorbar:
-            cb = plt.colorbar(pc)
+            plt.colorbar(pc)
         ax.contour(
             self.X_tiled,
             self.Y_tiled,
@@ -331,6 +330,7 @@ class Analysis:
         plt.show()
 
     def get_wss_data(self, curves, samples):
+        """Calculate the wall shear stress data."""
         return np.array([1])
 
     def get_permeability(self, curve, curve_deriv, delta_x, delta_p):
