@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
-import cupy
+
+# import cupy
 import torch
 import time
 
@@ -20,9 +21,10 @@ def generate_linear_system(seed, bound=1):
         1 * bound + 1j * bound,
         -1 * bound + 1j * bound,
     ]
-    prob.add_exterior_polygon(
-        corners,
-        num_edge_points=500,
+    prob.add_periodic_domain(
+        length,
+        length,
+        num_edge_points=600,
         num_poles=0,
         deg_poly=75,
         spacing="linear",
@@ -40,21 +42,24 @@ def generate_linear_system(seed, bound=1):
     n_circles = len(centroids)
     print(f"{n_circles = }")
     for centroid, radius in zip(centroids, radii):
-        prob.add_interior_curve(
+        prob.add_periodic_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=250,
+            num_points=300,
             deg_laurent=50,
             centroid=centroid,
             mirror_laurents=True,
+            image_laurents=True,
         )
+    prob.domain.plot(set_lims=False)
+    plt.show()
     prob.add_boundary_condition("0", "u[0]", 0)
     prob.add_boundary_condition("0", "v[0]", 0)
     prob.add_boundary_condition("2", "u[2]", 0)
     prob.add_boundary_condition("2", "v[2]", 0)
-    prob.add_boundary_condition("1", "u[1]", "1-y**2")
-    prob.add_boundary_condition("1", "v[1]", 0)
-    prob.add_boundary_condition("3", "p[3]", 0)
-    prob.add_boundary_condition("3", "v[3]", 0)
+    prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+    prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 2)
+    prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
     interiors = [str(i) for i in range(4, 4 + n_circles)]
     for interior in interiors:
         prob.add_boundary_condition(f"{interior}", f"u[{interior}]", 0)
@@ -76,7 +81,7 @@ def test_solvers():
 if __name__ == "__main__":
     num_tests = 10
     n_solvers = 4
-    bound = 1
+    bound = 5
     times = np.zeros((num_tests, n_solvers))
     residuals = np.zeros((num_tests, n_solvers))
     for i in range(num_tests):
@@ -96,13 +101,14 @@ if __name__ == "__main__":
             A_torch, b_torch, rcond=None, driver="gelsd"
         )
         end_torch = time.perf_counter()
-        print("Finished torch.")
         time_torch = end_torch - start_torch
         residual_torch = torch.max(
             torch.abs(torch.matmul(A_torch, sol_torch[0]) - b_torch)
         )
+        print(f"Residual: {residual_torch}")
+        print("Finished torch.")
         start_np = time.perf_counter()
-        sol_np = np.linalg.lstsq(A, b)
+        sol_np = np.linalg.lstsq(A, b, rcond=None)
         end_np = time.perf_counter()
         time_np = end_np - start_np
         residual_np = np.max(np.abs(A @ sol_np[0] - b))
@@ -113,20 +119,20 @@ if __name__ == "__main__":
         time_scipy = end_scipy - start_scipy
         residual_scipy = np.max(np.abs(A @ sol_scipy[0] - b))
         print("Finished scipy.")
-        start_cupy = time.perf_counter()
-        sol_cupy = cupy.linalg.lstsq(cupy.array(A), cupy.array(b))
-        end_cupy = time.perf_counter()
-        time_cupy = end_cupy - start_cupy
-        residual_cupy = np.max(np.abs(A @ sol_cupy[0].get() - b))
+        # start_cupy = time.perf_counter()
+        # sol_cupy = cupy.linalg.lstsq(cupy.array(A), cupy.array(b))
+        # end_cupy = time.perf_counter()
+        # time_cupy = end_cupy - start_cupy
+        # residual_cupy = np.max(np.abs(A @ sol_cupy[0].get() - b))
         print("Finished cupy.")
         times[i, 0] = time_torch
         times[i, 1] = time_np
         times[i, 2] = time_scipy
-        times[i, 3] = time_cupy
+        # times[i, 3] = time_cupy
         residuals[i, 0] = residual_torch
         residuals[i, 1] = residual_np
         residuals[i, 2] = residual_scipy
-        residuals[i, 3] = residual_cupy
+        # residuals[i, 3] = residual_cupy
         print(f"{times = }")
         print(f"{residuals = }")
     times_df = pd.DataFrame(times, columns=["torch", "numpy", "scipy", "cupy"])
