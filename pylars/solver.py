@@ -6,14 +6,14 @@ import numpy as np
 
 # import scipy.linalg as linalg
 # import numpy.linalg as linalg
-import jax
-from jax.numpy import linalg
+import torch
 from scipy.sparse import diags
 from time import perf_counter
 import re
 import pickle as pkl
 
-jax.config.update("jax_enable_x64", True)
+# jax.config.update("jax_enable_x64", True)
+torch.set_default_dtype(torch.float64)
 
 
 class Solver:
@@ -177,9 +177,18 @@ class Solver:
                 "A is not tall skinny enough. Add more boundary points."
             )
         # results = linalg.lstsq(self.A, self.b, rcond=None)
-        results = linalg.lstsq(self.A, self.b, rcond=None)
-        self.coefficients = results[0]
-        if results[1]:
+        # results = linalg.lstsq(self.A, self.b, rcond=None)
+        dev = "cpu"
+        device = torch.device(dev)
+        A_torch = torch.tensor(self.A.copy())
+        b_torch = torch.tensor(self.b.copy())
+        A_torch = A_torch.to(device)
+        b_torch = b_torch.to(device)
+        results = torch.linalg.lstsq(
+            A_torch, b_torch, rcond=None, driver="gelsd"
+        )
+        self.coefficients = np.array(results[0])
+        if len(results[1]) != 0:
             self.max_residual = np.sqrt(np.max(results[1]))
         else:
             if self.verbose:

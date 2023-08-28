@@ -90,7 +90,7 @@ if __name__ == "__main__":
         A_torch = A_torch.to(device)
         b_torch = b_torch.to(device)
         sol_torch = torch.linalg.lstsq(
-            torch.tensor(A), torch.tensor(b), rcond=None
+            torch.tensor(A), torch.tensor(b), rcond=None, driver="gelsd"
         )
         end_torch = time.perf_counter()
         time_torch = end_torch - start_torch
