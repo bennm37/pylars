@@ -35,7 +35,7 @@ x_quiver = -np.ones_like(y_quiver)
 u = sol.uv(x_quiver + 1j * y_quiver).real
 v = sol.uv(x_quiver + 1j * y_quiver).imag
 ax.quiver(x_quiver, y_quiver, u, v, color="black", scale=2)
-plt.savefig("media/poiseuille_flow.pdf", bbox_inches="tight")
+# plt.savefig("media/poiseuille_flow.pdf", bbox_inches="tight")
 plt.show()
 
 # Figure 2: Plot profiles.
