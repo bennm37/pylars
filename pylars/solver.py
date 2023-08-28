@@ -6,14 +6,15 @@ import numpy as np
 
 # import scipy.linalg as linalg
 # import numpy.linalg as linalg
-import jax
-from jax.numpy import linalg
+# import jax
+# from jax.numpy import linalg
+import cupy
 from scipy.sparse import diags
 from time import perf_counter
 import re
 import pickle as pkl
 
-jax.config.update("jax_enable_x64", True)
+# jax.config.update("jax_enable_x64", True)
 
 
 class Solver:
@@ -177,8 +178,9 @@ class Solver:
                 "A is not tall skinny enough. Add more boundary points."
             )
         # results = linalg.lstsq(self.A, self.b, rcond=None)
-        results = linalg.lstsq(self.A, self.b, rcond=None)
-        self.coefficients = results[0]
+        # results = linalg.lstsq(self.A, self.b, rcond=None)
+        results = cupy.linalg.lstsq(cupy.array(self.A),cupy.array(self.b))
+        self.coefficients = results[0].get()
         if results[1]:
             self.max_residual = np.sqrt(np.max(results[1]))
         else:

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
+import cupy
 import torch
 import time
 
@@ -74,38 +75,58 @@ def test_solvers():
 
 if __name__ == "__main__":
     num_tests = 10
-    n_solvers = 3
+    n_solvers = 4
     bound = 1
     times = np.zeros((num_tests, n_solvers))
+    residuals = np.zeros((num_tests, n_solvers))
     for i in range(num_tests):
         A, b = generate_linear_system(i, bound)
         start_torch = time.perf_counter()
-        if torch.cuda.is_available():
-            dev = "cuda:0"
-        else:
-            dev = "cpu"
+        # if torch.cuda.is_available():
+        #     dev = "cuda:0"
+        # else:
+        #     dev = "cpu"
+        dev = "cpu"
         device = torch.device(dev)
         A_torch = torch.tensor(A)
         b_torch = torch.tensor(b)
         A_torch = A_torch.to(device)
         b_torch = b_torch.to(device)
         sol_torch = torch.linalg.lstsq(
-            torch.tensor(A), torch.tensor(b), rcond=None
+            A_torch, b_torch, rcond=None, driver="gelsd"
         )
         end_torch = time.perf_counter()
+        print("Finished torch.")
         time_torch = end_torch - start_torch
+        residual_torch = torch.max(torch.abs(torch.matmul(A_torch, sol_torch[0]) - b_torch))
         start_np = time.perf_counter()
         sol_np = np.linalg.lstsq(A, b)
         end_np = time.perf_counter()
         time_np = end_np - start_np
+        residual_np = np.max(np.abs(A @ sol_np[0] - b))
+        print("Finished numpy.")
         start_scipy = time.perf_counter()
         sol_scipy = scipy.linalg.lstsq(A, b, lapack_driver="gelsd")
         end_scipy = time.perf_counter()
         time_scipy = end_scipy - start_scipy
+        residual_scipy = np.max(np.abs(A @ sol_scipy[0] - b))
+        print("Finished scipy.")
+        start_cupy = time.perf_counter()
+        sol_cupy = cupy.linalg.lstsq(cupy.array(A), cupy.array(b))
+        end_cupy = time.perf_counter()
+        time_cupy = end_cupy - start_cupy
+        residual_cupy = np.max(np.abs(A @ sol_cupy[0].get() - b))
+        print("Finished cupy.")
         times[i, 0] = time_torch
         times[i, 1] = time_np
         times[i, 2] = time_scipy
-        print(times)
-    times_df = pd.DataFrame(times, columns=["torch", "numpy", "scipy"])
+        times[i, 3] = time_cupy
+        residuals[i, 0] = residual_torch
+        residuals[i, 1] = residual_np
+        residuals[i, 2] = residual_scipy
+        residuals[i, 3] = residual_cupy
+        print(f"{times = }")
+        print(f"{residuals = }")
+    times_df = pd.DataFrame(times, columns=["torch", "numpy", "scipy","cupy"])
     times_df.boxplot()
     plt.show()
