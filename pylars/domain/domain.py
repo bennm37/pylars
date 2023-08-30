@@ -123,6 +123,16 @@ class Domain:
         self.movers += [side]
         return side
 
+    def add_point(self, point):
+        """Add a point to the domain."""
+        self.boundary_points = np.append(self.boundary_points, point).reshape(
+            -1, 1
+        )
+        side = f"{len(self.sides)}"
+        self.error_points[side] = np.array(point)
+        self.sides = np.append(self.sides, side)
+        self.indices[side] = len(self.boundary_points) - 1
+
     def remove(self, indices):
         """Remove the points at the given indices and adjust the indices."""
         n = len(self.boundary_points)
@@ -136,6 +146,16 @@ class Domain:
             raise ValueError("indices must be non negative")
         if np.any(indices >= n):
             raise ValueError("indices must be less than the number of points")
+        points_to_delete = self.boundary_points[indices]
+        for side, err_points in self.error_points.items():
+            avg_diff = np.mean(
+                np.abs(np.diff(self.boundary_points[self.indices[side]].T))
+            )
+            err_indices = np.where(
+                np.abs(points_to_delete - err_points.reshape(-1))
+                <= avg_diff / 2
+            )[1]
+            self.error_points[side] = np.delete(err_points, err_indices)
         self.boundary_points = np.delete(self.boundary_points, indices, axis=0)
         indices_start_values = [val[0] for val in self.indices.values()]
         # sort the sides so they are in increasing order
@@ -214,9 +234,13 @@ class Domain:
         """Create a list of boundary points on each edge."""
         if self.spacing == "linear":
             spacing = np.linspace(0, 1, self.num_edge_points)
+            error_spacing = np.linspace(0, 1, self.num_edge_points * 2)
         else:
             spacing = (
                 np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1
+            ) / 2
+            error_spacing = (
+                np.tanh(np.linspace(-10, 10, self.num_edge_points * 2)) + 1
             ) / 2
         nc = len(self.corners)
         self.boundary_points = np.array(
@@ -226,6 +250,11 @@ class Domain:
                 for i in range(len(self.corners))
             ]
         ).reshape(-1, 1)
+        self.error_points = {
+            str(i): self.corners[i]
+            + (self.corners[(i + 1) % nc] - self.corners[i]) * error_spacing
+            for i in range(len(self.corners))
+        }
         self.sides = np.array(
             [str(i) for i in range(len(self.corners))], dtype="<U50"
         )
@@ -244,6 +273,9 @@ class Domain:
         if not np.isclose(f(0), f(1)):
             raise ValueError("Curve must be closed")
         points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
+        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(
+            np.complex128
+        )
         # create a shapely LineString and check it is simple
         # (i.e. does not intersect itself)
         line = LineString(np.array([points.real, points.imag]).T)
@@ -257,6 +289,7 @@ class Domain:
         self.boundary_points = np.concatenate(
             [self.boundary_points, points.reshape(-1, 1)], axis=0
         )
+        self.error_points[side] = error_points
         return side
 
     def _name_side(self, old, new):

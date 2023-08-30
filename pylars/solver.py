@@ -2,6 +2,7 @@
 from pylars.numerics import va_orthogonalise, va_evaluate, make_function
 from pylars.problem import DEPENDENT, INDEPENDENT
 from pylars.solution import Solution
+from pylars import PeriodicDomain
 import numpy as np
 
 # import scipy.linalg as linalg
@@ -48,6 +49,40 @@ class Solver:
         for side in self.domain.sides:
             expression = re.sub(
                 f"\[{side}\]", f'[self.domain.indices["{side}"]]', expression
+            )
+        for identifier, code in zip(
+            INDEPENDENT,
+            ["np.real(points)", "np.imag(points)"],
+        ):
+            expression = expression.replace(identifier, code)
+        result = eval(expression)
+        return result
+
+    def evaluate_solution(self, expression, points):
+        """Evaluate the given expression from the solved function."""
+        psi = self.functions[0]  # noqa F841
+        u = lambda z: self.functions[1](z).real  # noqa F841
+        v = lambda z: self.functions[1](z).imag  # noqa F841
+        p = self.functions[2]  # noqa F841
+        e11 = lambda z: self.functions[4](z).real  # noqa F841
+        e12 = lambda z: self.functions[4](z).imag  # noqa F841
+        code_dependent = [
+            "psi",
+            "u",
+            "v",
+            "p",
+            "e11",
+            "e12",
+        ]
+        for identifier, code in zip(DEPENDENT, code_dependent):
+            identifier += "["
+            code += "["
+            expression = expression.replace(identifier, code)
+        for side in self.domain.sides:
+            expression = re.sub(
+                f"\[{side}\]",
+                f"(self.domain.error_points['{side}'])",
+                expression,
             )
         for identifier, code in zip(
             INDEPENDENT,
@@ -172,7 +207,7 @@ class Solver:
             print("Solving ...")
         if self.A.shape[0] < 4 * self.A.shape[1]:
             raise ValueError(
-                "A is not tall skinny enough. Add more boundary points."
+                f"A is not tall skinny enough with shape {self.A.shape}. Add more boundary points."
             )
         # results = linalg.lstsq(self.A, self.b, rcond=None)
         # results = linalg.lstsq(self.A, self.b, rcond=None)
@@ -544,3 +579,40 @@ class Solver:
             )
 
         return psi, uv, p, omega, eij
+
+    def get_error(self):
+        """Get the error in the solution."""
+        if not hasattr(self, "functions"):
+            raise ValueError("Solution not yet computed.")
+        self.errors = {side: [np.nan, np.nan] for side in self.domain.sides}
+        max_error = 0
+        if isinstance(self.domain, PeriodicDomain):
+            raise NotImplementedError("Periodic Error Calculation.")
+        for side, bcs in self.boundary_conditions.items():
+            for i, bc in enumerate(bcs):
+                expression, value = bc[0], bc[1]
+                expression_sol = self.evaluate_solution(
+                    expression,
+                    self.domain.error_points[side],
+                )
+                if isinstance(value, str):
+                    value_sol = self.evaluate_solution(
+                        value, self.domain.error_points[side]
+                    ).reshape(-1)
+                if isinstance(value, np.ndarray):
+                    if side in self.domain.movers:
+                        value_sol = self.problem.error_values[side][i].reshape(
+                            -1, 1
+                        )
+                    else:
+                        raise NotImplementedError(
+                            "Non-Mover Array Error Calculation."
+                        )
+                else:
+                    value_sol = value
+                self.errors[side][i] = np.abs(expression_sol - value_sol)
+
+                if np.max(self.errors[side][i]) > max_error:
+                    max_error = np.max(self.errors[side][i])
+        self.max_error = max_error
+        return max_error, self.errors

@@ -24,7 +24,7 @@ if __name__ == "__main__":
         deg_poly=100,
         spacing="linear",
     )
-    R, a, f = 0.5, 0.5, 10
+    R, a, f = 0.5, 0.3, 10
     theta = 0.0
     t = np.linspace(0, 1, 1000)
     blob = get_blob(R, a, f, theta)
@@ -60,6 +60,8 @@ if __name__ == "__main__":
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
+    max_error, errors = solver.get_error()
+    print(f"Error: {max_error}")
     print(
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )

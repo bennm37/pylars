@@ -27,7 +27,7 @@ def plot(centers, radii, length):
     ax.set_xlim(-length / 2, length / 2)
     ax.set_ylim(-length / 2, length / 2)
     ax.set_aspect("equal")
-    plt.show()
+    # plt.show()
 
 
 def test_lognormal_circles():

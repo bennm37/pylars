@@ -46,6 +46,9 @@ class CurvedDomain(Domain):
         if not np.isclose(f(0), f(1)):
             raise ValueError("Curve must be closed")
         points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
+        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(
+            np.complex128
+        )
         # create a shapely LineString and check it is simple
         # (i.e. does not intersect itself)
         line = LineString(np.array([points.real, points.imag]).T)
@@ -56,6 +59,7 @@ class CurvedDomain(Domain):
         self.exterior_curves = [side]
         self.indices = {side: [i for i in range(num_points)]}
         self.boundary_points = points.reshape(-1, 1)
+        self.error_points = {side: error_points}
         self.exterior_points = self.boundary_points.copy()
         return side
 

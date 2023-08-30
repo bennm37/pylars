@@ -129,10 +129,10 @@ def test_flow_periodic_curve():
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )
     an = Analysis(sol)
-    fig, ax = an.plot(resolution=301, streamline_type="linear")
-    plt.show()
-    fig, ax = an.plot_periodic(resolution=501)
-    plt.show()
+    # fig, ax = an.plot(resolution=301, streamline_type="linear")
+    # plt.show()
+    # fig, ax = an.plot_periodic(resolution=501)
+    # plt.show()
 
 
 if __name__ == "__main__":

@@ -155,9 +155,9 @@ class PeriodicDomain(Domain):
             points = curve(np.linspace(0, 1, num_points))
             centroid = np.mean(points)
         nnic = self.get_nn_image_centroids(centroid)
+        # TODO add error_points
         centered_points = curve(np.linspace(0, 1, num_points)) - centroid
         n_bp = len(self.boundary_points)
-        original = n_bp - 1
         self.indices[side] = None
         for image in nnic:
             translated_points = centered_points + image

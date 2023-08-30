@@ -53,9 +53,9 @@ def test_solve_circle_in_circle():
     prob.add_boundary_condition("0", "v[0]", 0)
     solver = Solver(prob)
     sol = solver.solve()
-    analysis = Analysis(sol)
-    analysis.plot(resolution=301)
-    plt.show()
+    # analysis = Analysis(sol)
+    # analysis.plot(resolution=301)
+    # plt.show()
 
     # TODO compare to williams results here
 

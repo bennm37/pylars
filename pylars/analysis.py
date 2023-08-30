@@ -300,6 +300,20 @@ class Analysis:
         ax.legend()
         plt.show()
 
+    def plot_errors(self, errors):
+        """Plot errors from dictionary."""
+        fig, ax = plt.subplots()
+        for side, error in errors.items():
+            for i, err in enumerate(error):
+                bc = self.problem.boundary_conditions[side][i]
+                if isinstance(bc[1], np.ndarray):
+                    label = f"{bc[0]} - RHS"
+                else:
+                    label = f"{bc[0]} - {bc[1]}"
+                ax.semilogy(err.reshape(-1), label=label)
+        ax.legend()
+        return fig, ax
+
     def plot_stress_torque(self, curve, deriv, centroid):
         """Plot stress and torque."""
         pass

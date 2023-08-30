@@ -84,11 +84,11 @@ class Problem:
             raise Warning("Deleting old domain object and creating a new one.")
         self.domain = CurvedDomain(
             curve,
-            num_edge_points=500,
-            aaa=False,
-            aaa_mmax=None,
-            deg_poly=30,
-            spacing="linear",
+            num_edge_points=num_edge_points,
+            aaa=aaa,
+            aaa_mmax=aaa_mmax,
+            deg_poly=deg_poly,
+            spacing=spacing,
         )
         self.domain_type = "curved"
 
@@ -188,6 +188,8 @@ class Problem:
             self.boundary_conditions = {
                 side: None for side in self.domain.sides
             }
+        if not hasattr(self, "error_values"):
+            self.error_values = {}
         if isinstance(self.domain, PeriodicDomain):
             side = self.domain.add_mover(
                 f=mover.curve,
@@ -211,21 +213,30 @@ class Problem:
         diff = mover.curve(np.linspace(0, 1, num_points)) - mover.centroid
         rs = np.abs(diff)
         thetas = np.angle(diff)
+        error_diff = (
+            mover.curve(np.linspace(0, 1, 2 * num_points)) - mover.centroid
+        )
+        error_rs = np.abs(error_diff)
+        error_thetas = np.angle(error_diff)
 
         u = mover.velocity.real - rs * mover.angular_velocity * np.sin(thetas)
         v = mover.velocity.imag + rs * mover.angular_velocity * np.cos(thetas)
         self.boundary_conditions[side] = None
         self.add_boundary_condition(side, f"u[{side}]", u)
         self.add_boundary_condition(side, f"v[{side}]", v)
+        error_u = (
+            mover.velocity.real
+            - error_rs * mover.angular_velocity * np.sin(error_thetas)
+        )
+        error_v = (
+            mover.velocity.imag
+            + error_rs * mover.angular_velocity * np.cos(error_thetas)
+        )
+        self.error_values[side] = (error_u, error_v)
 
     def add_point(self, point):
         """Add an expression and value for a point to boundary conditions."""
-        self.domain.boundary_points = np.append(
-            self.domain.boundary_points, point
-        ).reshape(-1, 1)
-        point_name = f"{len(self.domain.sides)}"
-        self.domain.sides = np.append(self.domain.sides, point_name)
-        self.domain.indices[point_name] = len(self.domain.boundary_points) - 1
+        self.domain.add_point(point)
 
     def name_side(self, old, new):
         """Change the name of a side."""
