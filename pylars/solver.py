@@ -121,8 +121,6 @@ class Solver:
         if self.verbose:
             print("Getting Dependents ...")
         self.get_dependents()
-        if self.verbose:
-            print("Constructing Linear System ...")
 
     def solve(
         self,

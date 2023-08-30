@@ -83,9 +83,6 @@ class Analysis:
                 vmin=vmin,
                 vmax=vmax,
             )
-
-        if colorbar:
-            cb = plt.colorbar(pc, fraction=0.046, pad=0.04)
         if not isinstance(n_streamlines, Integral):
             raise TypeError("n_streamlines must be an integer")
         if streamline_type == "starting_points":
@@ -133,6 +130,9 @@ class Analysis:
                 zorder=1,
             )
         ax.set_aspect("equal")
+        if colorbar:
+            cb = plt.colorbar(pc, fraction=0.046, pad=0.04)
+            # cb = plt.colorbar(pc, fraction=0.018, pad=0.04)
         if self.solution.status == "d":
             ax.set(xlabel="x (m)", ylabel="y (m)")
             cb.set_label("Velocity magnitude (m/s)")

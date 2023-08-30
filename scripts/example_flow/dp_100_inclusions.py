@@ -29,7 +29,7 @@ prob.add_periodic_domain(
 n_circles = 100
 np.random.seed(11)
 shift = -0.0
-centroids, radii = generate_normal_circles(n_circles, 0.01, 0.00)
+centroids, radii = generate_normal_circles(n_circles, 0.03, 0.00)
 
 # see if A tall skinny enough (conservative estimate)
 height = 2 * (n_circles * num_points + 4 * num_edge_points)
@@ -87,8 +87,12 @@ print(f"Time taken: {end-start:.2f}s")
 print(f"Absolute Residual: {abs_residual:.15e}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
 an = Analysis(sol)
-fig, ax = an.plot_periodic(interior_patch=True, enlarge_patch=1.0)
-plt.show()
+# fig, ax = an.plot_periodic(interior_patch=True, enlarge_patch=1.01)
+# ax.axis("off")
+# plt.savefig("dp_100_inclusions.pdf", bbox_inches="tight")
+fig, ax = an.plot(interior_patch=True, enlarge_patch=1.01)
+ax.axis("off")
+plt.savefig("dp_100_inclusions.pdf", bbox_inches="tight")
 
 # continuity checks
 an.plot_relative_periodicity_error()

@@ -106,9 +106,9 @@ def test_flow_periodic_curve():
     circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
     prob.add_periodic_curve(circle, centroid, num_points=200)
     R = 0.2
-    centroid = -0.2 - 0.9j
-    circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
-    prob.add_periodic_curve(circle, centroid, num_points=200)
+    # centroid = -0.2 - 0.9j
+    # circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
+    # prob.add_periodic_curve(circle, centroid, num_points=200)
     prob.domain.plot(set_lims=False)
     prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
     prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
@@ -120,8 +120,8 @@ def test_flow_periodic_curve():
     prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
     prob.add_boundary_condition("4", "u[4]", 0)
     prob.add_boundary_condition("4", "v[4]", 0)
-    prob.add_boundary_condition("5", "u[5]", 0)
-    prob.add_boundary_condition("5", "v[5]", 0)
+    # prob.add_boundary_condition("5", "u[5]", 0)
+    # prob.add_boundary_condition("5", "v[5]", 0)
     solver = Solver(prob, verbose=True)
     sol = solver.solve(normalize=False, weight=False)
 
@@ -129,6 +129,8 @@ def test_flow_periodic_curve():
         f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
     )
     an = Analysis(sol)
+    fig, ax = an.plot(resolution=301, streamline_type="linear")
+    plt.show()
     fig, ax = an.plot_periodic(resolution=501)
     plt.show()
 

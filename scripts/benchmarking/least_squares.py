@@ -50,8 +50,6 @@ def generate_linear_system(seed, bound=1):
             mirror_laurents=True,
             image_laurents=True,
         )
-    prob.domain.plot(set_lims=False)
-    plt.show()
     prob.add_boundary_condition("0", "u[0]", 0)
     prob.add_boundary_condition("0", "v[0]", 0)
     prob.add_boundary_condition("2", "u[2]", 0)
@@ -81,7 +79,7 @@ def test_solvers():
 if __name__ == "__main__":
     num_tests = 10
     n_solvers = 4
-    bound = 5
+    bound = 1
     times = np.zeros((num_tests, n_solvers))
     residuals = np.zeros((num_tests, n_solvers))
     for i in range(num_tests):

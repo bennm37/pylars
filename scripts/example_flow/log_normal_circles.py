@@ -36,7 +36,6 @@ def run_case(centers, radii, bound, p_drop):
             mirror_laurents=True,
             mirror_tol=bound / 2,
         )
-    p_drop = 0.25
     prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
     prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
     prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
@@ -88,12 +87,11 @@ def run(parameters):
     U = parameters["U"]
     mu = parameters["mu"]
     dist = parameters["rv"]
+    rv_args = parameters["rv_args"]
     if dist == "lognorm":
         rv = lognorm.rvs
-        rv_args = {"s": 0.5, "scale": 0.275, "loc": 0.0}
     if dist == "gamma":
         rv = lognorm.rvs
-        rv_args = {"a": 5, "scale": 0.05, "loc": 0.0}
     lengths = parameters["lengths"]
     seeds = parameters["seeds"]
 
@@ -132,7 +130,7 @@ def run(parameters):
                 min_dist=0.05,
             )
             n_circles = len(centroids)
-            sol, residual, run_time = run_case(centroids, radii, bound, 0.25)
+            sol, residual, run_time = run_case(centroids, radii, bound, p_drop)
             dim_sol = sol.dimensionalize(U=U, L=L, mu=mu)
             dim_length = length * L
             dim_p_drop = p_drop * U * mu / L
@@ -141,6 +139,7 @@ def run(parameters):
                 dim_sol, dim_radii, dim_length, dim_p_drop, plot=True
             )
             filename = f"data/{project_name}/{foldername}/seed_{seed}"
+            ax.axis("off")
             plt.savefig(filename + ".pdf", bbox_inches="tight")
             plt.close()
             np.savez(
@@ -223,15 +222,27 @@ def plot_summary_data(project_name):
 
 if __name__ == "__main__":
     parameters = {
-        "project_name": "log_normal_RVE",
+        "project_name": "log_normal_test",
         "porosity": 0.95,
-        "L": 1e-6,
-        "U": 1e-6,
-        "mu": 1e-3,
+        "L": 1,
+        "U": 1,
+        "mu": 1,
         "rv": "lognorm",
         "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": np.linspace(5, 15, 5),
-        "seeds": range(1, 5),
-        "p_drop": 1,
+        "lengths": [20],
+        "seeds": [1],
+        "p_drop": 100,
     }
+    # parameters = {
+    #     "project_name": "log_normal_RVE",
+    #     "porosity": 0.95,
+    #     "L": 1e-6,
+    #     "U": 1e-6,
+    #     "mu": 1e-3,
+    #     "rv": "lognorm",
+    #     "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
+    #     "lengths": np.linspace(5, 15, 5),
+    #     "seeds": range(1, 5),
+    #     "p_drop": 1,
+    # }
     run(parameters)
