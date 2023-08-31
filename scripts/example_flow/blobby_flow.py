@@ -62,9 +62,6 @@ if __name__ == "__main__":
     sol = solver.solve(check=False, normalize=False, weight=False)
     max_error, errors = solver.get_error()
     print(f"Error: {max_error}")
-    print(
-        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
     an = Analysis(sol)
     fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.0)
     plt.show()

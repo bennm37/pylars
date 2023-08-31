@@ -125,9 +125,7 @@ def test_flow_periodic_curve():
     solver = Solver(prob, verbose=True)
     sol = solver.solve(normalize=False, weight=False)
 
-    print(
-        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+    print(f"Error: {solver.max_error}")
     an = Analysis(sol)
     # fig, ax = an.plot(resolution=301, streamline_type="linear")
     # plt.show()

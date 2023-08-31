@@ -23,8 +23,7 @@ def test_poiseuille_permeability():
     prob.add_boundary_condition("3", "v[3]", 0)
     solver = Solver(prob)
     sol = solver.solve(weight=False, normalize=False)
-    residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
-    print(f"Residual: {residual:.15e}")
+    print(f"Error: {solver.max_error}")
     an = Analysis(sol)
     curve = lambda t: 1 + 2j * t - 1j
     points = curve(np.linspace(0, 1, 100))

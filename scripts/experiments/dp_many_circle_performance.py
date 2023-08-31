@@ -96,7 +96,6 @@ def get_residual_time():
     solver = Solver(prob, verbose=True)
     print("Solving the problem")
     sol = solver.solve(check=False, weight=False, normalize=False)
-    abs_residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
     end = time.perf_counter()
     dom = sol.problem.domain
     ATOL = 0.0

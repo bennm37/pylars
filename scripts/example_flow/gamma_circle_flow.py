@@ -50,9 +50,7 @@ def run_case(centers, radii, bound, p_drop):
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
-    print(
-        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+print(f"Error: {solver.max_error}")
     return sol
 
 

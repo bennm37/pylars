@@ -164,6 +164,7 @@ class Solver:
         check=True,
         normalize=False,
         weight=False,
+        calculate_error=True
     ):
         """Set up the solver and solve the least squares problem.
 
@@ -224,26 +225,24 @@ class Solver:
         if self.verbose:
             print("Constructing Functions ...")
         self.functions = self.construct_functions()
-        if len(results[1]) != 0:
-            self.max_residual = np.sqrt(np.max(results[1]))
-        else:
+        if calculate_error:
             if self.verbose:
                 print("Evaluating Error ...")
-            self.max_residual = np.max(
-                np.abs(self.A @ self.coefficients - self.b)
-            )
             try:
-                max_error, errors = self.get_error()
+                self.get_error()
             except NotImplementedError:
                 print(
                     "Warning: using (inaccurate) residual error estimate for periodic domain."
                 )
-                self.max_error = self.max_residual
+                self.max_error = np.max(
+                    np.abs(self.A @ self.coefficients - self.b)
+                )
+                self.errors = None
+            print(f"Max Error: {self.max_error}")
         if pickle:
             self.pickle_solution(filename)
         self.run_time = perf_counter() - self.problem.creation_time
         print(f"Run Time: {self.run_time}")
-        print(f"Max Residual: {self.max_residual}")
         return Solution(
             self.problem.copy(), *self.functions, error=self.max_error
         )

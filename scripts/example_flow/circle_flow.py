@@ -48,7 +48,7 @@ from pylars.numerics import split_laurent
 cf, cg, clf, clg = split_laurent(
     solver.coefficients, solver.domain.interior_laurents
 )
-print("Residual = ", np.abs(solver.A @ solver.coefficients - solver.b).max())
+print(f"Error: {solver.max_error}")
 print("clf = ", clf)
 print("clg = ", clg)
 print("diff = ", clg + np.conj(z_0) * clf)

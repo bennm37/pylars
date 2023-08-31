@@ -76,8 +76,8 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
     samples = np.round(20 * radii / np.min(radii))
     surface_length = np.sum([2 * np.pi * r for r in radii])
     wss_data = an.get_wss_data(curves, samples)
-    wss_mean = np.ma.mean(np.abs(wss_data, axis=1))
-    wss_std = np.std(wss_data, axis=1)
+    wss_mean = np.ma.mean(np.abs(wss_data))
+    wss_std = np.std(wss_data)
     if plot:
         fig, ax = an.plot(
             resolution=100, interior_patch=True, enlarge_patch=1.01, epsilon=0
@@ -309,12 +309,12 @@ if __name__ == "__main__":
     parameters = {
         "project_name": "log_normal_n_crit",
         "porosity": 0.95,
-        "n_max": 20,
+        "n_max": 1,
         "alpha": 0.05,
         "eps_CLT": 1.0,
         "rv": "lognorm",
         "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": [16],
+        "lengths": [1, 2],
         "p_drop": 100,
     }
     # parameters = {

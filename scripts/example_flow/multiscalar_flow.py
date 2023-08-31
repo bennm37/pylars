@@ -52,7 +52,7 @@ prob.add_boundary_condition("5", "v[5]", 0)
 
 solver = Solver(prob, verbose=True)
 sol = solver.solve(check=False, weight=False, normalize=False)
-residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
+print(f"Error: {solver.max_error}")
 an = Analysis(sol)
 fig, ax = an.plot(resolution=200, interior_patch=True)
 ax.axis("off")

@@ -72,9 +72,7 @@ def get_force_torque(
     prob.add_boundary_condition("3", "v[3]", 0)
     solver = Solver(prob)
     sol = solver.solve(normalize=False, weight=False)
-    print(
-        f"residual = {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+    print(f"Error: {solver.max_error}")
     if plot:
         prob.domain.plot(set_lims=False)
         plt.show()

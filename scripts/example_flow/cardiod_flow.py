@@ -47,9 +47,7 @@ def solve_cardioid():
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
-    print(
-        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+print(f"Error: {solver.max_error}")
     return prob, sol, cardioid
 
 

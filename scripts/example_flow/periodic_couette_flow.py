@@ -20,8 +20,7 @@ prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 
 solver = Solver(prob)
 sol = solver.solve(check=False, weight=False)
-residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
-print(f"Residual: {residual:.15e}")
+print(f"Error: {solver.max_error}")
 
 an = Analysis(sol)
 fig, ax = an.plot()

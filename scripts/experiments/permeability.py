@@ -92,7 +92,7 @@ def get_permeability():
     print("Solving the problem")
     sol = solver.solve(check=False, weight=False, normalize=False)
     sol.problem.domain.enlarge_holes(1.5)
-    print(f" Residual is {sol.max_residual}")
+    print(f" Error is {sol.max_error}")
     an = Analysis(sol)
     prob.domain.plot()
     plt.show()

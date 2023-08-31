@@ -68,7 +68,8 @@ for interior in interiors:
 
 solver = Solver(prob, verbose=True)
 sol = solver.solve(check=False, normalize=False, weight=False)
+print(f"Error: {solver.max_error}")
 an = Analysis(sol)
-print(f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}")
+
 fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.1)
 plt.show()

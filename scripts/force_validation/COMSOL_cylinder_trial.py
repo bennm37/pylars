@@ -71,7 +71,7 @@ def get_pylars_solution(center=0.2j):
     prob.add_boundary_condition("5", "psi[5]", 0)
     solver = Solver(prob)
     sol = solver.solve(check=False, normalize=False, weight=False)
-    print("Residual: ", solver.max_residual)
+    print("Error: ", solver.max_error)
     end = time.perf_counter()
     print(str(end - start) + " seconds")
     return sol

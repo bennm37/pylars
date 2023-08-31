@@ -21,8 +21,7 @@ prob.add_boundary_condition("walls", "v[walls]", 0)
 
 solver = Solver(prob)
 sol = solver.solve(check=False, normalize=False)
-residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
-print(f"Residual: {residual:.15e}")
+print(f"Error: {solver.max_error}")
 
 # plotting
 a = Analysis(sol)

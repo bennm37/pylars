@@ -43,8 +43,7 @@ def get_roating_circle_torque(
 
     solver = Solver(prob)
     sol = solver.solve(check=False, normalize=False)
-    residual = np.abs(solver.A @ solver.coefficients - solver.b).max()
-    print(f"residusal = {residual}, ")
+    print(f"Error: {solver.max_error}")
     force = sol.force(circle, circle_deriv)
     torque = sol.torque(circle, circle_deriv, centroid)
     return force, torque, sol

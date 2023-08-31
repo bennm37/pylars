@@ -52,9 +52,7 @@ if __name__ == "__main__":
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
-    print(
-        f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+print(f"Error: {solver.max_error}")
     an = Analysis(sol)
     fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.0)
     plt.savefig("media/circle_flow.pdf")

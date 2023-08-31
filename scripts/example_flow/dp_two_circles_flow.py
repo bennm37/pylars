@@ -70,13 +70,7 @@ prob.add_boundary_condition("6", "psi[6]", 0)
 
 solver = Solver(prob, verbose=True)
 sol = solver.solve(check=False, weight=False, normalize=False)
-residual = np.max(np.abs(solver.A @ solver.coefficients - solver.b))
-# relatieve_
-# residual = np.max(
-#     np.abs(solver.A @ solver.coefficients - solver.b)
-#     / (np.abs(solver.b) + 1e-8)
-# )
-print(f"Residual: {residual:.15e}")
+print(f"Error: {solver.max_error}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
 an = Analysis(sol)
 # fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)

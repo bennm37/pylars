@@ -30,13 +30,13 @@ class LowDensityMoverSimulation(Simulation):
         """Run the simulation with timestep dt."""
         n_steps = np.arange(start, end, dt).shape[0]
         self.mover_array = np.zeros((4, n_steps, self.n_movers), dtype=complex)
-        self.residuals = np.zeros((4, n_steps))
+        self.errors = np.zeros((4, n_steps))
         super().run(start, end, dt)
         self.mover_data["positions"] = self.mover_array[0, :, :]
         self.mover_data["velocities"] = self.mover_array[1, :, :]
         self.mover_data["angles"] = self.mover_array[2, :, :].real
         self.mover_data["angular_velocities"] = self.mover_array[3, :, :].real
-        self.results["residuals"] = self.residuals
+        self.results["errors"] = self.errors
         return self.results
 
     def update(self, k, dt):
@@ -68,7 +68,7 @@ class LowDensityMoverSimulation(Simulation):
             self.mover_array[1, k, i] = mover.velocity
             self.mover_array[2, k, i] = mover.angle
             self.mover_array[3, k, i] = mover.angular_velocity
-            self.residuals[:, k] = np.array(
+            self.errors[:, k] = np.array(
                 [
                     sol_x.error,
                     sol_y.error,
