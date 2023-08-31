@@ -137,12 +137,14 @@ def test_discrete_vs_goursat_circle_stress():
         deg_laurent=20,
         centroid=0.0 + 0.0j,
     )
-    prob.add_boundary_condition("0", "psi[0]", 1)
     prob.add_boundary_condition("0", "u[0]", 0)
-    prob.add_boundary_condition("2", "psi[2]", 0)
+    prob.add_boundary_condition("0", "v[0]", 0)
     prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("2", "v[2]", 0)
     prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
     prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
+    prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 2)
     prob.add_boundary_condition("4", "u[4]", 0)
     prob.add_boundary_condition("4", "v[4]", 0)
     solver = Solver(prob)

@@ -17,11 +17,11 @@ class Solution:
         p,
         omega,
         eij,
+        error=None,
         L=1,  # noqa N803
         U=1,
         mu=1,
         status="nd",
-        max_residual=None,
     ):
         self.problem = problem
         self.psi = psi
@@ -30,7 +30,7 @@ class Solution:
         self.omega = omega
         self.eij = eij
         self.functions = [psi, uv, p, omega, eij]
-        self.max_residual = max_residual
+        self.error = error
         self.L = L
         self.U = U
         self.mu = mu

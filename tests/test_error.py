@@ -38,13 +38,13 @@ def test_domain_error_points():
         circle(np.linspace(0, 1, num_circle_points * 2)),
     )
 
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
 
-    fig, ax = prob.domain.plot()
-    for side in prob.domain.sides:
-        points = prob.domain.error_points[side]
-        ax.scatter(points.real, points.imag, s=1, color="k")
-    plt.show()
+    # fig, ax = prob.domain.plot()
+    # for side in prob.domain.sides:
+    #     points = prob.domain.error_points[side]
+    #     ax.scatter(points.real, points.imag, s=1, color="k")
+    # plt.show()
 
 
 def test_get_error():

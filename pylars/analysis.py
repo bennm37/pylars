@@ -345,7 +345,14 @@ class Analysis:
 
     def get_wss_data(self, curves, samples):
         """Calculate the wall shear stress data."""
-        return np.array([1])
+        points = np.concatenate(
+            [
+                curve(np.linspace(0, 1, int(size)))
+                for curve, size in zip(curves, samples)
+            ]
+        )
+        wss_data = self.solution.eij(points)[:, 1, 0]
+        return wss_data
 
     def get_permeability(self, curve, curve_deriv, delta_x, delta_p):
         """Calculate the permeability of the domain at the outlet."""

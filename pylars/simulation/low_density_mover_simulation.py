@@ -70,10 +70,10 @@ class LowDensityMoverSimulation(Simulation):
             self.mover_array[3, k, i] = mover.angular_velocity
             self.residuals[:, k] = np.array(
                 [
-                    sol_x.max_residual,
-                    sol_y.max_residual,
-                    sol_theta.max_residual,
-                    sol_static.max_residual,
+                    sol_x.error,
+                    sol_y.error,
+                    sol_theta.error,
+                    sol_static.error,
                 ]
             )
             mover.translate(mover.velocity * self.dt)

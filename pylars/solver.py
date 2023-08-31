@@ -221,24 +221,31 @@ class Solver:
             A_torch, b_torch, rcond=None, driver="gelsd"
         )
         self.coefficients = np.array(results[0])
+        if self.verbose:
+            print("Constructing Functions ...")
+        self.functions = self.construct_functions()
         if len(results[1]) != 0:
             self.max_residual = np.sqrt(np.max(results[1]))
         else:
             if self.verbose:
-                print("Evaluating Residual ...")
+                print("Evaluating Error ...")
             self.max_residual = np.max(
                 np.abs(self.A @ self.coefficients - self.b)
             )
-        if self.verbose:
-            print("Constructing Functions ...")
-        self.functions = self.construct_functions()
+            try:
+                max_error, errors = self.get_error()
+            except NotImplementedError:
+                print(
+                    "Warning: using (inaccurate) residual error estimate for periodic domain."
+                )
+                self.max_error = self.max_residual
         if pickle:
             self.pickle_solution(filename)
         self.run_time = perf_counter() - self.problem.creation_time
         print(f"Run Time: {self.run_time}")
         print(f"Max Residual: {self.max_residual}")
         return Solution(
-            self.problem.copy(), *self.functions, self.max_residual
+            self.problem.copy(), *self.functions, error=self.max_error
         )
 
     def construct_linear_system(self):
