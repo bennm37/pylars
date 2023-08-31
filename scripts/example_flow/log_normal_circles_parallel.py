@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle
+import multiprocessing as mpi
 import os
 
 
@@ -50,7 +51,7 @@ def run_case(centers, radii, bound, p_drop):
         prob.add_boundary_condition(f"{interior}", f"u[{interior}]", 0)
         prob.add_boundary_condition(f"{interior}", f"v[{interior}]", 0)
 
-    solver = Solver(prob, verbose=True)
+    solver = Solver(prob, verbose=False)
     sol = solver.solve(check=False, normalize=False, weight=False)
     max_error, errors = solver.get_error()
     print(f"error: {max_error}")
@@ -82,6 +83,7 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
         fig, ax = an.plot(
             resolution=100, interior_patch=True, enlarge_patch=1.01, epsilon=0
         )
+        print("result")
         return (
             fig,
             ax,
@@ -94,6 +96,74 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
         )
     else:
         return permeability, wss_data
+
+
+def task(task_params):
+    """Task to be run in parallel."""
+    porosity = task_params["porosity"]
+    rv = task_params["rv"]
+    rv_args = task_params["rv_args"]
+    length = task_params["length"]
+    p_drop = task_params["p_drop"]
+    plot = task_params["plot"]
+    seed = task_params["seed"]
+    bound = length / 2
+    np.random.seed(seed)
+    centroids, radii = generate_rv_circles(
+        porosity=porosity,
+        rv=rv,
+        rv_args=rv_args,
+        length=length,
+        min_dist=0.05,
+    )
+    n_circles = len(centroids)
+    print(f"Solving for seed {seed} with {n_circles} circles")
+    sol, error, run_time = run_case(centroids, radii, bound, p_drop)
+    print(f"Analysing seed {seed}.")
+    (
+        fig,
+        ax,
+        permeability,
+        outlet_profile,
+        wss_mean,
+        wss_std,
+        wss_data,
+        surface_length,
+    ) = analyse_case(
+        sol, centroids, radii, length=length, p_drop=p_drop, plot=plot
+    )
+    return {
+        "n_circles": n_circles,
+        "centers": centroids,
+        "radii": radii,
+        "error": error,
+        "run_time": run_time,
+        "fig": fig,
+        "ax": ax,
+        "permeability": permeability,
+        "outlet_profile": outlet_profile,
+        "wss_mean": wss_mean,
+        "wss_std": wss_std,
+        "wss_data": wss_data,
+        "surface_length": surface_length,
+    }
+
+
+def fake_task(task_params):
+    return {
+        "n_circles": 1,
+        "error": 1,
+        "radii": 1,
+        "run_time": 1,
+        "fig": 1,
+        "ax": 1,
+        "permeability": 1,
+        "outlet_profile": 1,
+        "wss_mean": 1,
+        "wss_std": 1,
+        "wss_data": 1,
+        "surface_length": 1,
+    }
 
 
 def run(parameters):
@@ -110,8 +180,17 @@ def run(parameters):
     if dist == "gamma":
         rv = lognorm.rvs
     lengths = parameters["lengths"]
-    seeds = np.arange(n_max)
+    n_cores = parameters["n_cores"]
     err_tol = 1e-2
+    seeds = np.arange(n_max)
+    p_drop = 10
+    default_task_params = {
+        "porosity": porosity,
+        "rv": rv,
+        "rv_args": rv_args,
+        "p_drop": p_drop,
+        "plot": True,
+    }
 
     def save_df(data, filename):
         df = pd.DataFrame(data, columns=seeds, index=lengths)
@@ -132,112 +211,107 @@ def run(parameters):
     permeability_data = np.full((len(lengths), n_max), np.nan)
     wss_mean_data = np.full((len(lengths), n_max), np.nan)
     wss_std_data = np.full((len(lengths), n_max), np.nan)
-    p_drop = 10
     for i, length in enumerate(lengths):
         foldername = f"{length:.1e}"
         print(f"Starting length {foldername}")
-        bound = length / 2
+        default_task_params["length"] = length
         os.mkdir(f"data/{project_name}/{foldername}")
         n = 0
         converged_steps = 0
-        for n in range(n_max):
-            seed = n + i * n_max
-            print(" --- Starting sample", n)
-            np.random.seed(seed)
-            centroids, radii = generate_rv_circles(
-                porosity=porosity,
-                rv=rv,
-                rv_args=rv_args,
-                length=length,
-                min_dist=0.05,
-            )
-            n_circles = len(centroids)
-            sol, error, run_time = run_case(centroids, radii, bound, p_drop)
-            (
-                fig,
-                ax,
-                permeability,
-                outlet_profile,
-                wss_mean,
-                wss_std,
-                wss_data,
-                surface_length,
-            ) = analyse_case(
-                sol, centroids, radii, length=length, p_drop=p_drop, plot=True
-            )
-            filename = f"data/{project_name}/{foldername}/seed_{seed}"
-            ax.axis("off")
-            plt.savefig(filename + ".pdf", bbox_inches="tight")
-            plt.close()
-            np.savez(
-                f"{filename}.npz",
-                nc=n_circles,
-                porosity=porosity,
-                error=error,
-                run_time=run_time,
-                permeability=permeability,
-                outlet_profile=outlet_profile,
-                wss_mean=wss_mean,
-                wss_std=wss_std,
-                wss_data=wss_data,
-                surface_length=surface_length,
-            )
-            if error > err_tol:
-                print(
-                    f"Error {error} too large on iteration {n}. Skipping iteration."
-                )
-                continue
-            nc_data[i, n] = n_circles
-            porosity_data[i, n] = 1 - np.sum(np.pi * radii**2) / length**2
-            run_time_data[i, n] = run_time
-            error_data[i, n] = error
-            permeability_data[i, n] = permeability
-            wss_mean_data[i, n] = wss_mean
-            wss_std_data[i, n] = wss_std
-            # save every sim to be safe
-            data = {
-                "nc": nc_data,
-                "porosity": porosity_data,
-                "run_time": run_time_data,
-                "error": error_data,
-                "permeability": permeability_data,
-                "wss_mean": wss_mean_data,
-                "wss_std": wss_std_data,
-            }
-            for name, data in data.items():
-                save_df(
-                    data, f"data/{project_name}/summary_data/{name}_data.csv"
-                )
-            mean_perm = np.ma.mean(permeability_data[i, : n + 1])
-            sigma_perm = np.std(permeability_data[i, : n + 1])
-            n_crit_perm = (sigma_perm / (eps_CLT * mean_perm)) ** 2 * (
-                norm.ppf(1 - alpha / 2)
-            ) ** 2
-            mean_wssm = np.ma.mean(wss_mean_data[i, : n + 1])
-            sigma_wssm = np.std(wss_mean_data[i, : n + 1])
-            n_crit_wssm = (sigma_wssm / (eps_CLT * mean_wssm)) ** 2 * (
-                norm.ppf(1 - alpha / 2)
-            ) ** 2
-            n_crit = np.max([n_crit_perm, n_crit_wssm])
-            if n > n_crit:
-                converged_steps += 1
-                print(f"Converged {converged_steps} times on iteration {n}.")
-            if n < n_crit and converged_steps > 0:
-                converged_steps = 0
-            if converged_steps > 3:
-                break
-
-    data = {
-        "nc": nc_data,
-        "porosity": porosity_data,
-        "run_time": run_time_data,
-        "error": error_data,
-        "permeability": permeability_data,
-        "wss_mean": wss_mean_data,
-        "wss_std": wss_std_data,
-    }
-    for name, data in data.items():
-        save_df(data, f"data/{project_name}/summary_data/{name}_data.csv")
+        # do minibatch of n_cores - then see if converged
+        n = i * n_max
+        while n < n_max:
+            n += n_cores
+            minibatch_seeds = [i for i in range(n, n + n_cores)]
+            minibatch_params = [
+                {"seed": seed, **default_task_params}
+                for seed in minibatch_seeds
+            ]
+            with mpi.Pool() as pool:
+                results = pool.map(task, minibatch_params)
+                for minibatch_param, result in zip(minibatch_params, results):
+                    print(f'Processing minibatch {minibatch_param["seed"]}')
+                    seed = minibatch_param["seed"]
+                    radii = result["radii"]
+                    n_circles = result["n_circles"]
+                    error = result["error"]
+                    run_time = result["run_time"]
+                    # fig = result["fig"]
+                    # ax = result["ax"]
+                    fig, ax = plt.subplots()
+                    permeability = result["permeability"]
+                    outlet_profile = result["outlet_profile"]
+                    wss_data = result["wss_data"]
+                    wss_mean = result["wss_mean"]
+                    wss_std = result["wss_std"]
+                    surface_length = result["surface_length"]
+                    fig.savefig(
+                        f"data/{project_name}/{foldername}/seed_{seed}.png",
+                    )
+                    filename = f"data/{project_name}/{foldername}/seed_{seed}"
+                    ax.axis("off")
+                    np.savez(
+                        f"{filename}.npz",
+                        nc=n_circles,
+                        porosity=porosity,
+                        error=error,
+                        run_time=run_time,
+                        permeability=permeability,
+                        outlet_profile=outlet_profile,
+                        wss_mean=wss_mean,
+                        wss_std=wss_std,
+                        wss_data=wss_data,
+                        surface_length=surface_length,
+                    )
+                    if error > err_tol:
+                        print(
+                            f"Error {error} too large on iteration {n}. Skipping iteration."
+                        )
+                        continue
+                    nc_data[i, n] = n_circles
+                    porosity_data[i, n] = (
+                        1 - np.sum(np.pi * radii**2) / length**2
+                    )
+                    run_time_data[i, n] = run_time
+                    error_data[i, n] = error
+                    permeability_data[i, n] = permeability
+                    wss_mean_data[i, n] = wss_mean
+                    wss_std_data[i, n] = wss_std
+                    # save every sim to be safe
+                    data = {
+                        "nc": nc_data,
+                        "porosity": porosity_data,
+                        "run_time": run_time_data,
+                        "error": error_data,
+                        "permeability": permeability_data,
+                        "wss_mean": wss_mean_data,
+                        "wss_std": wss_std_data,
+                    }
+                    for name, data in data.items():
+                        save_df(
+                            data,
+                            f"data/{project_name}/summary_data/{name}_data.csv",
+                        )
+                    mean_perm = np.ma.mean(permeability_data[i, : n + 1])
+                    sigma_perm = np.std(permeability_data[i, : n + 1])
+                    n_crit_perm = (sigma_perm / (eps_CLT * mean_perm)) ** 2 * (
+                        norm.ppf(1 - alpha / 2)
+                    ) ** 2
+                    mean_wssm = np.ma.mean(wss_mean_data[i, : n + 1])
+                    sigma_wssm = np.std(wss_mean_data[i, : n + 1])
+                    n_crit_wssm = (sigma_wssm / (eps_CLT * mean_wssm)) ** 2 * (
+                        norm.ppf(1 - alpha / 2)
+                    ) ** 2
+                    n_crit = np.max([n_crit_perm, n_crit_wssm])
+                    if n > n_crit:
+                        converged_steps += 1
+                        print(
+                            f"Converged {converged_steps} times on iteration {n}."
+                        )
+                    if n < n_crit and converged_steps > 0:
+                        converged_steps = 0
+                    if converged_steps > 3:
+                        break
 
 
 def plot_summary_data(project_name):
@@ -309,25 +383,19 @@ if __name__ == "__main__":
     parameters = {
         "project_name": "log_normal_n_crit",
         "porosity": 0.95,
-        "n_max": 1,
+        "n_max": 10,
         "alpha": 0.05,
         "eps_CLT": 1.0,
         "rv": "lognorm",
         "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": [3],
+        "lengths": [2],
         "p_drop": 100,
+        "n_cores": 5,
     }
-    # parameters = {
-    #     "project_name": "log_normal_RVE",
-    #     "porosity": 0.95,
-    #     "L": 1e-6,
-    #     "U": 1e-6,
-    #     "mu": 1e-3,
-    #     "rv": "lognorm",
-    #     "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-    #     "lengths": np.linspace(5, 15, 5),
-    #     "seeds": range(1, 5),
-    #     "p_drop": 1,
-    # }
     run(parameters)
-    plot_summary_data(parameters["project_name"])
+    # params = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    # with mpi.Pool() as pool:
+    #     results = pool.map(fake_task, params)
+    #     for result in results:
+    #         print(result)
+    # plot_summary_data(parameters["project_name"])

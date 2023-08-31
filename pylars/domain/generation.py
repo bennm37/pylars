@@ -26,8 +26,9 @@ def generate_circles(n_circles, radius):
     return centroids
 
 
-def generate_normal_circles(n_circles, mean, std):
+def generate_normal_circles(n_circles, mean, std, seed):
     """Generate non-overlapping circles."""
+    np.random.seed(seed)
     L = 2 - 3 * (mean + 5 * std)
     radii = np.array(np.random.normal(mean, std, 1))
     centroids = np.array(
