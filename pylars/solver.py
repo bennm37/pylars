@@ -164,7 +164,7 @@ class Solver:
         check=True,
         normalize=False,
         weight=False,
-        calculate_error=True
+        calculate_error=True,
     ):
         """Set up the solver and solve the least squares problem.
 

@@ -26,12 +26,15 @@ def run_case(centers, radii, bound, p_drop):
         deg_poly=75,
         spacing="linear",
     )
-
-    for centroid, radius in zip(centers, radii):
+    if np.max(radii) == np.min(radii):
+        scales = np.ones_like(radii)
+    else:
+        scales = (radii - np.min(radii)) / (np.max(radii) - np.min(radii))
+    for centroid, radius, s in zip(centers, radii, scales):
         prob.add_interior_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=200,
-            deg_laurent=40,
+            num_points=100 + int(100 * s),
+            deg_laurent=20 + int(20 * s),
             centroid=centroid,
             mirror_laurents=True,
             mirror_tol=bound / 2,
@@ -52,7 +55,7 @@ def run_case(centers, radii, bound, p_drop):
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
-    max_error, errors = solver.get_error()
+    max_error = solver.max_error
     print(f"error: {max_error}")
     # print(
     #     f"error: {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
@@ -73,7 +76,7 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
         lambda t: center + radius * np.exp(2j * np.pi * t)
         for center, radius in zip(centers, radii)
     ]
-    samples = np.round(20 * radii / np.min(radii))
+    samples = np.round(100 * radii / np.min(radii))
     surface_length = np.sum([2 * np.pi * r for r in radii])
     wss_data = an.get_wss_data(curves, samples)
     wss_mean = np.ma.mean(np.abs(wss_data))
@@ -240,7 +243,7 @@ def run(parameters):
         save_df(data, f"data/{project_name}/summary_data/{name}_data.csv")
 
 
-def plot_summary_data(project_name):
+def plot_summary_data(project_name, error_type="Confidence"):
     plt.style.use("ggplot")
     parameters = pickle.load(open(f"data/{project_name}/parameters.pkl", "rb"))
     lengths = parameters["lengths"]
@@ -249,6 +252,12 @@ def plot_summary_data(project_name):
     ).to_numpy()[:, 1:]
     converged = np.where(og_error_data < 1e-2, True, False)
     error_data = np.ma.array(og_error_data, mask=~converged)
+    num_samples = np.sum(converged, axis=1)
+    error_kw_confidence = dict(ecolor="blue", lw=1, capsize=5, capthick=1)
+    err_sf = norm.ppf(1 - 0.05 / 2) / np.sqrt(num_samples)
+    label_confidence = "95 % CI"
+    error_kw_std = dict(ecolor="black", lw=1, capsize=5, capthick=1)
+    label_std = "Std. Dev."
 
     def get_data(filename):
         data = pd.read_csv(filename).to_numpy()[:, 1:]
@@ -270,35 +279,69 @@ def plot_summary_data(project_name):
     )
 
     fig, ax = plt.subplots(3, 2, sharex=True)
-    err_nc = np.std(nc_data, axis=1)
-    ax[0, 0].errorbar(lengths, np.ma.mean(nc_data, axis=1), yerr=err_nc)
+    sig_nc = np.std(nc_data, axis=1)
+    err_nc = sig_nc * err_sf
+    ax[0, 0].errorbar(
+        lengths,
+        np.ma.mean(nc_data, axis=1),
+        yerr=sig_nc,
+        **error_kw_confidence,
+    )
+    ax[0, 0].errorbar(
+        lengths,
+        np.ma.mean(nc_data, axis=1),
+        yerr=sig_nc,
+        **error_kw_confidence,
+    )
     ax[0, 0].set_ylabel("Number of circles")
-    err_porosity = np.std(porosity_data, axis=1)
+    sig_porosity = np.std(porosity_data, axis=1)
+    err_porosity = sig_porosity * err_sf
     ax[0, 1].errorbar(
-        lengths, np.ma.mean(porosity_data, axis=1), yerr=err_porosity
+        lengths,
+        np.ma.mean(porosity_data, axis=1),
+        yerr=err_porosity,
+        **error_kw_confidence,
     )
     ax[0, 1].set_ylabel("Porosity")
 
-    err_rt = np.std(run_time_data, axis=1)
-    ax[1, 0].errorbar(lengths, np.ma.mean(run_time_data, axis=1), yerr=err_rt)
+    sig_rt = np.std(run_time_data, axis=1)
+    err_rt = sig_rt * err_sf
+    ax[1, 0].errorbar(
+        lengths,
+        np.ma.mean(run_time_data, axis=1),
+        yerr=err_rt,
+        **error_kw_confidence,
+    )
     ax[1, 0].set_ylabel("Run Time")
-    err_error = np.std(error_data, axis=1)
+    sig_error = np.std(error_data, axis=1)
+    err_error = sig_error * err_sf
     ax[1, 1].set_yscale("log")
     ax[1, 1].errorbar(
         lengths,
         np.ma.mean(error_data, axis=1),
         yerr=err_error,
+        **error_kw_confidence,
     )
     ax[1, 1].set_ylabel("Error")
 
-    err_perm = np.std(permeability_data, axis=1)
+    sig_perm = np.std(permeability_data, axis=1)
+    err_perm = sig_perm * err_sf
     ax[2, 0].errorbar(
-        lengths, np.ma.mean(permeability_data, axis=1), yerr=err_perm
+        lengths,
+        np.ma.mean(permeability_data, axis=1),
+        yerr=err_perm,
+        **error_kw_confidence,
     )
     ax[2, 0].set_ylabel("Permeability")
     ax[2, 0].set_xlabel("Length (m)")
-    err_wss = np.std(wss_mean_data, axis=1)
-    ax[2, 1].errorbar(lengths, np.ma.mean(wss_mean_data, axis=1), yerr=err_wss)
+    sig_wss = np.std(wss_mean_data, axis=1)
+    err_wss = sig_wss * err_sf
+    ax[2, 1].errorbar(
+        lengths,
+        np.ma.mean(wss_mean_data, axis=1),
+        yerr=err_wss,
+        **error_kw_confidence,
+    )
     ax[2, 1].set_ylabel("WSS Mean")
     ax[2, 1].set_xlabel("Length (m)")
     plt.tight_layout()
@@ -314,7 +357,7 @@ if __name__ == "__main__":
         "eps_CLT": 1.0,
         "rv": "lognorm",
         "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": [3],
+        "lengths": [5],
         "p_drop": 100,
     }
     # parameters = {
