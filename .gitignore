@@ -164,5 +164,6 @@ tests/data/VAorthog_debug/
 media/
 data/log_normal_results
 data/log_normal_results_2
+data/log_norm_linear_hellion_partial
 .vscode
 *.DS_Store

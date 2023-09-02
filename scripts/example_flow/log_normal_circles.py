@@ -21,16 +21,16 @@ def run_case(centers, radii, bound, p_drop):
     ]
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=200 * n_circles,
+        num_edge_points=100 * n_circles,
         num_poles=0,
-        deg_poly=75,
+        deg_poly=50,
         spacing="linear",
     )
 
     for centroid, radius in zip(centers, radii):
         prob.add_interior_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=200,
+            num_points=120,
             deg_laurent=40,
             centroid=centroid,
             mirror_laurents=True,
@@ -60,7 +60,7 @@ def run_case(centers, radii, bound, p_drop):
     return sol, max_error, solver.run_time
 
 
-def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
+def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=True):
     """Analyse the solution."""
     an = Analysis(sol)
     curve = lambda t: length / 2 + 2j * length / 2 * t - 1j * length / 2
@@ -116,12 +116,8 @@ def run(parameters):
     n_max = parameters["n_max"]
     alpha = parameters["alpha"]
     eps_CLT = parameters["eps_CLT"]
-    dist = parameters["rv"]
+    rv = parameters["rv"]
     rv_args = parameters["rv_args"]
-    if dist == "lognorm":
-        rv = lognorm.rvs
-    if dist == "gamma":
-        rv = lognorm.rvs
     lengths = parameters["lengths"]
     seeds = np.arange(n_max)
     err_tol = 1e-2
@@ -137,7 +133,9 @@ def run(parameters):
         raise FileExistsError("Please delete the folder manually")
     os.mkdir(f"data/{project_name}/summary_data")
     with open(f"data/{project_name}/parameters.pkl", "wb") as f:
-        pickle.dump(parameters, f)
+        save_parameters = parameters.copy()
+        save_parameters.pop("rv")
+        pickle.dump(save_parameters, f)
     nc_data = np.full((len(lengths), n_max), np.nan)
     porosity_data = np.full((len(lengths), n_max), np.nan)
     run_time_data = np.full((len(lengths), n_max), np.nan)
@@ -162,7 +160,7 @@ def run(parameters):
                 rv=rv,
                 rv_args=rv_args,
                 length=length,
-                min_dist=0.05,
+                min_dist=0.1,
             )
             n_circles = len(centroids)
             sol, error, run_time = run_case(centroids, radii, bound, p_drop)
@@ -176,7 +174,7 @@ def run(parameters):
                 wss_data,
                 surface_length,
             ) = analyse_case(
-                sol, centroids, radii, length=length, p_drop=p_drop, plot=False
+                sol, centroids, radii, length=length, p_drop=p_drop, plot=True
             )
             filename = f"data/{project_name}/{foldername}/seed_{seed}"
             if fig is not None:
@@ -302,10 +300,10 @@ def plot_summary_data(project_name, scale=None):
         # To impose a pressure gradient of grad_p Pa, we need to scale
         # by grad_p * non_dim_l * U * mu/ (2 * L)
         wss_mean_data = (
-            grad_p * lengths[:, np.newaxis] * wss_mean_data * mu * U / (2 * L)
+            grad_p * lengths[:, np.newaxis] * wss_mean_data * mu * U / (10 * L)
         )
         wss_std_data = (
-            grad_p * lengths[:, np.newaxis] * wss_std_data * mu * U / (2 * L)
+            grad_p * lengths[:, np.newaxis] * wss_std_data * mu * U / (10 * L)
         )
         lengths = lengths * L
         permeability_data = permeability_data * L**2
@@ -350,17 +348,33 @@ def plot_summary_data(project_name, scale=None):
 
 
 if __name__ == "__main__":
+    mean, var = lognorm.stats(
+        **{"s": 0.5, "scale": 0.275, "loc": 0.0}, moments="mv"
+    )
+    rv = lambda mu: mu
+    rv_args = {"mu": mean}
     parameters = {
-        "project_name": "random_test",
+        "project_name": "uniform_circles",
         "porosity": 0.95,
-        "n_max": 3,
+        "n_max": 300,
         "alpha": 0.05,
-        "eps_CLT": 0.1,
-        "rv": "lognorm",
-        "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": [5, 6],
+        "eps_CLT": 0.05,
+        "rv": rv,
+        "rv_args": rv_args,
+        "lengths": [8, 10, 12],
         "p_drop": 100,
     }
+    # parameters = {
+    #     "project_name": "random_test",
+    #     "porosity": 0.95,
+    #     "n_max": 300,
+    #     "alpha": 0.05,
+    #     "eps_CLT": 0.1,
+    #     "rv": "lognorm",
+    #     "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
+    #     "lengths": [8],
+    #     "p_drop": 100,
+    # }
     # parameters = {
     #     "project_name": "log_normal_RVE",
     #     "porosity": 0.95,
@@ -373,6 +387,6 @@ if __name__ == "__main__":
     #     "seeds": range(1, 5),
     #     "p_drop": 1,
     # }
-    # run(parameters)
-    plot_summary_data(parameters["project_name"])
+    run(parameters)
+    plot_summary_data(parameters["project_name"], scale=(1e-6, 1e-6, 1e-3, 1))
     plt.show()
