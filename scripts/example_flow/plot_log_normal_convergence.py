@@ -1,6 +1,7 @@
 from log_normal_circles import plot_summary_data
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import pickle
 import os
 import shutil
@@ -61,7 +62,13 @@ def concatenate(project_name, lengths):
         )
 
 
+def plot_wss_distribution(project_name):
+    pass
+
+
 if __name__ == "__main__":
     # concatenate("log_normal_hellion", [4, 8, 10, 16])
     project_name = "log_normal_hellion/log_normal_concatenated_data"
-    plot_summary_data(project_name, error_type="std")
+    fig, ax = plot_summary_data(project_name, scale=(1e-6, 1e-6, 1e-3, 5000))
+    plt.show()
+    plt.savefig("media/log_normal_convergence.pdf")

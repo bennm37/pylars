@@ -112,7 +112,7 @@ def run(parameters):
         rv = lognorm.rvs
     if dist == "gamma":
         rv = lognorm.rvs
-    lengths = parameters["lengths"]
+    lengths = np.array(parameters["lengths"])
     seeds = np.arange(n_max)
     err_tol = 1e-2
 
@@ -243,10 +243,10 @@ def run(parameters):
         save_df(data, f"data/{project_name}/summary_data/{name}_data.csv")
 
 
-def plot_summary_data(project_name, error_type="Confidence"):
+def plot_summary_data(project_name, scale=None):
     plt.style.use("ggplot")
     parameters = pickle.load(open(f"data/{project_name}/parameters.pkl", "rb"))
-    lengths = parameters["lengths"]
+    lengths = np.array(parameters["lengths"])
     og_error_data = pd.read_csv(
         f"data/{project_name}/summary_data/error_data.csv"
     ).to_numpy()[:, 1:]
@@ -255,8 +255,8 @@ def plot_summary_data(project_name, error_type="Confidence"):
     num_samples = np.sum(converged, axis=1)
     error_kw_confidence = dict(ecolor="blue", lw=1, capsize=5, capthick=1)
     err_sf = norm.ppf(1 - 0.05 / 2) / np.sqrt(num_samples)
-    label_confidence = "95 % CI"
-    error_kw_std = dict(ecolor="black", lw=1, capsize=5, capthick=1)
+    label_confidence = "95 \% CI"
+    error_kw_std = dict(ecolor="red", lw=1, capsize=5, capthick=1)
     label_std = "Std. Dev."
 
     def get_data(filename):
@@ -277,75 +277,60 @@ def plot_summary_data(project_name, error_type="Confidence"):
     wss_mean_data = get_data(
         f"data/{project_name}/summary_data/wss_mean_data.csv"
     )
+    wss_std_data = get_data(
+        f"data/{project_name}/summary_data/wss_std_data.csv"
+    )
+    if scale is not None:
+        L, U, mu, grad_p = scale
+        # the simulations are run with a non-dimensional pressure drop of 2.
+        # To impose a pressure gradient of grad_p Pa, we need to scale
+        # by grad_p * non_dim_l * U * mu/ (2 * L)
+        wss_mean_data = (
+            grad_p * lengths[:, np.newaxis] * wss_mean_data * mu * U / (2 * L)
+        )
+        wss_std_data = (
+            grad_p * lengths[:, np.newaxis] * wss_std_data * mu * U / (2 * L)
+        )
+        lengths = lengths * L
+        permeability_data = permeability_data * L**2
+
+    def plot(name, data, ax):
+        mean = np.ma.mean(data, axis=1)
+        sig = np.std(data, axis=1)
+        err = sig * err_sf
+        ax.errorbar(
+            lengths,
+            mean,
+            yerr=err,
+            color="black",
+            **error_kw_confidence,
+            label=label_confidence,
+        )
+        ax.errorbar(
+            lengths,
+            mean,
+            yerr=sig,
+            color="black",
+            **error_kw_std,
+            label=label_std,
+        )
+        ax.set_ylabel(name)
 
     fig, ax = plt.subplots(3, 2, sharex=True)
-    sig_nc = np.std(nc_data, axis=1)
-    err_nc = sig_nc * err_sf
-    ax[0, 0].errorbar(
-        lengths,
-        np.ma.mean(nc_data, axis=1),
-        yerr=sig_nc,
-        **error_kw_confidence,
-    )
-    ax[0, 0].errorbar(
-        lengths,
-        np.ma.mean(nc_data, axis=1),
-        yerr=sig_nc,
-        **error_kw_confidence,
-    )
-    ax[0, 0].set_ylabel("Number of circles")
-    sig_porosity = np.std(porosity_data, axis=1)
-    err_porosity = sig_porosity * err_sf
-    ax[0, 1].errorbar(
-        lengths,
-        np.ma.mean(porosity_data, axis=1),
-        yerr=err_porosity,
-        **error_kw_confidence,
-    )
-    ax[0, 1].set_ylabel("Porosity")
-
-    sig_rt = np.std(run_time_data, axis=1)
-    err_rt = sig_rt * err_sf
-    ax[1, 0].errorbar(
-        lengths,
-        np.ma.mean(run_time_data, axis=1),
-        yerr=err_rt,
-        **error_kw_confidence,
-    )
-    ax[1, 0].set_ylabel("Run Time")
-    sig_error = np.std(error_data, axis=1)
-    err_error = sig_error * err_sf
+    plot("Number of Circles", nc_data, ax[0, 0])
+    plot("Porosity", porosity_data, ax[0, 1])
+    plot("Run Time", run_time_data, ax[1, 0])
+    plot("Rel Error", error_data, ax[1, 1])
     ax[1, 1].set_yscale("log")
-    ax[1, 1].errorbar(
-        lengths,
-        np.ma.mean(error_data, axis=1),
-        yerr=err_error,
-        **error_kw_confidence,
-    )
-    ax[1, 1].set_ylabel("Error")
+    plot("Permeability ($\mathrm{m}^2$)", permeability_data, ax[2, 0])
+    plot("WSS Mean", wss_mean_data, ax[2, 1])
 
-    sig_perm = np.std(permeability_data, axis=1)
-    err_perm = sig_perm * err_sf
-    ax[2, 0].errorbar(
-        lengths,
-        np.ma.mean(permeability_data, axis=1),
-        yerr=err_perm,
-        **error_kw_confidence,
-    )
-    ax[2, 0].set_ylabel("Permeability")
-    ax[2, 0].set_xlabel("Length (m)")
-    sig_wss = np.std(wss_mean_data, axis=1)
-    err_wss = sig_wss * err_sf
-    ax[2, 1].errorbar(
-        lengths,
-        np.ma.mean(wss_mean_data, axis=1),
-        yerr=err_wss,
-        **error_kw_confidence,
-    )
-    ax[2, 1].set_ylabel("WSS Mean")
+    ax[2, 1].set_ylabel("WSS Mean (Pa)")
     ax[2, 1].set_xlabel("Length (m)")
+    handles, labels = ax[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels)
     plt.tight_layout()
-    plt.show()
+    return fig, ax
 
 
 if __name__ == "__main__":
@@ -372,5 +357,5 @@ if __name__ == "__main__":
     #     "seeds": range(1, 5),
     #     "p_drop": 1,
     # }
-    run(parameters)
+    # run(parameters)
     plot_summary_data(parameters["project_name"])

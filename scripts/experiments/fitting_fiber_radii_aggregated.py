@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import gamma, lognorm
+from scipy.stats import gamma, lognorm, chisquare
 from scipy.optimize import curve_fit
 import numpy as np
 
@@ -53,11 +53,11 @@ colorGamma = "black"
 colorLognorm = "blue"
 if fitGamma:
     gammaParamsDict = {}
-    gammaRSquaredDict = {}
+    gammaChiSquaredDict = {}
     p0 = [1.1, 0.2]
 if fitLognorm:
     lognormParamsDict = {}
-    lognormRSquaredDict = {}
+    lognormChiSquaredDict = {}
     p0 = [1.1, 0.2]
 for keys, cols in zip(nameKeys, nameData):
     key = keys[0]
@@ -99,29 +99,44 @@ for keys, cols in zip(nameKeys, nameData):
             f, binCenters, normHist, maxfev=10000, p0=p0
         )[0]
         gammaParamsDict[sampleName] = [a_gamma, loc, scale_gamma]
-        residuals = normHist - f(binCenters, a_gamma, scale_gamma)
+        expected = f(binCenters, a_gamma, scale_gamma)
+        expected *= np.sum(hist) / np.sum(expected)
+        expected = expected[1:]
+        index = np.min(np.where(expected < 5))
+        expected[index] = np.sum(expected[index:])
+        expected = expected[: index + 1]
+        observed = hist[1:]
+        observed[index] = np.sum(observed[index:])
+        observed = observed[: index + 1]
+
+        chiSquaredStat, pValue = chisquare(observed, expected)
         print(f"Gamma parmaeters are {a_gamma=}, {loc=}, {scale_gamma=}")
-        ss_res = np.sum((residuals) ** 2)
-        ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
-        gammaRSquaredDict[sampleName] = 1 - (ss_res / ss_tot)
-        print(gammaRSquaredDict[sampleName])
+        gammaChiSquaredDict[sampleName] = pValue
+        print(gammaChiSquaredDict[sampleName])
     if fitLognorm:
         f = lambda x, s, scale: lognorm.pdf(x, s=s, scale=scale)
         s_lognorm, scale_lognorm = curve_fit(
             f, binCenters, normHist, maxfev=10000, p0=p0
         )[0]
         lognormParamsDict[sampleName] = [s_lognorm, loc, scale_lognorm]
-        residuals = normHist - f(binCenters, s_lognorm, scale_lognorm)
+        expected = f(binCenters, s_lognorm, scale_lognorm)
+        expected *= np.sum(hist) / np.sum(expected)
+        expected = expected[1:]
+        index = np.min(np.where(expected < 5))
+        expected[index] = np.sum(expected[index:])
+        expected = expected[: index + 1]
+        observed = hist[1:]
+        observed[index] = np.sum(observed[index:])
+        observed = observed[: index + 1]
+        chiSquaredStat, pValue = chisquare(observed, expected)
         print(f"Lognorm parmaeters are {s_lognorm=}, {loc=}, {scale_lognorm=}")
-        ss_res = np.sum((residuals) ** 2)
-        ss_tot = np.sum((normHist - np.mean(normHist)) ** 2)
-        lognormRSquaredDict[sampleName] = 1 - (ss_res / ss_tot)
-        print(lognormRSquaredDict[sampleName])
+        lognormChiSquaredDict[sampleName] = pValue
+        print(lognormChiSquaredDict[sampleName])
 
     if isToPlot:
         ax.plot(
             binCenters[:plotCutoff],
-            normHist[:plotCutoff] * 100,
+            normHist[:plotCutoff],
             color=color,
             alpha=0.2,
             linestyle=linestyle,
@@ -133,7 +148,7 @@ for keys, cols in zip(nameKeys, nameData):
         if fitGamma:
             ax.plot(
                 D,
-                gamma.pdf(D, a=a_gamma, loc=loc, scale=scale_gamma) * 100,
+                gamma.pdf(D, a=a_gamma, loc=loc, scale=scale_gamma),
                 color=colorGamma,
                 alpha=1.0,
                 linestyle=linestyle,
@@ -143,8 +158,7 @@ for keys, cols in zip(nameKeys, nameData):
         if fitLognorm:
             ax.plot(
                 D,
-                lognorm.pdf(D, s=s_lognorm, loc=loc, scale=scale_lognorm)
-                * 100,
+                lognorm.pdf(D, s=s_lognorm, loc=loc, scale=scale_lognorm),
                 color=colorLognorm,
                 alpha=1.0,
                 linestyle=linestyle,
@@ -157,13 +171,13 @@ for sampleName, index in axis_dict.items():
     ax = axs[index[0]][index[1]]  # to choose in which axis to plot
     ax.grid()
     ax.set_title(sampleName, fontsize=8, pad=-14)
-    ax.set(ylim=(0, maxNormHist * 110))
+    ax.set(ylim=(0, maxNormHist * 1.1))
     ax.legend(loc="upper right", fontsize=4)
 
-axs[4, 0].set_ylabel("              Abs. Count ()", fontsize=8)
-axs[4, 1].set_ylabel("              Abs. Count ()", fontsize=8)
-axs[7, 0].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
-axs[7, 1].set_xlabel("Approx Radius (" + "\u03bc" + "m)", fontsize=8)
+axs[4, 0].set_ylabel("Density", fontsize=8)
+axs[4, 1].set_ylabel("Density", fontsize=8)
+axs[7, 0].set_xlabel("Approx Radius (" + "$\mu$" + "m)", fontsize=8)
+axs[7, 1].set_xlabel("Approx Radius (" + "$\mu$" + "m)", fontsize=8)
 dist = "gamma" if fitGamma else " "
 dist += " and " if fitGamma and fitLognorm else " "
 dist += "lognorm" if fitLognorm else " "
@@ -178,22 +192,25 @@ if fitLognorm:
     lognormParamsDf = pd.DataFrame.from_dict(lognormParamsDict)
     lognormParamsDf.to_csv("data/fiber_radii_lognorm_params.csv", index=False)
 if fitGamma:
-    gammaRSquaredDf = pd.DataFrame.from_dict(gammaRSquaredDict, orient="index")
-    gammaRSquaredDf.to_csv("data/fiber_radii_gamma_r2.csv", index=True)
-if fitLognorm:
-    lognormRSquaredDf = pd.DataFrame.from_dict(
-        lognormRSquaredDict, orient="index"
+    gammaChiSquaredDf = pd.DataFrame.from_dict(
+        gammaChiSquaredDict, orient="index"
     )
-    lognormRSquaredDf.to_csv("data/fiber_radii_lognorm_r2.csv", index=True)
+    gammaChiSquaredDf.to_csv("data/fiber_radii_gamma_r2.csv", index=True)
+if fitLognorm:
+    lognormChiSquaredDf = pd.DataFrame.from_dict(
+        lognormChiSquaredDict, orient="index"
+    )
+    lognormChiSquaredDf.to_csv("data/fiber_radii_lognorm_r2.csv", index=True)
 
-rSquaredDf = pd.concat([lognormRSquaredDf, gammaRSquaredDf], axis=1)
-rSquaredDf.columns = ["lognorm", "gamma"]
+ChiSquaredDf = pd.concat([lognormChiSquaredDf, gammaChiSquaredDf], axis=1)
+ChiSquaredDf.columns = ["lognorm", "gamma"]
 
 fig, ax = plt.subplots()
-rSquaredDf.plot(kind="barh", ax=ax)
-ax.set_title(f"R-squared values for {dist} fit")
-rSquaredData = rSquaredDf.to_numpy()
-ax.set_xlim(np.min(rSquaredData) - 0.1, np.max(rSquaredData) + 0.02)
+ChiSquaredDf.plot(kind="barh", ax=ax)
+ax.set_title(f"Chi-squared values for {dist} fit")
+ChiSquaredData = ChiSquaredDf.to_numpy()
+ax.set_xlim(np.min(ChiSquaredData) * 0.5, np.max(ChiSquaredData) * 1.1)
+ax.set_xscale("log")
 plt.tight_layout()
 plt.savefig(f"media/fiber_radii_{dist}_fit_r2.pdf")
 plt.show()
