@@ -26,15 +26,12 @@ def run_case(centers, radii, bound, p_drop):
         deg_poly=75,
         spacing="linear",
     )
-    if np.max(radii) == np.min(radii):
-        scales = np.ones_like(radii)
-    else:
-        scales = (radii - np.min(radii)) / (np.max(radii) - np.min(radii))
-    for centroid, radius, s in zip(centers, radii, scales):
+
+    for centroid, radius in zip(centers, radii):
         prob.add_interior_curve(
             lambda t: centroid + radius * np.exp(2j * np.pi * t),
-            num_points=100 + int(100 * s),
-            deg_laurent=20 + int(20 * s),
+            num_points=200,
+            deg_laurent=40,
             centroid=centroid,
             mirror_laurents=True,
             mirror_tol=bound / 2,
@@ -76,9 +73,13 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
         lambda t: center + radius * np.exp(2j * np.pi * t)
         for center, radius in zip(centers, radii)
     ]
+    derivs = [
+        lambda t: 2j * np.pi * radius * np.exp(2j * np.pi * t)
+        for center, radius in zip(centers, radii)
+    ]
     samples = np.round(100 * radii / np.min(radii))
     surface_length = np.sum([2 * np.pi * r for r in radii])
-    wss_data = an.get_wss_data(curves, samples)
+    wss_data = an.get_wss_data(curves, derivs, samples)
     wss_mean = np.ma.mean(np.abs(wss_data))
     wss_std = np.std(wss_data)
     if plot:
@@ -96,7 +97,16 @@ def analyse_case(sol, centers, radii, length=2, p_drop=0.25, plot=False):
             surface_length,
         )
     else:
-        return permeability, wss_data
+        return (
+            None,
+            None,
+            permeability,
+            outlet_profile,
+            wss_mean,
+            wss_std,
+            wss_data,
+            surface_length,
+        )
 
 
 def run(parameters):
@@ -112,7 +122,7 @@ def run(parameters):
         rv = lognorm.rvs
     if dist == "gamma":
         rv = lognorm.rvs
-    lengths = np.array(parameters["lengths"])
+    lengths = parameters["lengths"]
     seeds = np.arange(n_max)
     err_tol = 1e-2
 
@@ -146,7 +156,7 @@ def run(parameters):
         for n in range(n_max):
             seed = n + i * n_max
             print(" --- Starting sample", n)
-            np.random.seed(seed)
+            # np.random.seed(seed)
             centroids, radii = generate_rv_circles(
                 porosity=porosity,
                 rv=rv,
@@ -166,12 +176,13 @@ def run(parameters):
                 wss_data,
                 surface_length,
             ) = analyse_case(
-                sol, centroids, radii, length=length, p_drop=p_drop, plot=True
+                sol, centroids, radii, length=length, p_drop=p_drop, plot=False
             )
             filename = f"data/{project_name}/{foldername}/seed_{seed}"
-            ax.axis("off")
-            plt.savefig(filename + ".pdf", bbox_inches="tight")
-            plt.close()
+            if fig is not None:
+                ax.axis("off")
+                plt.savefig(filename + ".pdf", bbox_inches="tight")
+                plt.close()
             np.savez(
                 f"{filename}.npz",
                 nc=n_circles,
@@ -211,17 +222,22 @@ def run(parameters):
                 save_df(
                     data, f"data/{project_name}/summary_data/{name}_data.csv"
                 )
-            mean_perm = np.ma.mean(permeability_data[i, : n + 1])
-            sigma_perm = np.std(permeability_data[i, : n + 1])
+            p_data = permeability_data[i, : n + 1].copy()
+            p_data = np.delete(p_data, np.where(np.isnan(p_data)))
+            mean_perm = np.ma.mean(p_data)
+            sigma_perm = np.std(p_data)
             n_crit_perm = (sigma_perm / (eps_CLT * mean_perm)) ** 2 * (
                 norm.ppf(1 - alpha / 2)
             ) ** 2
-            mean_wssm = np.ma.mean(wss_mean_data[i, : n + 1])
-            sigma_wssm = np.std(wss_mean_data[i, : n + 1])
+            wssm_data = wss_mean_data[i, : n + 1].copy()
+            wssm_data = np.delete(wssm_data, np.where(np.isnan(wssm_data)))
+            mean_wssm = np.ma.mean(wssm_data)
+            sigma_wssm = np.std(wssm_data)
             n_crit_wssm = (sigma_wssm / (eps_CLT * mean_wssm)) ** 2 * (
                 norm.ppf(1 - alpha / 2)
             ) ** 2
             n_crit = np.max([n_crit_perm, n_crit_wssm])
+            print(f"n_crit estimate is {n_crit}")
             if n > n_crit:
                 converged_steps += 1
                 print(f"Converged {converged_steps} times on iteration {n}.")
@@ -335,14 +351,14 @@ def plot_summary_data(project_name, scale=None):
 
 if __name__ == "__main__":
     parameters = {
-        "project_name": "log_normal_n_crit",
+        "project_name": "random_test",
         "porosity": 0.95,
-        "n_max": 1,
+        "n_max": 3,
         "alpha": 0.05,
-        "eps_CLT": 1.0,
+        "eps_CLT": 0.1,
         "rv": "lognorm",
         "rv_args": {"s": 0.5, "scale": 0.275, "loc": 0.0},
-        "lengths": [5],
+        "lengths": [5, 6],
         "p_drop": 100,
     }
     # parameters = {
@@ -359,3 +375,4 @@ if __name__ == "__main__":
     # }
     # run(parameters)
     plot_summary_data(parameters["project_name"])
+    plt.show()

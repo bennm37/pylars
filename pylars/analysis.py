@@ -343,7 +343,7 @@ class Analysis:
         ax.set(yscale="log")
         plt.show()
 
-    def get_wss_data(self, curves, samples):
+    def get_wss_data(self, curves, derivs, samples):
         """Calculate the wall shear stress data."""
         points = np.concatenate(
             [
@@ -351,7 +351,23 @@ class Analysis:
                 for curve, size in zip(curves, samples)
             ]
         )
-        wss_data = self.solution.eij(points)[:, 1, 0]
+        tangents = np.concatenate(
+            [
+                tangent(np.linspace(0, 1, int(size)))
+                for tangent, size in zip(derivs, samples)
+            ]
+        )
+        tangents /= np.abs(tangents)
+        normals = -1j * tangents
+        tangents = np.array([tangents.real, tangents.imag]).T
+        normals = np.array([normals.real, normals.imag]).T
+        stress_tensors = self.solution.stress_goursat(points)
+        wss_data = [
+            tangent.T @ stress_tensor @ normal
+            for stress_tensor, tangent, normal in zip(
+                stress_tensors, tangents, normals
+            )
+        ]
         return wss_data
 
     def get_permeability(self, curve, curve_deriv, delta_x, delta_p):
