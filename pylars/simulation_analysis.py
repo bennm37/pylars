@@ -277,7 +277,7 @@ class SimulationAnalysis:
                 count += 1
 
         self.generate_pathlines(
-            np.max(frame - 5, 0), frame, starting_positions=starting_positions
+            np.max(frame - 30, 0), frame, starting_positions=starting_positions
         )
 
         def colorline(
@@ -305,6 +305,12 @@ class SimulationAnalysis:
         fig, ax = plt.subplots()
         dom_frame = self.solution_data[frame].problem.domain
         speeds = np.abs(self.pathline_velocity_data)
+        speeds[np.where(np.abs(self.pathline_data.real) > 1)] = np.nan
+        speeds[np.where(np.abs(self.pathline_data.imag) > 1)] = np.nan
+        self.pathline_data[np.where(self.pathline_data.real > 1)] = np.nan
+        self.pathline_data[np.where(self.pathline_data.imag > 1)] = np.nan
+        max_speed = np.max(speeds[~np.isnan(speeds)])
+        speeds = speeds / max_speed
         for line, speed in zip(self.pathline_data.T, speeds.T):
             lc = colorline(line.real, line.imag, speed)
             ax.add_collection(lc)
@@ -315,6 +321,7 @@ class SimulationAnalysis:
         #     alpha=0.5,
         # )
         # plot the movers path
+
         ax.scatter(
             self.pathline_data[-1].real,
             self.pathline_data[-1].imag,
@@ -340,5 +347,5 @@ class SimulationAnalysis:
         ax.set(xlim=(-1, 1), ylim=(-1, 1))
         ax.plot([-1, 1, 1, -1, -1], [1, 1, -1, -1, 1], color="k", linewidth=2)
         ax.axis("off")
-        plt.colorbar(lc)
+        cb = plt.colorbar(lc, label="Velocity Magnitude")
         return fig, ax
