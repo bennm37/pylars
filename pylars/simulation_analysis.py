@@ -234,13 +234,15 @@ class SimulationAnalysis:
         self.levels.sort(axis=1)
         print("finished")
 
-    def generate_pathlines(self, frame, starting_positions=100):
+    def generate_pathlines(
+        self, start_frame, end_frame, starting_positions=100
+    ):
         """Generate pathlines."""
         if isinstance(starting_positions, int):
             starting_positions = (
                 -1 + np.linspace(-1, 1, starting_positions) * 1j
             )
-        times = self.time_data[: frame + 1]
+        times = self.time_data[start_frame : end_frame + 1]
         n_particles = len(starting_positions)
         n_steps = len(times)
         dt = np.diff(self.time_data)[0]
@@ -253,7 +255,9 @@ class SimulationAnalysis:
         pathline_data[0, :] = starting_positions
         for i in range(n_steps):
             velocities = (
-                self.solution_data[i].uv(pathline_data[i, :]).reshape(-1)
+                self.solution_data[start_frame + i]
+                .uv(pathline_data[i, :])
+                .reshape(-1)
             )
             pathline_velocity_data[i, :] = velocities
             pathline_data[i + 1, :] = pathline_data[i, :] + velocities * dt
@@ -272,7 +276,9 @@ class SimulationAnalysis:
                 starting_positions[count] = position
                 count += 1
 
-        self.generate_pathlines(frame, starting_positions=starting_positions)
+        self.generate_pathlines(
+            np.max(frame - 5, 0), frame, starting_positions=starting_positions
+        )
 
         def colorline(
             x,
