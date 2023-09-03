@@ -379,4 +379,6 @@ class Problem:
 
     def copy(self):
         """Return a copy of the current object."""
-        return copy.deepcopy(self)
+        new = copy.deepcopy(self)
+        new.creation_time = perf_counter()
+        return new

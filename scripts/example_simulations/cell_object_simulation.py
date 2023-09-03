@@ -2,6 +2,7 @@
 from pylars import Problem, SimulationAnalysis
 from pylars.simulation import LowDensityMoverSimulation, Mover
 import numpy as np
+import matplotlib.pyplot as plt
 
 init_prob = Problem()
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
@@ -44,10 +45,13 @@ cell = Mover(
 )
 movers = [cell]
 ldms = LowDensityMoverSimulation(init_prob, movers)
-results = ldms.run(0, 2.0, 0.1)
-print(results["residuals"])
+results = ldms.run(0, 20, 0.1)
+print(results["errors"])
 an = SimulationAnalysis(results)
-fig, ax, anim = an.animate_fast(
-    interval=50, resolution=200, streamline_type="starting_points"
-)
-anim.save(f"media/scaff_centroid_{centroid}.mp4")
+an.plot_pathlines(19)
+plt.savefig("media/pathlines.pdf")
+plt.show()
+# fig, ax, anim = an.animate_fast(
+#     interval=50, resolution=200, streamline_type="starting_points"
+# )
+# anim.save(f"media/scaff_centroid_{centroid}.mp4")

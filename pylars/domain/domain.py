@@ -13,6 +13,7 @@ from collections import Counter
 from pylars.numerics import cart, cluster, aaa
 from shapely import Point, Polygon, LineString
 import matplotlib.patches as patches
+from matplotlib.collections import PatchCollection
 
 BLUE = [0.36, 0.54, 0.66]
 
@@ -551,14 +552,21 @@ class Domain:
         # plt.tight_layout()
         return fig, ax
 
-    def plot_polygon(self, ax, poly):
+    def plot_polygon(
+        self,
+        ax,
+        poly,
+        exterior_color="white",
+        interior_color=None,
+        zorder=1000,
+    ):
         """Plot a polygon on the given axis."""
         exterior_coords = np.array(self.polygon.exterior.coords)
-        exterior_patch = patches.Polygon(exterior_coords)
+        exterior_patch = patches.Polygon(exterior_coords, color=interior_color)
         ax.add_patch(exterior_patch)
         for inner in poly.interiors:
             interior_patch = patches.Polygon(
-                np.array(inner.coords), color="white"
+                np.array(inner.coords), color=exterior_color, zorder=zorder
             )
             ax.add_patch(interior_patch)
         ax.autoscale_view()

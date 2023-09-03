@@ -11,13 +11,14 @@ class Simulation:
         self.results = {}
         self.name = "AbstractSimulation"
 
-    def run(self, start, end, dt, name=None):
+    def run(self, start, n_steps, dt, name=None):
         """Run the simulation."""
+        end = start + n_steps * dt
         self.start, self.end, self.dt = start, end, dt
         if name is None:
             name = self.name
-        self.times = np.arange(start, end, dt)
-        self.n_steps = self.times.shape[0]
+        self.times = np.linspace(start, start + (n_steps - 1) * dt, n_steps)
+        self.n_steps = n_steps
         # create a progress bar for loop
         for k, time in enumerate(tqdm(self.times, desc=self.name)):
             self.update(k, dt)

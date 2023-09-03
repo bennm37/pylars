@@ -75,12 +75,10 @@ def plot_convergence_p_wss(project_name, scale=None):
     error_kw_confidence = dict(ecolor="blue", lw=1, capsize=5, capthick=1)
     err_sf = norm.ppf(1 - 0.05 / 2) / np.sqrt(num_samples)
     label_confidence = "95 \% CI"
-    error_kw_std = dict(ecolor="red", lw=1, capsize=5, capthick=1)
-    label_std = "Std. Dev."
 
     def get_data(filename):
         data = pd.read_csv(filename).to_numpy()[:, 1:]
-        data = np.ma.array(data, mask=~converged)
+        data = np.ma.array(data, mask=np.isnan(data))
         return data
 
     permeability_data = get_data(
@@ -147,24 +145,31 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
     hist_data = {name: [] for name in names}
     bins = np.linspace(0, 30, 30)
     bin_centers = (bins[1:] + bins[:-1]) / 2
-    i = 0
     for length, name in zip(lengths, names):
-        while True:
-            try:
-                data = np.load(f"data/{project_name}/{name}/seed_{i}.npz")
-                wss_data_i = data["wss_data"]
-                # the simulations are run with a non-dimensional pressure drop of 10.
-                # To impose a pressure gradient of grad_p Pa, we need to scale
-                # by grad_p * non_dim_l * U * mu/ (10 * L)
-                wss_data_i = grad_p * length * wss_data_i * mu * U / (10 * L)
-                hist_data_i, _ = np.histogram(
-                    wss_data_i, bins=bins, density=True
-                )
-                wss_data[name].append(wss_data_i)
-                hist_data[name].append(hist_data_i)
-                i += 1
-            except FileNotFoundError:
-                break
+        # get all the file names in f"data/{project_name}/{name}/"
+        # that start with "seed_"
+        filenames = os.listdir(f"data/{project_name}/{name}/")
+        filenames = [
+            filename
+            for filename in filenames
+            if filename.startswith("seed_") and filename.endswith(".npz")
+        ]
+        # sort the filenames
+        filenames = sorted(
+            filenames, key=lambda x: int(x.split("_")[1].split(".")[0])
+        )
+        for filename in filenames:
+            data = np.load(f"data/{project_name}/{name}/{filename}")
+            wss_data_i = data["wss_data"]
+            if np.any(np.isnan(wss_data_i)):
+                continue
+            # the simulations are run with a non-dimensional pressure drop of 10.
+            # To impose a pressure gradient of grad_p Pa, we need to scale
+            # by grad_p * non_dim_l * U * mu/ (10 * L)
+            wss_data_i = grad_p * length * wss_data_i * mu * U / (10 * L)
+            hist_data_i, _ = np.histogram(wss_data_i, bins=bins, density=True)
+            wss_data[name].append(wss_data_i)
+            hist_data[name].append(hist_data_i)
     N = len(lengths)
     fig, ax = plt.subplots(1, N, sharey=True, figsize=(6, 2.5))
     ax[0].set_ylabel("Probability Density")
@@ -196,7 +201,8 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
 if __name__ == "__main__":
     # concatenate("log_normal_hellion", [4, 8, 10, 16])
     plt.style.use("ggplot")
-    project_name = "log_norm_linear_hellion_partial"
+    # project_name = "log_norm_linear_hellion_partial"
+    project_name = "uniform_circles"
     # fig, ax = plot_summary_data(project_name, scale=(1e-6, 1e-6, 1e-3, 2500))
     # plt.show()
     fig, ax = plot_convergence_p_wss(
@@ -204,12 +210,14 @@ if __name__ == "__main__":
     )
     fig.set_size_inches(6, 2)
     plt.tight_layout()
-    plt.savefig("media/log_normal_convergence.pdf", bbox_inches="tight")
+    plt.savefig("media/{project_name}_convergence.pdf", bbox_inches="tight")
     plt.show()
 
-    # plt.savefig("media/log_normal_convergence.pdf")
+    # plt.savefig("media/{project_name}_convergence.pdf")
     fig, ax = plot_wss_distribution(
-        project_name, unfinished=2, scale=(1e-6, 1e-6, 1e-3, 2500)
+        project_name, unfinished=1, scale=(1e-6, 1e-6, 1e-3, 2500)
     )
-    plt.savefig("media/log_normal_wss_distribution.pdf", bbox_inches="tight")
+    plt.savefig(
+        "media/{project_name}_wss_distribution.pdf", bbox_inches="tight"
+    )
     plt.show()

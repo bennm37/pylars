@@ -3,6 +3,7 @@ from pylars import Analysis
 import numpy as np
 import matplotlib.animation as animation
 import matplotlib.patches as patches
+import matplotlib.collections as mcoll
 import matplotlib.pyplot as plt
 from pylars.colormaps import parula
 
@@ -232,3 +233,106 @@ class SimulationAnalysis:
         self.levels = self.psi_data[:, 0, :: resolution // n_levels].real
         self.levels.sort(axis=1)
         print("finished")
+
+    def generate_pathlines(self, frame, starting_positions=100):
+        """Generate pathlines."""
+        if isinstance(starting_positions, int):
+            starting_positions = (
+                -1 + np.linspace(-1, 1, starting_positions) * 1j
+            )
+        times = self.time_data[: frame + 1]
+        n_particles = len(starting_positions)
+        n_steps = len(times)
+        dt = np.diff(self.time_data)[0]
+        pathline_data = np.zeros(
+            (n_steps + 1, n_particles), dtype=np.complex128
+        )
+        pathline_velocity_data = np.zeros(
+            (n_steps + 1, n_particles), dtype=np.complex128
+        )
+        pathline_data[0, :] = starting_positions
+        for i in range(n_steps):
+            velocities = (
+                self.solution_data[i].uv(pathline_data[i, :]).reshape(-1)
+            )
+            pathline_velocity_data[i, :] = velocities
+            pathline_data[i + 1, :] = pathline_data[i, :] + velocities * dt
+        self.pathline_data = pathline_data
+        self.pathline_velocity_data = pathline_velocity_data
+
+    def plot_pathlines(self, frame, n_particles=500):
+        """Plot pathlines."""
+        # generate random starting positions in the fluid domain
+        starting_positions = np.zeros(n_particles, dtype=np.complex128)
+        count = 0
+        dom0 = self.solution_data[0].problem.domain
+        while count < n_particles:
+            position = np.random.uniform(-1, 1) + 1j * np.random.uniform(-1, 1)
+            if position in dom0:
+                starting_positions[count] = position
+                count += 1
+
+        self.generate_pathlines(frame, starting_positions=starting_positions)
+
+        def colorline(
+            x,
+            y,
+            array,
+            cmap=parula,
+            norm=plt.Normalize(0.0, 1.0),
+            linewidth=0.5,
+        ):
+            # Create a path from the x and y points
+            points = np.array([x, y]).T.reshape(-1, 1, 2)
+            segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+            # Create a continuous norm to map from data points to colors
+            lc = mcoll.LineCollection(
+                segments,
+                array=array,
+                cmap=cmap,
+                norm=norm,
+                linewidth=linewidth,
+            )
+            return lc
+
+        fig, ax = plt.subplots()
+        dom_frame = self.solution_data[frame].problem.domain
+        speeds = np.abs(self.pathline_velocity_data)
+        for line, speed in zip(self.pathline_data.T, speeds.T):
+            lc = colorline(line.real, line.imag, speed)
+            ax.add_collection(lc)
+        # ax.plot(
+        #     self.pathline_data.real,
+        #     self.pathline_data.imag,
+        #     color=speed,
+        #     alpha=0.5,
+        # )
+        # plot the movers path
+        ax.scatter(
+            self.pathline_data[-1].real,
+            self.pathline_data[-1].imag,
+            color=parula(speeds[-2, :]),
+            s=1,
+            zorder=10,
+        )
+        dom_frame.plot_polygon(
+            ax=ax,
+            poly=dom_frame.polygon,
+            exterior_color="w",
+            interior_color="black",
+            # zorder=10,
+        )
+        ax.plot(
+            self.position_data[: frame + 1].real,
+            self.position_data[: frame + 1].imag,
+            color=[0.82, 0.1, 0.26],
+            alpha=1,
+            zorder=999,
+        )
+        ax.set_aspect("equal")
+        ax.set(xlim=(-1, 1), ylim=(-1, 1))
+        ax.plot([-1, 1, 1, -1, -1], [1, 1, -1, -1, 1], color="k", linewidth=2)
+        ax.axis("off")
+        plt.colorbar(lc)
+        return fig, ax

@@ -21,7 +21,7 @@ def run_case(centers, radii, bound, p_drop):
     ]
     prob.add_exterior_polygon(
         corners,
-        num_edge_points=100 * n_circles,
+        num_edge_points=120 * n_circles,
         num_poles=0,
         deg_poly=50,
         spacing="linear",
@@ -51,7 +51,11 @@ def run_case(centers, radii, bound, p_drop):
         prob.add_boundary_condition(f"{interior}", f"v[{interior}]", 0)
 
     solver = Solver(prob, verbose=True)
-    sol = solver.solve(check=False, normalize=False, weight=False)
+    try:
+        sol = solver.solve(check=False, normalize=False, weight=False)
+    except ValueError:
+        print(f"Solve failed.")
+        return None, None, None
     max_error = solver.max_error
     print(f"error: {max_error}")
     # print(
@@ -164,6 +168,9 @@ def run(parameters):
             )
             n_circles = len(centroids)
             sol, error, run_time = run_case(centroids, radii, bound, p_drop)
+            if sol is None:
+                print("Solve failed. Skipping iteration {n}.")
+                continue
             (
                 fig,
                 ax,
@@ -361,7 +368,7 @@ if __name__ == "__main__":
         "eps_CLT": 0.05,
         "rv": rv,
         "rv_args": rv_args,
-        "lengths": [8, 10, 12],
+        "lengths": [4, 8, 12, 16],
         "p_drop": 100,
     }
     # parameters = {
