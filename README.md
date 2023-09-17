@@ -13,7 +13,7 @@ Activate the virtual environment:\
 ```source venv/bin/activate```\
 Install the requirements:\
 ```pip install -r requirements.txt```\
-Install pyls:\
+Install pylars:\
 ```pip install -e .```\
 Check the tests pass:\
 ```python -m pytest .```\

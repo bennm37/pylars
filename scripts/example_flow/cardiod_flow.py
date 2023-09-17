@@ -30,9 +30,9 @@ def solve_cardioid():
         aaa=False,
         aaa_mmax=150,
     )
-    prob.domain.plot()
-    plt.tight_layout()
-    plt.show()
+    # prob.domain.plot()
+    # plt.tight_layout()
+    # plt.show()
     p_drop = 37
     prob.add_boundary_condition("0", "u[0]", 0)
     prob.add_boundary_condition("0", "psi[0]", 0)
@@ -47,7 +47,7 @@ def solve_cardioid():
 
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
-print(f"Error: {solver.max_error}")
+    print(f"Error: {solver.max_error}")
     return prob, sol, cardioid
 
 
@@ -123,15 +123,19 @@ def plot_matlab_error(sol):
 
     # plot error
     fig, ax = plt.subplots(2, 2, figsize=(6, 4))
-    cmap = plt.get_cmap("RdBu_r")
+    cmap = plt.get_cmap("jet")
     cmap.set_bad("white")
     psi_diff = np.abs(matlab_psi_data - pylars_psi_data)
     psi_diff_max = psi_diff[~inside].max()
     print(f"Max error in psi: {psi_diff_max}")
+    ax[0, 0].set_aspect("equal")
+    ax[1, 0].set_aspect("equal")
+    ax[0, 1].set_aspect("equal")
+    ax[1, 1].set_aspect("equal")
     im00 = ax[0, 0].imshow(
         psi_diff,
         cmap=cmap,
-        norm=LogNorm(vmin=psi_diff[~inside].min() + 1e-17, vmax=psi_diff_max),
+        norm=LogNorm(vmin=1e-16, vmax=1e-9),
     )
     ax[0, 0].axis("off")
     plt.text(
@@ -142,14 +146,20 @@ def plot_matlab_error(sol):
         va="center",
         transform=ax[0, 0].transAxes,
     )
-    plt.colorbar(im00, ax=ax[0, 0], fraction=0.046, pad=0.04)
+    plt.colorbar(
+        im00,
+        ax=ax[0, 0],
+        fraction=0.046,
+        pad=0.04,
+        ticks=np.logspace(-16, -9,5),
+    )
     p_diff = np.abs(matlab_p_data - pylars_p_data)
     p_diff_max = p_diff[~inside].max()
     print(f"Max error in p: {p_diff_max}")
     im10 = ax[1, 0].imshow(
         p_diff,
         cmap=cmap,
-        norm=LogNorm(vmin=p_diff[~inside].min() + 1e-17, vmax=p_diff_max),
+        norm=LogNorm(vmin=1e-16, vmax=1e-9),
     )
     ax[1, 0].axis("off")
     plt.text(
@@ -160,17 +170,20 @@ def plot_matlab_error(sol):
         va="center",
         transform=ax[1, 0].transAxes,
     )
-    plt.colorbar(im10, ax=ax[1, 0], fraction=0.046, pad=0.04)
+    plt.colorbar(
+        im10,
+        ax=ax[1, 0],
+        fraction=0.046,
+        pad=0.04,
+        ticks=np.logspace(1e-16, 1e-9, 5),
+    )
     omega_diff = np.abs(matlab_omega_data - pylars_omega_data)
     omega_diff_max = omega_diff[~inside].max()
     print(f"Max error in omega: {omega_diff_max}")
     im01 = ax[0, 1].imshow(
         omega_diff,
         cmap=cmap,
-        norm=LogNorm(
-            vmin=omega_diff[~inside].min() + 1e-17,
-            vmax=omega_diff_max,
-        ),
+        norm=LogNorm(vmin=1e-16, vmax=1e-9),
     )
     ax[0, 1].axis("off")
     plt.text(
@@ -181,14 +194,20 @@ def plot_matlab_error(sol):
         va="center",
         transform=ax[0, 1].transAxes,
     )
-    plt.colorbar(im01, ax=ax[0, 1], fraction=0.046, pad=0.04)
+    plt.colorbar(
+        im01,
+        ax=ax[0, 1],
+        fraction=0.046,
+        pad=0.04,
+        ticks=np.logspace(1e-16, 1e-9, 5),
+    )
     u_diff = np.abs(matlab_u_data - pylars_u_data)
     u_diff_max = u_diff[~inside].max()
     print(f"Max error in u: {u_diff_max}")
     im11 = ax[1, 1].imshow(
         u_diff,
         cmap=cmap,
-        norm=LogNorm(vmin=u_diff[~inside].min() + 1e-17, vmax=u_diff_max),
+        norm=LogNorm(vmin=1e-16, vmax=1e-9),
     )
     ax[1, 1].axis("off")
     plt.text(
@@ -199,7 +218,13 @@ def plot_matlab_error(sol):
         va="center",
         transform=ax[1, 1].transAxes,
     )
-    plt.colorbar(im11, ax=ax[1, 1], fraction=0.046, pad=0.04)
+    plt.colorbar(
+        im11,
+        ax=ax[1, 1],
+        fraction=0.046,
+        pad=0.04,
+        ticks=np.logspace(1e-16, 1e-9, 5),
+    )
     # plt.tight_layout()
     plt.subplots_adjust(left=0.05, right=0.90, bottom=0.05, top=0.95)
     return fig, ax
@@ -208,11 +233,20 @@ def plot_matlab_error(sol):
 if __name__ == "__main__":
     prob, sol, cardioid = solve_cardioid()
     # an = Analysis(sol)
-    # fig, ax = an.plot(resolution=301, interior_patch=True, enlarge_patch=1.0)
+    # fig, ax = an.plot(
+    #     resolution=401,
+    #     interior_patch=True,
+    #     enlarge_patch=1.02,
+    #     n_streamlines=20,
+    # )
+    # fig.set_size_inches(6, 4)
+    # ax.axis("off")
+    # plt.savefig("media/cardioid.png", bbox_inches="tight")
     # plt.show()
-    # plt.savefig("media/cardioid.pdf", bbox_inches="tight")
     # plt.show()
-    fig, ax = plot_moffat_eddies(prob, sol, cardioid)
-    plt.savefig("media/moffat_eddies.pdf", bbox_inches="tight")
-    # fig, ax = plot_matlab_error(sol)
+    # fig, ax = plot_moffat_eddies(prob, sol, cardioid)
+    # plt.savefig("media/moffat_eddies.pdf", bbox_inches="tight")
+    plt.rcParams["figure.dpi"] = 150
+    fig, ax = plot_matlab_error(sol)
+    plt.show()
     # plt.savefig("media/matlab_error.pdf", bbox_inches="tight")

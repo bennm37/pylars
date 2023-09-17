@@ -8,7 +8,7 @@ import numpy as np
 np.random.seed(0)
 shape = (500, 500)
 dp_noise = generate_noise(
-    shape=shape, sigma=10, iter=1, porosity=0.95, clear=True
+    shape=shape, sigma=15, iter=1, porosity=0.95, clear=True
 )
 num_points = 100
 tcks = get_boundary_curves(dp_noise, 0.00)
@@ -73,4 +73,8 @@ print(
     f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max():.2e}"
 )
 fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.1)
+fig.set_size_inches(3, 3)
+ax.axis("off")
+plt.tight_layout()
+plt.savefig("media/scaffold_flow.png", bbox_inches="tight")
 plt.show()

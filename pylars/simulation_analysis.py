@@ -347,5 +347,5 @@ class SimulationAnalysis:
         ax.set(xlim=(-1, 1), ylim=(-1, 1))
         ax.plot([-1, 1, 1, -1, -1], [1, 1, -1, -1, 1], color="k", linewidth=2)
         ax.axis("off")
-        cb = plt.colorbar(lc, label="Velocity Magnitude")
+        plt.colorbar(lc, label="Velocity Magnitude")
         return fig, ax

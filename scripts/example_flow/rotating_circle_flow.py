@@ -20,7 +20,7 @@ else:
         height=2,
         num_edge_points=600,
         num_poles=0,
-        deg_poly=75,
+        deg_poly=50,
         spacing="linear",
     )
 centroid = -1.85 + 0.0j
@@ -40,11 +40,12 @@ else:
     prob.add_periodic_curve(
         circle,
         num_points=num_points,
-        deg_laurent=20,
+        deg_laurent=10,
         centroid=centroid,
         mirror_laurents=False,
         image_laurents=True,
     )
+    prob.domain.error_points["4"] = circle(np.linspace(0, 1, 2 * num_points))
 prob.domain.plot(set_lims=False)
 plt.show()
 prob.add_boundary_condition("0", "u[0]", 0)
@@ -71,11 +72,14 @@ sol = solver.solve(check=False, normalize=False)
 an = Analysis(sol)
 print(f"residusal = {np.abs(solver.A @ solver.coefficients - solver.b).max()}")
 fig, ax = an.plot(
-    resolution=200,
+    resolution=100,
     interior_patch=True,
-    quiver=True,
+    quiver=False,
     streamline_type="linear",
     n_streamlines=20,
 )
-# plt.savefig("media/rotating_flow.pdf")
+ax.axis("off")
+fig.set_size_inches(3, 3)
+plt.tight_layout()
+# plt.savefig("media/rotating_flow.png", bbox_inches="tight")
 plt.show()

@@ -89,9 +89,11 @@ def plot_convergence_p_wss(project_name, scale=None):
     )
     if scale is not None:
         L, U, mu, grad_p = scale
-        # multiply by the dimensional pressure
+        # the simulations are run with a non-dimensional pressure drop of 2.
+        # To impose a pressure gradient of grad_p Pa, we need to scale
+        # by grad_p * non_dim_l * U * mu/ (2 * L)
         wss_mean_data = (
-            grad_p * L * lengths[:, np.newaxis] * wss_mean_data / (10)
+            grad_p * lengths[:, np.newaxis] * wss_mean_data * mu * U / (10 * L)
         )
         lengths = lengths * L
         permeability_data = permeability_data * L**2
@@ -118,7 +120,7 @@ def plot_convergence_p_wss(project_name, scale=None):
         # )
         ax.set_ylabel(name)
 
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(1, 2)
     plot("Permeability ($\mathrm{m}^2$)", permeability_data, ax[0])
 
     plot("WSS Mean (Pa)", wss_mean_data, ax[1])
@@ -141,7 +143,7 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
     names = [f"{length:.1e}" for length in lengths]
     wss_data = {name: [] for name in names}
     hist_data = {name: [] for name in names}
-    bins = np.linspace(0, 10, 30)
+    bins = np.linspace(0, 30, 30)
     bin_centers = (bins[1:] + bins[:-1]) / 2
     for length, name in zip(lengths, names):
         # get all the file names in f"data/{project_name}/{name}/"
@@ -164,16 +166,14 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
             # the simulations are run with a non-dimensional pressure drop of 10.
             # To impose a pressure gradient of grad_p Pa, we need to scale
             # by grad_p * non_dim_l * U * mu/ (10 * L)
-            wss_data_i = grad_p * length * L * wss_data_i / (10)
+            wss_data_i = grad_p * length * wss_data_i * mu * U / (10 * L)
             hist_data_i, _ = np.histogram(wss_data_i, bins=bins, density=True)
             wss_data[name].append(wss_data_i)
             hist_data[name].append(hist_data_i)
     N = len(lengths)
-    fig, ax = plt.subplots(1, N, sharey=True, figsize=(6, 2))
+    fig, ax = plt.subplots(1, N, sharey=True, figsize=(6, 2.5))
     ax[0].set_ylabel("Probability Density")
-    color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     for i, name in enumerate(names):
-        color = color_cycle[i]
         mean = np.mean(hist_data[name], axis=0)
         err = (
             1.96
@@ -183,60 +183,41 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
         ax[i].plot(
             bin_centers,
             mean,
-            color=color,
         )
         ax[i].fill_between(
             bin_centers,
             mean - err,
             mean + err,
             alpha=0.5,
-            color=color,
         )
         ax[i].set_title(f"{lengths[i]*L:.1e}")
         if i == N // 2:
             ax[i].set_xlabel("Wall Shear Stress (Pa)")
+    ax[-1].legend(labels=["Mean", "95\% CI"], loc="upper center")
     plt.tight_layout()
-    ax[-1].legend(
-        labels=["Mean", "95\% CI"],
-        loc="lower right",
-        bbox_to_anchor=(1, -0.55),
-    )
-    fig2, ax2 = plt.subplots(figsize=(6, 2.5))
-    for i, name in enumerate(names):
-        mean = np.mean(hist_data[name], axis=0)
-        ax2.plot(bin_centers, 100 * mean, label=f"{lengths[i]*L:.1e}")
-    ax2.set_ylabel("Percentage Fibre Surface \%")
-    ax2.set_xlabel("Wall Shear Stress (Pa)")
-    ax2.legend()
-    return fig, ax, fig2, ax2
+    return fig, ax
 
 
 if __name__ == "__main__":
     # concatenate("log_normal_hellion", [4, 8, 10, 16])
     plt.style.use("ggplot")
-    # 5mmhg over 0.61 mm scaffold
-    grad_p = 5 * 133.322 / (6.1e-4)
     # project_name = "log_norm_linear_hellion_partial"
-    project_name = "log_norm_aggregated"
-    # project_name = "log_norm_linear_hellion_8_10_11.3_12_14_16"
-    # fig, ax = plot_summary_data(project_name, scale=(1e-6, 1e-6, 1e-3, grad_p))
+    project_name = "uniform_circles"
+    # fig, ax = plot_summary_data(project_name, scale=(1e-6, 1e-6, 1e-3, 2500))
     # plt.show()
     fig, ax = plot_convergence_p_wss(
-        project_name, scale=(1e-6, 1e-6, 1e-3, grad_p)
+        project_name, scale=(1e-6, 1e-6, 1e-3, 2500)
     )
-    fig.set_size_inches(2.5, 3)
+    fig.set_size_inches(6, 2)
     plt.tight_layout()
     plt.savefig(f"media/{project_name}_convergence.pdf", bbox_inches="tight")
     plt.show()
 
     # plt.savefig("media/{project_name}_convergence.pdf")
-    fig, ax, fig2, ax2 = plot_wss_distribution(
-        project_name, unfinished=1, scale=(1e-6, 1e-6, 1e-3, grad_p)
+    fig, ax = plot_wss_distribution(
+        project_name, unfinished=1, scale=(1e-6, 1e-6, 1e-3, 2500)
     )
-    fig.savefig(
+    plt.savefig(
         f"media/{project_name}_wss_distribution.pdf", bbox_inches="tight"
-    )
-    fig2.savefig(
-        f"media/{project_name}_wss_distribution_all.pdf", bbox_inches="tight"
     )
     plt.show()

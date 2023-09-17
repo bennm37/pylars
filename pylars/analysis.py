@@ -38,6 +38,7 @@ class Analysis:
         enlarge_patch=1.0,
         epsilon=1e-3,
         figax=None,
+        figsize=None,
         colorbar=True,
         vmin=None,
         vmax=None,
@@ -61,6 +62,12 @@ class Analysis:
             fig, ax = figax
         else:
             fig, ax = plt.subplots()
+        ax.plot(
+            exterior_points.real,
+            exterior_points.imag,
+            linewidth=0.5,
+            color="k",
+        )
         speed = np.abs(self.uv_values)
         parula.set_bad("white")
         if imshow:
@@ -90,7 +97,11 @@ class Analysis:
             levels = self.psi_values[0, ::stride]
             levels.sort()
         elif streamline_type == "linear":
-            levels = n_streamlines
+            if n_streamlines % 2 == 0:
+                n_streamlines += 1
+            psi_min = np.min(self.psi_values[~np.isnan(self.psi_values)])
+            psi_max = np.max(self.psi_values[~np.isnan(self.psi_values)])
+            levels = np.linspace(psi_min, psi_max, n_streamlines)
         else:
             raise ValueError(
                 "streamline_type must be 'starting_points' or 'linear'"
@@ -115,7 +126,13 @@ class Analysis:
                     points = np.array(
                         [enlarged_points.real, enlarged_points.imag]
                     ).T.reshape(-1, 2)
-                    poly = patches.Polygon(points, color="w", zorder=2)
+                    poly = patches.Polygon(
+                        points,
+                        facecolor="w",
+                        edgecolor="k",
+                        linewidth=0.5,
+                        zorder=2,
+                    )
                     ax.add_patch(poly)
 
         if quiver:
@@ -132,10 +149,13 @@ class Analysis:
         ax.set_aspect("equal")
         if colorbar:
             cb = plt.colorbar(pc, fraction=0.046, pad=0.04)
-            # cb = plt.colorbar(pc, fraction=0.018, pad=0.04)
+            # cb = plt.colorbar(pc, fraction=0.025, pad=0.04)
+            cb.set_label("Velocity magnitude")
         if self.solution.status == "d":
             ax.set(xlabel="x (m)", ylabel="y (m)")
             cb.set_label("Velocity magnitude (m/s)")
+        if figsize is not None:
+            fig.set_size_inches(*figsize)
         return fig, ax
 
     def get_Z(self, resolution=100, epsilon=1e-3):  # noqa: N802
@@ -159,7 +179,7 @@ class Analysis:
         n_tile=3,
         figax=None,
         colorbar=True,
-        enlarge_patch=1.0,
+        enlarge_patch=1.02,
     ):
         """Plot the contours and velocity magnitude of the solution."""
         corners = self.domain.corners
@@ -215,7 +235,8 @@ class Analysis:
             shading="gouraud",
         )
         if colorbar:
-            plt.colorbar(pc)
+            cb = plt.colorbar(pc, fraction=0.046, pad=0.04)
+            cb.set_label("Velocity magnitude")
         ax.contour(
             self.X_tiled,
             self.Y_tiled,
@@ -253,7 +274,11 @@ class Analysis:
                     for disp in disps:
                         translated_points = points + disp[np.newaxis, :]
                         poly = patches.Polygon(
-                            translated_points, color="w", zorder=2
+                            translated_points,
+                            facecolor="w",
+                            edgecolor="k",
+                            linewidth=0.5,
+                            zorder=2,
                         )
                         ax.add_patch(poly)
         if quiver:

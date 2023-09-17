@@ -165,5 +165,8 @@ media/
 data/log_normal_results
 data/log_normal_results_2
 data/log_norm_linear_hellion_partial
+data/log_norm_aggregated
+data/log_norm_linear_hellion_8_10_11.3_12_14_16
+data/log_norm_linear_nitro_16_24
 .vscode
 *.DS_Store

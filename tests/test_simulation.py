@@ -9,10 +9,10 @@ def test_import_simulation():
 
 
 def test_mover_simulation():
+    """Test the LowDensityMoverSimulation class."""
     from pylars import Problem, Solution
     from pylars.simulation import LowDensityMoverSimulation, Mover
     import numpy as np
-    import matplotlib.pyplot as plt
 
     init_prob = Problem()
     corners = [-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j]
@@ -52,7 +52,7 @@ def test_mover_simulation():
     )
     movers = [cell]
     ldms = LowDensityMoverSimulation(init_prob, movers)
-    results = ldms.run(0, 0.4, 0.1)
+    results = ldms.run(0, 4, 0.1)
     solutions = results["solution_data"]
     mover_data = results["mover_data"]
     for sol in solutions:

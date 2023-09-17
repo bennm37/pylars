@@ -307,10 +307,10 @@ def plot_summary_data(project_name, scale=None):
         # To impose a pressure gradient of grad_p Pa, we need to scale
         # by grad_p * non_dim_l * U * mu/ (2 * L)
         wss_mean_data = (
-            grad_p * lengths[:, np.newaxis] * wss_mean_data * mu * U / (10 * L)
+            grad_p * L * lengths[:, np.newaxis] * wss_mean_data / (10)
         )
         wss_std_data = (
-            grad_p * lengths[:, np.newaxis] * wss_std_data * mu * U / (10 * L)
+            grad_p * L * lengths[:, np.newaxis] * wss_std_data / (10)
         )
         lengths = lengths * L
         permeability_data = permeability_data * L**2

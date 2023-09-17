@@ -93,6 +93,6 @@ if __name__ == "__main__":
     solver = Solver(prob, verbose=True)
     sol = solver.solve(check=False, normalize=False, weight=False)
     an = Analysis(sol)
-print(f"Error: {solver.max_error}")
+    print(f"Error: {solver.max_error}")
     fig, ax = an.plot(resolution=100, interior_patch=True, enlarge_patch=1.1)
     plt.show()

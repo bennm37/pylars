@@ -133,7 +133,9 @@ class PeriodicDomain(Domain):
             point = Point(np.array([image.real, image.imag]))
             if self.rect.exterior.distance(point) < tol:
                 self._generate_exterior_laurent_series(
-                    side, deg_laurent, image
+                    side,
+                    deg_laurent,
+                    image,
                 )
                 if side not in self.image_indices.keys():
                     self.image_indices[side] = [

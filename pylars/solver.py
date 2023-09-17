@@ -605,7 +605,7 @@ class Solver:
                     value_sol = self.evaluate_solution(
                         value, self.domain.error_points[side]
                     ).reshape(-1)
-                if isinstance(value, np.ndarray):
+                elif isinstance(value, np.ndarray):
                     if side in self.domain.movers:
                         value_sol = self.problem.error_values[side][i].reshape(
                             -1, 1
