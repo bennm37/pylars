@@ -7,9 +7,10 @@ import numpy as np
 class LowDensityMoverSimulation(Simulation):
     """Simulation Class for Low Density Mover Problems."""
 
-    def __init__(self, base_problem, movers, deg_laurent=10):
+    def __init__(self, base_problem, movers, num_points=100, deg_laurent=20):
         super().__init__(base_problem)
         self.movers = movers
+        self.num_points = num_points
         self.deg_laurent = deg_laurent
         self.homogenous_problem = self.base_problem.get_homogenous_problem()
         self.name = "LowDensityMoverSimulation"
@@ -92,6 +93,7 @@ class LowDensityMoverSimulation(Simulation):
             prob = self.base_problem.copy()
         prob.add_mover(
             mover,
+            num_points=self.num_points,
             deg_laurent=self.deg_laurent,
             image_laurents=True,
             image_tol=1.0,

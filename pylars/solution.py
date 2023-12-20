@@ -3,8 +3,6 @@ from numbers import Number
 import numpy as np
 from scipy.integrate import quad
 
-# import pickle as pkl
-
 
 class Solution:
     """Solution class to store the solution to a problem."""

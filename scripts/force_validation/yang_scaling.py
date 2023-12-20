@@ -227,7 +227,7 @@ if __name__ == "__main__":
     #         "angular_velocity": 1.0,
     #         "centroid": 0.09j,
     #         "radius": 0.9,
-    #         "plot": True,
+    #         "plot": False,
     #         "resolution": 400,
     #         "colorbar": True,
     #     }
@@ -240,4 +240,5 @@ if __name__ == "__main__":
         filename="data/yang_scaling.npz", plotname="media/yang_scaling.pdf"
     )
     plotname = "media/yang_scaling.pdf"
-    plt.savefig(plotname + ".pgf", backend="pgf")
+    plt.show()
+    # plt.savefig(plotname + ".pgf", backend="pgf")

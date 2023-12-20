@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
-
-# import cupy
 import torch
 import time
 
@@ -117,20 +115,13 @@ if __name__ == "__main__":
         time_scipy = end_scipy - start_scipy
         residual_scipy = np.max(np.abs(A @ sol_scipy[0] - b))
         print("Finished scipy.")
-        # start_cupy = time.perf_counter()
-        # sol_cupy = cupy.linalg.lstsq(cupy.array(A), cupy.array(b))
-        # end_cupy = time.perf_counter()
-        # time_cupy = end_cupy - start_cupy
-        # residual_cupy = np.max(np.abs(A @ sol_cupy[0].get() - b))
         print("Finished cupy.")
         times[i, 0] = time_torch
         times[i, 1] = time_np
         times[i, 2] = time_scipy
-        # times[i, 3] = time_cupy
         residuals[i, 0] = residual_torch
         residuals[i, 1] = residual_np
         residuals[i, 2] = residual_scipy
-        # residuals[i, 3] = residual_cupy
         print(f"{times = }")
         print(f"{residuals = }")
     times_df = pd.DataFrame(times, columns=["torch", "numpy", "scipy", "cupy"])

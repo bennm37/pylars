@@ -242,7 +242,7 @@ class SimulationAnalysis:
             starting_positions = (
                 -1 + np.linspace(-1, 1, starting_positions) * 1j
             )
-        times = self.time_data[start_frame : end_frame + 1]
+        times = self.time_data[start_frame:end_frame]
         n_particles = len(starting_positions)
         n_steps = len(times)
         dt = np.diff(self.time_data)[0]
@@ -265,6 +265,93 @@ class SimulationAnalysis:
         self.pathline_velocity_data = pathline_velocity_data
 
     def plot_pathlines(self, frame, n_particles=500):
+        """Plot pathlines."""
+        # generate random starting positions in the fluid domain
+        starting_positions = np.zeros(n_particles, dtype=np.complex128)
+        count = 0
+        dom0 = self.solution_data[0].problem.domain
+        while count < n_particles:
+            position = np.random.uniform(-1, 1) + 1j * np.random.uniform(-1, 1)
+            if position in dom0 and dom0.exterior_distance(position) > 0.001:
+                starting_positions[count] = position
+                count += 1
+        self.generate_pathlines(
+            np.max([frame - 30, 0]),
+            frame,
+            starting_positions=starting_positions,
+        )
+
+        def colorline(
+            x,
+            y,
+            array,
+            cmap=parula,
+            norm=plt.Normalize(0.0, 1.0),
+            linewidth=0.5,
+        ):
+            # Create a path from the x and y points
+            points = np.array([x, y]).T.reshape(-1, 1, 2)
+            segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+            # Create a continuous norm to map from data points to colors
+            lc = mcoll.LineCollection(
+                segments,
+                array=array,
+                cmap=cmap,
+                norm=norm,
+                linewidth=linewidth,
+            )
+            return lc
+
+        fig, ax = plt.subplots()
+        dom_frame = self.solution_data[frame].problem.domain
+        speeds = np.abs(self.pathline_velocity_data)
+        speeds[np.where(np.abs(self.pathline_data.real) > 1)] = np.nan
+        speeds[np.where(np.abs(self.pathline_data.imag) > 1)] = np.nan
+        self.pathline_data[np.where(self.pathline_data.real > 1)] = np.nan
+        self.pathline_data[np.where(self.pathline_data.imag > 1)] = np.nan
+        max_speed = np.max(speeds[~np.isnan(speeds)])
+        speeds = speeds / max_speed
+        for line, speed in zip(self.pathline_data.T, speeds.T):
+            lc = colorline(line.real, line.imag, speed)
+            ax.add_collection(lc)
+        # ax.plot(
+        #     self.pathline_data.real,
+        #     self.pathline_data.imag,
+        #     color=speed,
+        #     alpha=0.5,
+        # )
+        # plot the movers path
+
+        ax.scatter(
+            self.pathline_data[-1].real,
+            self.pathline_data[-1].imag,
+            color=parula(speeds[-2, :]),
+            s=1,
+            zorder=10,
+        )
+        dom_frame.plot_polygon(
+            ax=ax,
+            poly=dom_frame.polygon,
+            exterior_color="w",
+            interior_color="black",
+            zorder=10,
+        )
+        ax.plot(
+            self.position_data[: frame + 1].real,
+            self.position_data[: frame + 1].imag,
+            color=[0.82, 0.1, 0.26],
+            alpha=1,
+            zorder=999,
+        )
+        ax.set_aspect("equal")
+        ax.set(xlim=(-1, 1), ylim=(-1, 1))
+        ax.plot([-1, 1, 1, -1, -1], [1, 1, -1, -1, 1], color="k", linewidth=2)
+        ax.axis("off")
+        plt.colorbar(lc, label="Velocity Magnitude")
+        return fig, ax
+
+    def animate_pathlines(self, frame, n_particles=500):
         """Plot pathlines."""
         # generate random starting positions in the fluid domain
         starting_positions = np.zeros(n_particles, dtype=np.complex128)
@@ -299,6 +386,7 @@ class SimulationAnalysis:
                 cmap=cmap,
                 norm=norm,
                 linewidth=linewidth,
+                alpha=np.linspace(0, 1, len(x)),
             )
             return lc
 

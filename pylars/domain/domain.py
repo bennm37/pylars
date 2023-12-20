@@ -596,6 +596,14 @@ class Domain:
         else:
             raise TypeError("polygon must be a sequence of complex numbers")
 
+    def exterior_distance(self, point):
+        """Determine the distance from a point to the exterior of the domain."""
+        if isinstance(point, complex):
+            point = Point(np.array([point.real, point.imag]))
+            return self.polygon.exterior.distance(point)
+        else:
+            return TypeError("point must be a complex number")
+
     def mask_contains(self, z):
         """Create a boolean mask of where z is in the domain."""
         mask = np.zeros(z.shape, dtype=bool)
