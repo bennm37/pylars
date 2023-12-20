@@ -1,5 +1,5 @@
-# PyLS
-Python Lighting Stokes Solver.
+# PyLARS
+Python Rational Stokes Solver.
 
 ## Installation
 Clone the repository:\
