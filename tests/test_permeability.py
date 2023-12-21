@@ -1,7 +1,6 @@
 def test_poiseuille_permeability():
     from pylars import Problem, Solver, Analysis
     import numpy as np
-    import matplotlib.pyplot as plt
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()

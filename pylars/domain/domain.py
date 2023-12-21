@@ -472,10 +472,10 @@ class Domain:
                 x_max = max(self.exterior_points.real)
                 y_min = min(self.exterior_points.imag)
                 y_max = max(self.exterior_points.imag)
-            x_min = min(min(self.exterior_points.real), x_min)
-            x_max = max(max(self.exterior_points.real), x_max)
-            y_min = min(min(self.exterior_points.imag), y_min)
-            y_max = max(max(self.exterior_points.imag), y_max)
+            x_min = min(min(self.exterior_points.real)[0], x_min)
+            x_max = max(max(self.exterior_points.real)[0], x_max)
+            y_min = min(min(self.exterior_points.imag)[0], y_min)
+            y_max = max(max(self.exterior_points.imag)[0], y_max)
             ax.set_xlim(x_min - 0.1, x_max + 0.1)
             ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
@@ -568,7 +568,7 @@ class Domain:
         for inner in poly.interiors:
             interior_patch = patches.Polygon(
                 np.array(inner.coords),
-                color=exterior_color,
+                facecolor=exterior_color,
                 edgecolor="k",
                 zorder=zorder,
             )

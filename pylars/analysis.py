@@ -9,6 +9,7 @@ from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
 from scipy.integrate import quad
+from numbers import Number
 
 
 class Analysis:
@@ -413,7 +414,10 @@ class Analysis:
         def integrand(s):
             dx = np.abs(curve_deriv(s))
             normal = (-curve_deriv(s) * 1j) / dx
-            return np.real(np.conj(self.solution.uv(curve(s))) * normal) * dx
+            result = np.real(np.conj(self.solution.uv(curve(s))) * normal) * dx
+            if isinstance(result, Number):
+                return result
+            return result[0][0]
 
         return quad(integrand, 0, 1)[0]
 

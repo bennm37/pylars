@@ -38,32 +38,32 @@ def test_get_nnic():
     from pylars import PeriodicDomain
     import numpy as np
     from collections import Counter
-
-    dom = PeriodicDomain(2, 2)
-    dom.plot()
-    # plt.show()
-    R = 0.5
-    centroid = 0.75 + 0.75j
-    circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
-    dom.add_periodic_curve(circle, centroid)
-    assert dom.periodic_curves[0] == "4"
-    nnic = dom.get_nn_image_centroids(centroid)
-    assert Counter(nnic) == Counter(
-        [
-            centroid - 2,
-            centroid - 2 - 2j,
-            centroid - 2 + 2j,
-            centroid,
-            centroid - 2j,
-            centroid + 2j,
-            centroid + 2,
-            centroid + 2 - 2j,
-            centroid + 2 + 2j,
-        ]
-    )
-    assert len(dom.indices["0"]) == len(dom.indices["2"])
-    assert len(dom.indices["1"]) == len(dom.indices["3"])
-    fig, ax = dom.plot()
+    import warnings
+    warnings.filterwarnings("error", category=DeprecationWarning)
+    with warnings.catch_warnings():
+        dom = PeriodicDomain(2, 2)
+        R = 0.5
+        centroid = 0.75 + 0.75j
+        circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
+        dom.add_periodic_curve(circle, centroid)
+        assert dom.periodic_curves[0] == "4"
+        nnic = dom.get_nn_image_centroids(centroid)
+        assert Counter(nnic) == Counter(
+            [
+                centroid - 2,
+                centroid - 2 - 2j,
+                centroid - 2 + 2j,
+                centroid,
+                centroid - 2j,
+                centroid + 2j,
+                centroid + 2,
+                centroid + 2 - 2j,
+                centroid + 2 + 2j,
+            ]
+        )
+        assert len(dom.indices["0"]) == len(dom.indices["2"])
+        assert len(dom.indices["1"]) == len(dom.indices["3"])
+        fig, ax = dom.plot()
 
 
 def test_generate_periodic_curve():
@@ -122,7 +122,7 @@ def test_flow_periodic_curve():
     prob.add_boundary_condition("4", "v[4]", 0)
     # prob.add_boundary_condition("5", "u[5]", 0)
     # prob.add_boundary_condition("5", "v[5]", 0)
-    solver = Solver(prob, verbose=True)
+    solver = Solver(prob, verbose=False)
     sol = solver.solve(normalize=False, weight=False)
 
     print(f"Error: {solver.max_error}")

@@ -11,7 +11,6 @@ def test_import_analysis():
 def test_save_pgf():
     """Test saving figure as a pgf."""
     from pylars import Problem, Solver, Analysis
-    import matplotlib.pyplot as plt
 
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
