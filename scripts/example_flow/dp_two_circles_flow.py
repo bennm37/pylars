@@ -73,41 +73,17 @@ sol = solver.solve(check=False, weight=False, normalize=False)
 print(f"Error: {solver.max_error}")
 # sol.problem.domain._update_polygon(buffer=1e-5)
 an = Analysis(sol)
-# fig, ax = an.plot(interior_patch=True, resolution=200, epsilon=0.01)
-# fig, ax = an.plot_periodic(
-#     interior_patch=True, resolution=200, n_streamlines=50
-# )
-# plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
+an.plot(resolution=300)
+plt.show()
+fig, ax = an.plot_periodic(
+    interior_patch=True, resolution=200, n_streamlines=50
+)
+plt.show()
+plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
 
-# continuity checks
-dom = sol.problem.domain
-points_0 = dom.boundary_points[dom.indices["0"]]
-points_1 = dom.boundary_points[dom.indices["1"]]
-fig, ax = plt.subplots()
-plt.plot(
-    points_0.real,
-    np.abs(sol.eij(points_0)[:, 0, 1] - sol.eij(points_0 - 2j)[:, 0, 1]),
-    label="e12 tb",
-)
-plt.plot(
-    points_1.imag,
-    np.abs(sol.eij(points_1)[:, 0, 1] - sol.eij(points_1 + 2)[:, 0, 1]),
-    label="e12 lr",
-)
-plt.plot(
-    points_0.real,
-    np.abs(sol.p(points_0) - sol.p(points_0 - 2j)),
-    label="p tb",
-)
-plt.plot(
-    points_1.imag,
-    np.abs(sol.p(points_1) - sol.p(points_1 + 2) - p_drop),
-    label="p lr",
-)
-
-plt.legend()
-# plt.plot(points.imag, sol.p(points+2), label="p right")
-# plt.show()
+# plotting error
+an.plot_errors(solver.errors)
+plt.show()
 
 # compare to COMSOL data
 CS_p_data = pd.read_csv("data/dp_two_circles/pressure.txt")

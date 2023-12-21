@@ -32,11 +32,11 @@ class Analysis:
 
     def plot(
         self,
-        resolution=100,
+        resolution=200,
         n_streamlines=20,
         streamline_type="linear",
-        interior_patch=False,
-        enlarge_patch=1.0,
+        interior_patch=True,
+        enlarge_patch=1.03,
         epsilon=1e-3,
         figax=None,
         figsize=None,

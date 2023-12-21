@@ -301,16 +301,25 @@ class Domain:
                 raise ValueError(f"Side {new} already exists")
             self.sides[np.where(self.sides == old)] = new
             self.indices[new] = self.indices.pop(old)
+            self.error_points[new] = self.error_points.pop(old)
         else:
             raise TypeError("Side names must be strings")
 
     def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
         self.indices[str(new)] = []
+        self.error_points[str(new)] = []
         for side in old_sides:
-            np.delete(self.sides, np.where(self.sides == side))
+            self.sides = np.delete(self.sides, np.where(self.sides == side))
             self.indices[str(new)] += self.indices.pop(side)
+            self.error_points[str(new)] = np.concatenate(
+                [
+                    self.error_points[str(new)],
+                    self.error_points.pop(side),
+                ]
+            )
         self.sides = np.concatenate([self.sides, [str(new)]])
+
 
     def _generate_lightning_poles(self):
         """Generate exponentially clustered lightning poles.

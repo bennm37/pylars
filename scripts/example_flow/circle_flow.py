@@ -39,7 +39,7 @@ prob.add_boundary_condition("4", "v[4]", 0)
 solver = Solver(prob)
 sol = solver.solve(check=False, normalize=False)
 an = Analysis(sol)
-fig, ax = an.plot(resolution=100, interior_patch=True, enlarge_patch=1.1)
+fig, ax = an.plot(resolution=300, interior_patch=True, enlarge_patch=1.1)
 plt.savefig("media/circle_flow.pdf")
 plt.show()
 

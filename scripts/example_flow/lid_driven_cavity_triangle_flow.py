@@ -7,8 +7,8 @@ corners = [1 + 1j, -1 + 1j, -5j]
 prob = Problem()
 prob.add_exterior_polygon(
     corners,
-    num_edge_points=300,
-    num_poles=49,
+    num_edge_points=400,
+    num_poles=40,
     deg_poly=20,
     length_scale=1.5,
     sigma=4,

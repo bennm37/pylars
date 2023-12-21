@@ -63,5 +63,5 @@ if __name__ == "__main__":
     max_error, errors = solver.get_error()
     print(f"Error: {max_error}")
     an = Analysis(sol)
-    fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.0)
+    fig, ax = an.plot(resolution=200, interior_patch=True)
     plt.show()
