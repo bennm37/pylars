@@ -301,16 +301,25 @@ class Domain:
                 raise ValueError(f"Side {new} already exists")
             self.sides[np.where(self.sides == old)] = new
             self.indices[new] = self.indices.pop(old)
+            self.error_points[new] = self.error_points.pop(old)
         else:
             raise TypeError("Side names must be strings")
 
     def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
         self.indices[str(new)] = []
+        self.error_points[str(new)] = []
         for side in old_sides:
-            np.delete(self.sides, np.where(self.sides == side))
+            self.sides = np.delete(self.sides, np.where(self.sides == side))
             self.indices[str(new)] += self.indices.pop(side)
+            self.error_points[str(new)] = np.concatenate(
+                [
+                    self.error_points[str(new)],
+                    self.error_points.pop(side),
+                ]
+            )
         self.sides = np.concatenate([self.sides, [str(new)]])
+
 
     def _generate_lightning_poles(self):
         """Generate exponentially clustered lightning poles.
@@ -472,10 +481,10 @@ class Domain:
                 x_max = max(self.exterior_points.real)
                 y_min = min(self.exterior_points.imag)
                 y_max = max(self.exterior_points.imag)
-            x_min = min(min(self.exterior_points.real), x_min)
-            x_max = max(max(self.exterior_points.real), x_max)
-            y_min = min(min(self.exterior_points.imag), y_min)
-            y_max = max(max(self.exterior_points.imag), y_max)
+            x_min = min(min(self.exterior_points.real)[0], x_min)
+            x_max = max(max(self.exterior_points.real)[0], x_max)
+            y_min = min(min(self.exterior_points.imag)[0], y_min)
+            y_max = max(max(self.exterior_points.imag)[0], y_max)
             ax.set_xlim(x_min - 0.1, x_max + 0.1)
             ax.set_ylim(y_min - 0.1, y_max + 0.1)
         self.plot_polygon(ax, self.polygon)
@@ -568,7 +577,7 @@ class Domain:
         for inner in poly.interiors:
             interior_patch = patches.Polygon(
                 np.array(inner.coords),
-                color=exterior_color,
+                facecolor=exterior_color,
                 edgecolor="k",
                 zorder=zorder,
             )

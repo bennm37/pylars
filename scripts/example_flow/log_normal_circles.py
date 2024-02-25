@@ -361,7 +361,7 @@ if __name__ == "__main__":
     rv = lambda mu: mu
     rv_args = {"mu": mean}
     parameters = {
-        "project_name": "uniform_circles",
+        "project_name": "new_test",
         "porosity": 0.95,
         "n_max": 300,
         "alpha": 0.05,

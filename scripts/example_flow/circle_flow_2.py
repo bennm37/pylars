@@ -76,15 +76,13 @@ if __name__ == "__main__":
         )
 
     prob.add_boundary_condition("0", "u[0]", 0)
-    prob.add_boundary_condition("0", "psi[0]", -2 / 3)
-    # prob.add_boundary_condition("0", "v[0]", 0)
+    prob.add_boundary_condition("0", "v[0]", 0)
     prob.add_boundary_condition("2", "u[2]", 0)
-    # prob.add_boundary_condition("2", "v[2]", 0)
-    prob.add_boundary_condition("2", "psi[2]", 2 / 3)
-    prob.add_boundary_condition("1", "u[1]", "1-y**2")
-    prob.add_boundary_condition("1", "v[1]", 0)
-    prob.add_boundary_condition("3", "p[3]", 0)
-    prob.add_boundary_condition("3", "v[3]", 0)
+    prob.add_boundary_condition("2", "v[2]", 0)
+    prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+    prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 2)
+    prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
     interiors = [str(i) for i in range(4, 4 + n_circles)]
     for interior in interiors:
         prob.add_boundary_condition(f"{interior}", f"u[{interior}]", 0)
@@ -94,5 +92,9 @@ if __name__ == "__main__":
     sol = solver.solve(check=False, normalize=False, weight=False)
     an = Analysis(sol)
     print(f"Error: {solver.max_error}")
-    fig, ax = an.plot(resolution=100, interior_patch=True, enlarge_patch=1.1)
+    fig, ax = an.plot(resolution=300, interior_patch=True, enlarge_patch=1.1)
     plt.show()
+    # plot the inlet profile
+    
+    # an.plot_errors(solver.errors)
+    # plt.show()

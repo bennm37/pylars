@@ -30,7 +30,6 @@ def test_tan_aaa():
     from scipy.io import loadmat
     import numpy as np
     from pylars.numerics import aaa
-
     test_answers = loadmat("tests/data/tan_aaa.mat")
     z = test_answers["z"]
     f = test_answers["f"]

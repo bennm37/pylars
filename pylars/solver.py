@@ -48,8 +48,8 @@ class Solver:
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\[{side}\]", f'[self.domain.indices["{side}"]]', expression
-            )
+                f"\\[{side}\\]", f'[self.domain.indices["{side}"]]', expression
+            )   
         for identifier, code in zip(
             INDEPENDENT,
             ["np.real(points)", "np.imag(points)"],
@@ -80,7 +80,7 @@ class Solver:
             expression = expression.replace(identifier, code)
         for side in self.domain.sides:
             expression = re.sub(
-                f"\[{side}\]",
+                f"\\[{side}\\]",
                 f"(self.domain.error_points['{side}'])",
                 expression,
             )

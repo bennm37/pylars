@@ -390,50 +390,51 @@ def va_evaluate(
 
 def aaa(F, Z, tol=1e-13, mmax=100):  # noqa N803
     """Use the AAA algorithm to compute a rational approximation of f(z)."""
-    M = len(Z)
-    if hasattr(F, "__call__"):
-        F = F(Z)
-    Z = np.array(Z).reshape(-1, 1)
-    M = len(Z)
-    F = np.array(F).reshape(-1, 1)
-    SF = diags(F.flatten())
-    J = np.array(range(M))
-    z = np.empty((0, 1))
-    f = np.empty((0, 1))
-    C = np.empty((M, 0))
-    errvec = np.empty((0, 1))
-    R = np.mean(F)
-    for M in range(mmax - 1):
-        if M % 5 == 0:
-            print(f"AAA iteration {M}")
-        j = np.argmax(np.abs(F - R))  # select next support point
-        z = np.vstack([z, Z[j]])  # update support points, data values'
-        f = np.vstack([f, F[j]])  # update support points, data values
-        J = np.delete(J, np.where(J == j))  # update index vector
-        C = np.hstack([C, 1 / (Z - Z[j])])  # next column of Cauchy matrix
-        Sf = diags(f.flatten())  # right scaling matrix
-        A = SF @ C - C @ Sf  # Loewner matrix
-        _, _, V = svd(
-            A[J, :],
-            full_matrices=False,
-        )  # SVD
-        # _, _, V = svd(
-        #     A[J, :],
-        #     full_matrices=False,
-        #     check_finite=False,
-        #     overwrite_a=True,
-        #     lapack_driver="gesdd",
-        # )  # SVD
-        V = np.conj(V.T)
-        w = V[:, M].reshape(-1, 1)  # weight vector = min sing vector
-        N = C @ (w * f)
-        D = C @ w  # numerator and denominator
-        R = F.copy()
-        R[J] = N[J] / D[J]  # rational approximation
-        err = np.max(np.abs(F - R))
-        errvec = np.vstack([errvec, err])  # max error at sample points
-        if err <= np.abs(tol * np.max(F)):
-            break  # stop if converged
+    with np.errstate(divide='ignore', invalid='ignore'):
+        M = len(Z)
+        if hasattr(F, "__call__"):
+            F = F(Z)
+        Z = np.array(Z).reshape(-1, 1)
+        M = len(Z)
+        F = np.array(F).reshape(-1, 1)
+        SF = diags(F.flatten())
+        J = np.array(range(M))
+        z = np.empty((0, 1))
+        f = np.empty((0, 1))
+        C = np.empty((M, 0))
+        errvec = np.empty((0, 1))
+        R = np.mean(F)
+        for M in range(mmax - 1):
+            if M % 5 == 0:
+                print(f"AAA iteration {M}")
+            j = np.argmax(np.abs(F - R))  # select next support point
+            z = np.vstack([z, Z[j]])  # update support points, data values'
+            f = np.vstack([f, F[j]])  # update support points, data values
+            J = np.delete(J, np.where(J == j))  # update index vector
+            C = np.hstack([C, 1 / (Z - Z[j])])  # next column of Cauchy matrix
+            Sf = diags(f.flatten())  # right scaling matrix
+            A = SF @ C - C @ Sf  # Loewner matrix
+            _, _, V = svd(
+                A[J, :],
+                full_matrices=False,
+            )  # SVD
+            # _, _, V = svd(
+            #     A[J, :],
+            #     full_matrices=False,
+            #     check_finite=False,
+            #     overwrite_a=True,
+            #     lapack_driver="gesdd",
+            # )  # SVD
+            V = np.conj(V.T)
+            w = V[:, M].reshape(-1, 1)  # weight vector = min sing vector
+            N = C @ (w * f)
+            D = C @ w  # numerator and denominator
+            R = F.copy()
+            R[J] = N[J] / D[J]  # rational approximation
+            err = np.max(np.abs(F - R))
+            errvec = np.vstack([errvec, err])  # max error at sample points
+            if err <= np.abs(tol * np.max(F)):
+                break  # stop if converged
 
     def r(zz):
         return rhandle(zz, z, f, w)

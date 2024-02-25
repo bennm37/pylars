@@ -10,6 +10,7 @@ from pylars.colormaps import parula
 from numbers import Integral
 import matplotlib.patches as patches
 from scipy.integrate import quad
+from numbers import Number
 
 
 class Analysis:
@@ -32,11 +33,11 @@ class Analysis:
 
     def plot(
         self,
-        resolution=100,
-        n_streamlines=21,
+        resolution=200,
+        n_streamlines=20,
         streamline_type="linear",
-        interior_patch=False,
-        enlarge_patch=1.0,
+        interior_patch=True,
+        enlarge_patch=1.03,
         epsilon=1e-3,
         figax=None,
         figsize=None,
@@ -400,7 +401,10 @@ class Analysis:
         def integrand(s):
             dx = np.abs(curve_deriv(s))
             normal = (-curve_deriv(s) * 1j) / dx
-            return np.real(np.conj(self.solution.uv(curve(s))) * normal) * dx
+            result = np.real(np.conj(self.solution.uv(curve(s))) * normal) * dx
+            if isinstance(result, Number):
+                return result
+            return result[0][0]
 
         return quad(integrand, 0, 1)[0]
 

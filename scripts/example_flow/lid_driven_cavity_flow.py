@@ -38,11 +38,11 @@ ax.contour(
     a.X, a.Y, a.psi_values, colors="y", levels=levels_moffat, linewidths=0.3
 )
 ax.axis("off")
-ax.scatter(
-    prob.domain.poles[:, -18:].real,
-    prob.domain.poles[:, -18:].imag,
-    s=1,
-    c="r",
-)
+# ax.scatter(
+#     prob.domain.poles[:, -18:].real,
+#     prob.domain.poles[:, -18:].imag,
+#     s=1,
+#     c="r",
+# )
 # plt.savefig("media/lid_driven_cavity.pdf")
 plt.show()
