@@ -2,6 +2,7 @@
 
 Supports plotting of the contours and velocity magnitude of the solution.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -32,7 +33,7 @@ class Analysis:
     def plot(
         self,
         resolution=100,
-        n_streamlines=20,
+        n_streamlines=21,
         streamline_type="linear",
         interior_patch=False,
         enlarge_patch=1.0,
@@ -103,9 +104,7 @@ class Analysis:
             psi_max = np.max(self.psi_values[~np.isnan(self.psi_values)])
             levels = np.linspace(psi_min, psi_max, n_streamlines)
         else:
-            raise ValueError(
-                "streamline_type must be 'starting_points' or 'linear'"
-            )
+            raise ValueError("streamline_type must be 'starting_points' or 'linear'")
         ax.contour(
             self.X,
             self.Y,
@@ -120,9 +119,7 @@ class Analysis:
                 for interior_curve in dom.interior_curves:
                     points = dom.boundary_points[dom.indices[interior_curve]]
                     centroid = dom.centroids[interior_curve]
-                    enlarged_points = (
-                        points - centroid
-                    ) * enlarge_patch + centroid
+                    enlarged_points = (points - centroid) * enlarge_patch + centroid
                     points = np.array(
                         [enlarged_points.real, enlarged_points.imag]
                     ).T.reshape(-1, 2)
@@ -174,7 +171,7 @@ class Analysis:
         resolution=100,
         interior_patch=True,
         quiver=False,
-        n_streamlines=50,
+        n_streamlines=51,
         vmax=None,
         n_tile=3,
         figax=None,
@@ -200,9 +197,7 @@ class Analysis:
                 for i in range(-n_tile // 2 + 1, n_tile // 2 + 1)
             ]
         ).flatten()
-        self.X_tiled, self.Y_tiled = np.meshgrid(
-            x_tiled, y_tiled, indexing="ij"
-        )
+        self.X_tiled, self.Y_tiled = np.meshgrid(x_tiled, y_tiled, indexing="ij")
 
         psi, uv, p, omega, eij = self.solution.functions
         self.psi_values = psi(self.Z).reshape(resolution, resolution)
@@ -265,9 +260,7 @@ class Analysis:
                 for interior_curve in self.domain.interior_curves:
                     points = dom.boundary_points[dom.indices[interior_curve]]
                     centroid = dom.centroids[interior_curve]
-                    enlarged_points = (
-                        points - centroid
-                    ) * enlarge_patch + centroid
+                    enlarged_points = (points - centroid) * enlarge_patch + centroid
                     points = np.array(
                         [enlarged_points.real, enlarged_points.imag]
                     ).T.reshape(-1, 2)
@@ -313,9 +306,7 @@ class Analysis:
         # plt.tight_layout()
         return fig, ax
 
-    def plot_relative_periodicity_error(
-        self, p_drop_lr=2, p_drop_tb=0, tol=1e-10
-    ):
+    def plot_relative_periodicity_error(self, p_drop_lr=2, p_drop_tb=0, tol=1e-10):
         """Plot the relative periodicity error."""
         errors = self.get_relative_periodicity_errors(tol=tol)
         fig, ax = plt.subplots()
@@ -343,9 +334,7 @@ class Analysis:
         """Plot stress and torque."""
         pass
 
-    def bar_relative_periodicity_error(
-        self, p_drop_lr=2, p_drop_tb=0, tol=1e-10
-    ):
+    def bar_relative_periodicity_error(self, p_drop_lr=2, p_drop_tb=0, tol=1e-10):
         """Barchart of the max relative periodicity error."""
         errors = self.get_relative_periodicity_errors(tol=tol)
         fig, ax = plt.subplots()
@@ -389,9 +378,7 @@ class Analysis:
         stress_tensors = self.solution.stress_goursat(points)
         wss_data = [
             tangent.T @ stress_tensor @ normal
-            for stress_tensor, tangent, normal in zip(
-                stress_tensors, tangents, normals
-            )
+            for stress_tensor, tangent, normal in zip(stress_tensors, tangents, normals)
         ]
         return wss_data
 

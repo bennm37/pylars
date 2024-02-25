@@ -467,5 +467,6 @@ def rhandle(zz, z, f, w):
     r = (CC @ (w * f)) / (CC @ w)
     ii = np.where(np.isnan(r))
     for i in ii:
-        r[i] = f[np.where(z[i] == z)]
+        if i.shape[0] > 0:
+            r[i] = f[np.where(z[i] == z)]
     return r.reshape(zz.shape)

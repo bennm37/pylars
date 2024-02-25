@@ -20,15 +20,11 @@ prob.add_interior_curve(
     deg_laurent=30,
     centroid=z_0,
 )
-prob.domain.plot()
-plt.tight_layout()
-plt.savefig("media/circle_domain.pdf")
 
-
-prob.add_boundary_condition("0", "u[0]", 0)
-prob.add_boundary_condition("0", "v[0]", 0)
-prob.add_boundary_condition("2", "u[2]", 0)
-prob.add_boundary_condition("2", "v[2]", 0)
+prob.add_boundary_condition("0", "u[0]-u[2][::-1]", 0)
+prob.add_boundary_condition("0", "v[0]-v[2][::-1]", 0)
+prob.add_boundary_condition("2", "p[0]-p[2][::-1]", 0)
+prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
 prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
 prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
 prob.add_boundary_condition("3", "p[1]-p[3][::-1]", 25)
@@ -36,18 +32,9 @@ prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 prob.add_boundary_condition("4", "u[4]", 0)
 prob.add_boundary_condition("4", "v[4]", 0)
 
+
 solver = Solver(prob)
 sol = solver.solve(check=False, normalize=False)
 an = Analysis(sol)
 fig, ax = an.plot(resolution=100, interior_patch=True, enlarge_patch=1.1)
-plt.savefig("media/circle_flow.pdf")
 plt.show()
-
-from pylars.numerics import split_laurent
-
-cf, cg, clf, clg = split_laurent(solver.coefficients, solver.domain.interior_laurents)
-print(f"Error: {solver.max_error}")
-print("clf = ", clf)
-print("clg = ", clg)
-print("diff = ", clg + np.conj(z_0) * clf)
-print("finished")

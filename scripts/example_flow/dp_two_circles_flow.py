@@ -1,4 +1,5 @@
 """Solve poiseuille flow with stream function boundary conditions."""
+
 from pylars import Problem, Solver, Analysis
 import numpy as np
 import matplotlib
@@ -129,9 +130,7 @@ fig, ax = plt.subplots(1, 2)
 # plotting pressure
 print("Plotting P")
 pylars_p = sol.p(CS_p_z).reshape(-1, 1)
-p_X, p_Y = np.meshgrid(
-    np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples)
-)
+p_X, p_Y = np.meshgrid(np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples))
 p_Z = p_X + 1j * p_Y
 mask = prob.domain.mask_contains(p_Z)
 # mask P_X, P_Y using mask_contains
@@ -147,9 +146,7 @@ im = ax[0].imshow(
     norm=LogNorm(vmin=np.min(p_diff), vmax=np.max(p_diff)),
 )
 scatter = ax[0].scatter(CS_p_x, CS_p_y, c=p_diff, s=1)
-plt.colorbar(
-    scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt)
-)
+plt.colorbar(scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt))
 ax[0].set_aspect("equal")
 ax[0].axis("off")
 ax[0].set_title("Difference in Pressure")
@@ -157,9 +154,7 @@ ax[0].set_title("Difference in Pressure")
 # plotting difference in U
 print("Plotting U")
 pylars_s = np.abs(sol.uv(CS_s_z)).reshape(-1, 1)
-p_X, p_Y = np.meshgrid(
-    np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples)
-)
+p_X, p_Y = np.meshgrid(np.linspace(-1, 1, n_samples), np.linspace(-1, 1, n_samples))
 p_Z = p_X + 1j * p_Y
 mask = prob.domain.mask_contains(p_Z)
 # mask P_X, P_Y using mask_contains
@@ -175,9 +170,7 @@ im = ax[1].imshow(
     norm=LogNorm(vmin=np.min(s_diff), vmax=np.max(s_diff)),
 )
 scatter = ax[1].scatter(CS_s_x, CS_s_y, c=s_diff, s=1)
-plt.colorbar(
-    scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt)
-)
+plt.colorbar(scatter, fraction=0.046, pad=0.04, format=ticker.FuncFormatter(fmt))
 ax[1].set_aspect("equal")
 ax[1].axis("off")
 ax[1].set_title("Difference in Velocity Magnitude")

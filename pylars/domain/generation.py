@@ -1,5 +1,42 @@
 """Domain generation functions."""
+
 import numpy as np
+
+
+def square(z_0, L):
+    """Return a parametric curve for a square."""
+    return rectangle(z_0, L, L)
+
+
+def rectangle(z_0, L, H):
+    """Return a parametric curve for a rectangle."""
+    corners = [
+        z_0 + L / 2 + H / 2 * 1j,
+        z_0 - L / 2 + H / 2 * 1j,
+        z_0 - L / 2 - H / 2 * 1j,
+        z_0 + L / 2 - H / 2 * 1j,
+    ]
+    return polygon(corners)
+
+
+def polygon(corners):
+    """Return a parametric curve for a polygon."""
+    lines = [(start, end) for start, end in zip(corners, corners[1:] + corners[:1])]
+    lengths = [np.abs(end - start) for start, end in lines]
+    bins = np.cumsum(lengths) / np.sum(lengths)
+
+    def curve(t, lines=lines, bins=bins):
+        """Return a point on the polygon."""
+        i = np.searchsorted(bins, t)
+        start, end = lines[i]
+        if i == 0:
+            prev = 0
+        else:
+            prev = bins[i - 1]
+        t = (t - prev) / (bins[i] - prev)
+        return start + t * (end - start)
+
+    return np.vectorize(curve)
 
 
 def generate_circles(n_circles, radius):
@@ -15,11 +52,7 @@ def generate_circles(n_circles, radius):
         if i % 100000 == 0:
             print(i)
             print(f"{n_current=}")
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids)) > 2 * radius:
             centroids = np.append(centroids, centroid)
             n_current += 1
@@ -37,11 +70,7 @@ def generate_normal_circles(n_circles, mean, std, seed):
     n_current = 1
     radius = np.random.normal(mean, std, 1)
     while n_current < n_circles:
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids) / (radii + radius)) > 1.5:
             centroids = np.append(centroids, centroid)
             radii = np.append(radii, radius)
@@ -60,11 +89,7 @@ def generate_normal_circles(n_circles, mean, std):
     n_current = 1
     radius = np.random.normal(mean, std, 1)
     while n_current < n_circles:
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids) / (radii + radius)) > 1.5:
             centroids = np.append(centroids, centroid)
             radii = np.append(radii, radius)
