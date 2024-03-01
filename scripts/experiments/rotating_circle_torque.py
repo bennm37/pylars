@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_roating_circle_torque(
-    v_x, v_y, v_theta, centroid=0.0 + 0.1j, radius=0.1
-):
+def get_roating_circle_torque(v_x, v_y, v_theta, centroid=0.0 + 0.1j, radius=0.1):
     """Flow a domain with a circular interior curve."""
     prob = Problem()
     prob.add_periodic_domain(
@@ -77,9 +75,7 @@ if __name__ == "__main__":
     # v_theta = -0.7534464129151148
     centroid = 0.0 + 0.85j
     R = 0.1
-    force, torque, sol = get_roating_circle_torque(
-        v_x, v_y, v_theta, centroid, R
-    )
+    force, torque, sol = get_roating_circle_torque(v_x, v_y, v_theta, centroid, R)
     print(f"force = {force}")
     print(f"torque = {torque}")
     an = Analysis(sol)

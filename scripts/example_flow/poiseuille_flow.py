@@ -45,9 +45,7 @@ ax[0, 0].set(xlabel="$y$", ylabel="$u$", title="u profile")
 ax[0, 0].legend()
 
 ax[1, 0].plot(y, sol.psi(1j * y).real, color="black", label="solver")
-ax[1, 0].plot(
-    y, y * (1 - y**2 / 3), color="red", linestyle="--", label="analytical"
-)
+ax[1, 0].plot(y, y * (1 - y**2 / 3), color="red", linestyle="--", label="analytical")
 ax[1, 0].set_yticks(np.linspace(-0.7, 0.7, 8))
 ax[1, 0].legend()
 ax[1, 0].set(xlabel="$y$", ylabel="$\psi$", title="$\psi$ profile")

@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 # create a square domain
 corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
 prob = Problem()
-prob.add_exterior_polygon(
-    corners, num_edge_points=300, num_poles=0, spacing="linear"
-)
+prob.add_exterior_polygon(corners, num_edge_points=300, num_poles=0, spacing="linear")
 # periodic Couette flow with no-slip boundary conditions
 prob.add_boundary_condition("0", "u[0]", 1)
 prob.add_boundary_condition("0", "v[0]", 0)

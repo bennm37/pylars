@@ -76,9 +76,7 @@ print(f"Error: {solver.max_error}")
 an = Analysis(sol)
 an.plot(resolution=300)
 plt.show()
-fig, ax = an.plot_periodic(
-    interior_patch=True, resolution=200, n_streamlines=50
-)
+fig, ax = an.plot_periodic(interior_patch=True, resolution=200, n_streamlines=50)
 plt.show()
 plt.savefig("media/doubly_periodic_pressure_drop_flow_object.pdf")
 

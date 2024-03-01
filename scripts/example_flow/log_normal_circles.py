@@ -202,9 +202,7 @@ def run(parameters):
                 surface_length=surface_length,
             )
             if error > err_tol:
-                print(
-                    f"Error {error} too large on iteration {n}. Skipping iteration."
-                )
+                print(f"Error {error} too large on iteration {n}. Skipping iteration.")
                 continue
             nc_data[i, n] = n_circles
             porosity_data[i, n] = 1 - np.sum(np.pi * radii**2) / length**2
@@ -224,9 +222,7 @@ def run(parameters):
                 "wss_std": wss_std_data,
             }
             for name, data in data.items():
-                save_df(
-                    data, f"data/{project_name}/summary_data/{name}_data.csv"
-                )
+                save_df(data, f"data/{project_name}/summary_data/{name}_data.csv")
             p_data = permeability_data[i, : n + 1].copy()
             p_data = np.delete(p_data, np.where(np.isnan(p_data)))
             mean_perm = np.ma.mean(p_data)
@@ -286,32 +282,20 @@ def plot_summary_data(project_name, scale=None):
         return data
 
     nc_data = get_data(f"data/{project_name}/summary_data/nc_data.csv")
-    porosity_data = get_data(
-        f"data/{project_name}/summary_data/porosity_data.csv"
-    )
-    run_time_data = get_data(
-        f"data/{project_name}/summary_data/run_time_data.csv"
-    )
+    porosity_data = get_data(f"data/{project_name}/summary_data/porosity_data.csv")
+    run_time_data = get_data(f"data/{project_name}/summary_data/run_time_data.csv")
     permeability_data = get_data(
         f"data/{project_name}/summary_data/permeability_data.csv"
     )
-    wss_mean_data = get_data(
-        f"data/{project_name}/summary_data/wss_mean_data.csv"
-    )
-    wss_std_data = get_data(
-        f"data/{project_name}/summary_data/wss_std_data.csv"
-    )
+    wss_mean_data = get_data(f"data/{project_name}/summary_data/wss_mean_data.csv")
+    wss_std_data = get_data(f"data/{project_name}/summary_data/wss_std_data.csv")
     if scale is not None:
         L, U, mu, grad_p = scale
         # the simulations are run with a non-dimensional pressure drop of 2.
         # To impose a pressure gradient of grad_p Pa, we need to scale
         # by grad_p * non_dim_l * U * mu/ (2 * L)
-        wss_mean_data = (
-            grad_p * L * lengths[:, np.newaxis] * wss_mean_data / (10)
-        )
-        wss_std_data = (
-            grad_p * L * lengths[:, np.newaxis] * wss_std_data / (10)
-        )
+        wss_mean_data = grad_p * L * lengths[:, np.newaxis] * wss_mean_data / (10)
+        wss_std_data = grad_p * L * lengths[:, np.newaxis] * wss_std_data / (10)
         lengths = lengths * L
         permeability_data = permeability_data * L**2
 
@@ -355,9 +339,7 @@ def plot_summary_data(project_name, scale=None):
 
 
 if __name__ == "__main__":
-    mean, var = lognorm.stats(
-        **{"s": 0.5, "scale": 0.275, "loc": 0.0}, moments="mv"
-    )
+    mean, var = lognorm.stats(**{"s": 0.5, "scale": 0.275, "loc": 0.0}, moments="mv")
     rv = lambda mu: mu
     rv_args = {"mu": mean}
     parameters = {

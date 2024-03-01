@@ -36,12 +36,8 @@ def test_poiseuille_stress():
     X, Y = np.meshgrid(x, x)
     Z = X + 1j * Y
     ATOL, RTOL = 1e-10, 1e-3
-    assert np.allclose(
-        sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL)
 
     def poiseuille_stress(z):
         zshape = z.shape
@@ -54,13 +50,9 @@ def test_poiseuille_stress():
         return stress.reshape(zshape + (2, 2))
 
     stress_discrete = sol.stress_discrete(Z)
-    assert np.allclose(
-        stress_discrete, poiseuille_stress(Z), atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(stress_discrete, poiseuille_stress(Z), atol=ATOL, rtol=RTOL)
     stress_goursat = sol.stress_goursat(Z)
-    assert np.allclose(
-        stress_goursat, poiseuille_stress(Z), atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(stress_goursat, poiseuille_stress(Z), atol=ATOL, rtol=RTOL)
 
 
 def test_couette_stress():
@@ -109,9 +101,7 @@ def test_couette_stress():
         return stress.reshape(zshape + (2, 2))
 
     stress_discrete = sol.stress_discrete(Z)
-    assert np.allclose(
-        stress_discrete, couette_stress(Z), atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(stress_discrete, couette_stress(Z), atol=ATOL, rtol=RTOL)
     stress_goursat = sol.stress_goursat(Z)
     assert np.allclose(stress_goursat, couette_stress(Z), atol=ATOL, rtol=RTOL)
 

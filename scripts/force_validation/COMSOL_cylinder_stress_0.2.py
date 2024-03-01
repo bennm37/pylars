@@ -107,9 +107,7 @@ if __name__ == "__main__":
         stress_tensor = sol.stress_goursat(z)
         normals = normal(np.array(theta))
         normals = np.array([normals.real, normals.imag]).T
-        surface_stress = np.array(
-            [S @ n for n, S in zip(normals, stress_tensor)]
-        )
+        surface_stress = np.array([S @ n for n, S in zip(normals, stress_tensor)])
         pylars_data[size] = surface_stress
     size = "extremely_fine"
     # for size in mesh_sizes:
@@ -189,15 +187,11 @@ if __name__ == "__main__":
         # plt.savefig("media/COMSOL_vs_PyLARS_stress.pdf")
         # plot convergence of the max error
         max_errors_x = [
-            np.max(
-                np.abs(np.array(data[size][0][:, 1]) - pylars_data[size][:, 0])
-            )
+            np.max(np.abs(np.array(data[size][0][:, 1]) - pylars_data[size][:, 0]))
             for size in mesh_sizes
         ]
         max_errors_y = [
-            np.max(
-                np.abs(np.array(data[size][1][:, 1]) - pylars_data[size][:, 1])
-            )
+            np.max(np.abs(np.array(data[size][1][:, 1]) - pylars_data[size][:, 1]))
             for size in mesh_sizes
         ]
         ax[1, 1].plot(max_errors_x, label="$T_x$")

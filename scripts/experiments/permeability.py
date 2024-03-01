@@ -15,11 +15,7 @@ def generate_normal_circles(n_circles, mean, std):
     n_current = 1
     radius = np.random.normal(mean, std, 1)
     while n_current < n_circles:
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids) / (radii + radius)) > 1.5:
             centroids = np.append(centroids, centroid)
             radii = np.append(radii, radius)

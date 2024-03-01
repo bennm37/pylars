@@ -10,9 +10,7 @@ def test_lid_driven_cavity_get_dependents():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     basis_answer = test_answers["R0"]
     basis_deriv_answer = test_answers["R1"]
     PSI_answer = test_answers["PSI"]
@@ -137,9 +135,7 @@ def test_three_circles_get_dependents():
             deg_laurent=deg_laurent,
             centroid=c,
         )
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     solver = Solver(prob)
     solver.basis = basis_answer
     solver.basis_derivatives = basis_deriv_answer
@@ -165,9 +161,7 @@ def test_lid_driven_cavity_construct_linear_system_1():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     A_answer = test_answers["A_standard"]
     b_answer = test_answers["rhs_standard"]
     U_answer = test_answers["U"]
@@ -223,9 +217,7 @@ def test_lid_driven_cavity_construct_linear_system_2():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     A_answer = test_answers["A_standard"]
     b_answer = test_answers["rhs_standard"]
     A_weighted_answer = test_answers["A_weighted"]
@@ -301,9 +293,7 @@ def test_row_weighting():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     A_standard_answer = test_answers["A_standard"]
     rhs_standard_answer = test_answers["rhs_standard"]
     A_weighted_answer = test_answers["A_weighted"]

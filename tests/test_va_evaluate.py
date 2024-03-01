@@ -111,9 +111,7 @@ def test_small_poles_second_va_evaluate():
         - (2 * z - 5) / ((z - 2) * (z - 3)) ** 2
     )
     pole_second_deriv2 = lambda z: -4 / (z - 2) ** 3
-    basis_answer = np.array(
-        [poly0(Z), poly1(Z), poly2(Z), pole1(Z), pole2(Z)]
-    ).T
+    basis_answer = np.array([poly0(Z), poly1(Z), poly2(Z), pole1(Z), pole2(Z)]).T
     basis_deriv_answer = np.array(
         [
             poly_deriv0(Z),
@@ -273,9 +271,7 @@ def test_large_poles_va_evaluate():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     Z_answer = test_answers["Z"]
     poles_answer = test_answers["Pol"]
     basis_answer = test_answers["R0"]
@@ -295,9 +291,7 @@ def test_large_poles_va_evaluate():
     )
     # check the MATALB prob.domainain points and poles are the same
     # check the polynomial coefficients are the same
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(prob.domain.poles, poles_answer, atol=ATOL, rtol=RTOL)
 
     hessenbergs, Q = va_orthogonalise(
@@ -309,9 +303,7 @@ def test_large_poles_va_evaluate():
         prob.domain.boundary_points, hessenbergs, poles=prob.domain.poles
     )
     # check the polynomial basis is the same
-    assert np.allclose(
-        basis[:, :25], basis_answer[:, :25], atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(basis[:, :25], basis_answer[:, :25], atol=ATOL, rtol=RTOL)
     assert np.allclose(
         basis_deriv[:, :25],
         basis_deriv_answer[:, :25],
@@ -332,9 +324,7 @@ def test_large_poles_va_evaluate_hypothesis():
 
     n = 0
     num_poles = 10
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     Z_answer = test_answers["Z"]
     poles_answer = test_answers["Pol"]
     basis_answer = test_answers["R0"]
@@ -354,9 +344,7 @@ def test_large_poles_va_evaluate_hypothesis():
     )
     # check the MATALB domain points and poles are the same
     # check the polynomial coefficients are the same
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(prob.domain.poles, poles_answer, atol=ATOL, rtol=RTOL)
 
     hessenbergs, Q = va_orthogonalise(
@@ -368,9 +356,7 @@ def test_large_poles_va_evaluate_hypothesis():
         prob.domain.boundary_points, hessenbergs, poles=prob.domain.poles
     )
     # check the polynomial basis is the same
-    assert np.allclose(
-        basis[:, :25], basis_answer[:, :25], atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(basis[:, :25], basis_answer[:, :25], atol=ATOL, rtol=RTOL)
     assert np.allclose(
         basis_deriv[:, :25], basis_deriv_answer[:, :25], atol=ATOL, rtol=RTOL
     )
@@ -422,9 +408,7 @@ def test_laurent_va_evaluate():
         deg_laurent=deg_laurent,
         centroid=0.0 + 0.0j,
     )
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise(
         prob.domain.boundary_points.reshape(-1, 1),
         deg_poly,

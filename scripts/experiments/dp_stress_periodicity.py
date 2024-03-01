@@ -69,9 +69,7 @@ prob.add_boundary_condition("2", "e12[0]-e12[2][::-1]", 0)
 
 prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
 prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
-prob.add_boundary_condition(
-    "3", "p[1]-2*e11[1]-p[3][::-1]+2*e11[3][::-1]", p_drop
-)
+prob.add_boundary_condition("3", "p[1]-2*e11[1]-p[3][::-1]+2*e11[3][::-1]", p_drop)
 # prob.add_boundary_condition("3", "p[1]-p[3][::-1]", p_drop)
 prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
 interiors = [str(i) for i in range(4, 4 + n_circles)]

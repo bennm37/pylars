@@ -43,18 +43,12 @@ class LowDensityMoverSimulation(Simulation):
         """Update method for simulation."""
         for i, mover in enumerate(self.movers):
             # setup and solve the stationary, x, y and theta problems
-            sol_x, force_x, torque_x = self.get_force(
-                mover, 1, 0, 0, homogenous=True
-            )
-            sol_y, force_y, torque_y = self.get_force(
-                mover, 0, 1, 0, homogenous=True
-            )
+            sol_x, force_x, torque_x = self.get_force(mover, 1, 0, 0, homogenous=True)
+            sol_y, force_y, torque_y = self.get_force(mover, 0, 1, 0, homogenous=True)
             sol_theta, force_theta, torque_theta = self.get_force(
                 mover, 0, 0, 1, homogenous=True
             )
-            sol_static, force_static, torque_static = self.get_static_force(
-                mover
-            )
+            sol_static, force_static, torque_static = self.get_static_force(mover)
             # solve for the velocities
             F_matrix = np.hstack([force_x, force_y, force_theta])
             torques = np.array([torque_x, torque_y, torque_theta])

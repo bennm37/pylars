@@ -40,12 +40,8 @@ def test_poiseuille_force():
     X, Y = np.meshgrid(x, y, indexing="ij")
     Z = X + 1j * Y
     ATOL, RTOL = 1e-10, 1e-3
-    assert np.allclose(
-        sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL
-    )
-    assert np.allclose(
-        sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(sol.uv(Z).reshape(100, 100), uv_answer(Z), atol=ATOL, rtol=RTOL)
+    assert np.allclose(sol.p(Z).reshape(100, 100), p_answer(Z), atol=ATOL, rtol=RTOL)
     poiseuille_force = np.array([8 + 4 * p_0 * 1j])
     curve = lambda t: 4 * t - 2 + 1j  # noqa E731
     deriv = lambda t: 4  # noqa E731
@@ -55,9 +51,7 @@ def test_poiseuille_force():
     R = 0.3
     for centroid in centorids:
         circle = lambda t: centroid + 0.3 * np.exp(2j * np.pi * t)  # noqa E731
-        circle_deriv = (
-            lambda t: 1j * np.pi * np.exp(2j * np.pi * t)
-        )  # noqa E731
+        circle_deriv = lambda t: 1j * np.pi * np.exp(2j * np.pi * t)  # noqa E731
         force = sol.force(circle, circle_deriv)
         assert np.isclose(force, 0.0j, atol=ATOL, rtol=RTOL)
         torque = sol.torque(circle, circle_deriv, centroid=centroid)

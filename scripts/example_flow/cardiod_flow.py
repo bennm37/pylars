@@ -151,7 +151,7 @@ def plot_matlab_error(sol):
         ax=ax[0, 0],
         fraction=0.046,
         pad=0.04,
-        ticks=np.logspace(-16, -9,5),
+        ticks=np.logspace(-16, -9, 5),
     )
     p_diff = np.abs(matlab_p_data - pylars_p_data)
     p_diff_max = p_diff[~inside].max()

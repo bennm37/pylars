@@ -10,9 +10,7 @@ def test_lid_driven_cavity_make_functions():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     Z = test_answers["Z"]
     Hes = test_answers["Hes"]
     hessenbergs = [Hes[0, i] for i in range(Hes.shape[1])]
@@ -48,9 +46,7 @@ def test_lid_driven_cavity_make_functions():
     assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(
-        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL)
 
 
 def test_single_circle_make_functions():
@@ -79,34 +75,22 @@ def test_single_circle_make_functions():
     laurents = [(0.0 + 0.0j, deg_laurent)]
 
     def psi(z):
-        return make_function(
-            "psi", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("psi", z, c, hessenbergs, interior_laurents=laurents)
 
     def p(z):
-        return make_function(
-            "p", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("p", z, c, hessenbergs, interior_laurents=laurents)
 
     def uv(z):
-        return make_function(
-            "uv", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("uv", z, c, hessenbergs, interior_laurents=laurents)
 
     def omega(z):
-        return make_function(
-            "omega", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("omega", z, c, hessenbergs, interior_laurents=laurents)
 
     def f(z):
-        return make_function(
-            "f", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("f", z, c, hessenbergs, interior_laurents=laurents)
 
     def g(z):
-        return make_function(
-            "g", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("g", z, c, hessenbergs, interior_laurents=laurents)
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
@@ -123,9 +107,7 @@ def test_single_circle_make_functions():
     assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(
-        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(f_100_100, f_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(g_100_100, g_100_100_answer, atol=ATOL, rtol=RTOL)
 
@@ -169,29 +151,19 @@ def test_three_circles_make_functions():
         )
 
     def p(z):
-        return make_function(
-            "p", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("p", z, c, hessenbergs, interior_laurents=laurents)
 
     def uv(z):
-        return make_function(
-            "uv", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("uv", z, c, hessenbergs, interior_laurents=laurents)
 
     def omega(z):
-        return make_function(
-            "omega", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("omega", z, c, hessenbergs, interior_laurents=laurents)
 
     def f(z):
-        return make_function(
-            "f", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("f", z, c, hessenbergs, interior_laurents=laurents)
 
     def g(z):
-        return make_function(
-            "g", z, c, hessenbergs, interior_laurents=laurents
-        )
+        return make_function("g", z, c, hessenbergs, interior_laurents=laurents)
 
     x = np.linspace(-1, 1, 100)
     X, Y = np.meshgrid(x, x)
@@ -208,9 +180,7 @@ def test_three_circles_make_functions():
     assert np.allclose(psi_100_100, psi_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(p_100_100, p_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(uv_100_100, uv_100_100_answer, atol=ATOL, rtol=RTOL)
-    assert np.allclose(
-        omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(omega_100_100, omega_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(f_100_100, f_100_100_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(g_100_100, g_100_100_answer, atol=ATOL, rtol=RTOL)
 
@@ -224,9 +194,7 @@ def test_lid_driven_cavity_solve():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     Z_answer = test_answers["Z"]
     psi_100_100_answer = test_answers["psi_100_100"]
     p_100_100_answer = test_answers["p_100_100"]

@@ -185,9 +185,7 @@ class Problem:
         if self.domain is None:
             raise ValueError("Exterior polygon must be set first.")
         if self.boundary_conditions is None:
-            self.boundary_conditions = {
-                side: None for side in self.domain.sides
-            }
+            self.boundary_conditions = {side: None for side in self.domain.sides}
         if not hasattr(self, "error_values"):
             self.error_values = {}
         if isinstance(self.domain, PeriodicDomain):
@@ -213,9 +211,7 @@ class Problem:
         diff = mover.curve(np.linspace(0, 1, num_points)) - mover.centroid
         rs = np.abs(diff)
         thetas = np.angle(diff)
-        error_diff = (
-            mover.curve(np.linspace(0, 1, 2 * num_points)) - mover.centroid
-        )
+        error_diff = mover.curve(np.linspace(0, 1, 2 * num_points)) - mover.centroid
         error_rs = np.abs(error_diff)
         error_thetas = np.angle(error_diff)
 
@@ -224,13 +220,11 @@ class Problem:
         self.boundary_conditions[side] = None
         self.add_boundary_condition(side, f"u[{side}]", u)
         self.add_boundary_condition(side, f"v[{side}]", v)
-        error_u = (
-            mover.velocity.real
-            - error_rs * mover.angular_velocity * np.sin(error_thetas)
+        error_u = mover.velocity.real - error_rs * mover.angular_velocity * np.sin(
+            error_thetas
         )
-        error_v = (
-            mover.velocity.imag
-            + error_rs * mover.angular_velocity * np.cos(error_thetas)
+        error_v = mover.velocity.imag + error_rs * mover.angular_velocity * np.cos(
+            error_thetas
         )
         self.error_values[side] = (error_u, error_v)
 
@@ -259,17 +253,13 @@ class Problem:
         The expression is stripped and added to the dictionary.
         """
         if self.boundary_conditions is None:
-            self.boundary_conditions = {
-                side: None for side in self.domain.sides
-            }
+            self.boundary_conditions = {side: None for side in self.domain.sides}
         expression = expression.strip().replace(" ", "")
         if side not in self.domain.sides:
             raise ValueError("side must be in domain.sides")
         if isinstance(self.boundary_conditions[side], Sequence):
             if len(self.boundary_conditions[side]) == 2:
-                raise ValueError(
-                    f"2 boundary conditions already set for side {side}"
-                )
+                raise ValueError(f"2 boundary conditions already set for side {side}")
             if len(self.boundary_conditions[side]) == 1:
                 self.boundary_conditions[side].append((expression, value))
         else:
@@ -290,16 +280,12 @@ class Problem:
             if self.boundary_conditions[side] is None:
                 raise ValueError(f"boundary condition not set for side {side}")
             if len(self.boundary_conditions[side]) != 2:
-                raise ValueError(
-                    f"2 boundary conditions not set for side {side}"
-                )
+                raise ValueError(f"2 boundary conditions not set for side {side}")
             for expression, value in self.boundary_conditions[side]:
                 self.validate(expression)
                 if isinstance(value, str):
                     if not self.validate(value):
-                        raise ValueError(
-                            f"value {value} is not a valid expression."
-                        )
+                        raise ValueError(f"value {value} is not a valid expression.")
                     continue
                 if not isinstance(value, (int, float, np.ndarray)):
                     raise TypeError("value must be a numerical or string type")
@@ -351,16 +337,12 @@ class Problem:
         while "." in expression:
             index = expression.index(".")
             if index == 0 or index == len(expression) - 1:
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
+                raise ValueError(f"expression contains invalid decimal: {expression}")
             if (
                 not expression[index - 1].isnumeric()
                 or not expression[index + 1].isnumeric()
             ):
-                raise ValueError(
-                    f"expression contains invalid decimal: {expression}"
-                )
+                raise ValueError(f"expression contains invalid decimal: {expression}")
             expression = expression.replace(".", "")
         for side in self.domain.sides:
             expression = expression.replace(side, "")
@@ -368,9 +350,7 @@ class Problem:
             expression = expression.replace(str(number), "")
         # check if only numbers remain
         if expression != "":
-            raise ValueError(
-                f"expression contains invalid characters: {expression}"
-            )
+            raise ValueError(f"expression contains invalid characters: {expression}")
         return True
 
     def show(self):

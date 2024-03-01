@@ -17,9 +17,7 @@ class Mover:
         angular_velocity=0,
         density=1,
     ):
-        self.initial_curve = lambda t: (curve(t) - centroid) * np.exp(
-            -1j * angle
-        )
+        self.initial_curve = lambda t: (curve(t) - centroid) * np.exp(-1j * angle)
         self.initial_deriv = lambda t: deriv(t) * np.exp(-1j * angle)
         self.curve = curve
         self.deriv = deriv
@@ -59,9 +57,7 @@ class Mover:
         points = [p for p in points if self.poly.contains(Point(p))]
         points = np.array(points)
         return (
-            bounding_area
-            * np.sum(integrand(points[:, 0], points[:, 1]))
-            / num_samples
+            bounding_area * np.sum(integrand(points[:, 0], points[:, 1])) / num_samples
         )
 
     def translate(self, disp):

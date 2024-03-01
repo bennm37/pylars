@@ -47,9 +47,7 @@ cell = Mover(
     angle=angle,
 )
 movers = [cell]
-ldms = LowDensityMoverSimulation(
-    init_prob, movers, num_points=200, deg_laurent=30
-)
+ldms = LowDensityMoverSimulation(init_prob, movers, num_points=200, deg_laurent=30)
 results = ldms.run(0, 20, 0.2)
 print(results["errors"])
 an = SimulationAnalysis(results)

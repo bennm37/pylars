@@ -22,9 +22,7 @@ def cluster(num_points, length_scale, sigma):
 def split(coefficients):
     """Split the coefficients for f and g."""
     num_coeff = len(coefficients) // 4
-    complex_coeff = (
-        coefficients[: 2 * num_coeff] + 1j * coefficients[2 * num_coeff :]
-    )
+    complex_coeff = coefficients[: 2 * num_coeff] + 1j * coefficients[2 * num_coeff :]
     cf = complex_coeff[:num_coeff]
     cg = complex_coeff[num_coeff : 2 * num_coeff]
     return cf, cg
@@ -90,9 +88,7 @@ def make_function(
             case "omega":
                 return np.imag(-4 * basis_deriv @ cf)
             case "eij":
-                result = z * np.conj(basis_deriv_2 @ cf) + np.conj(
-                    basis_deriv_2 @ cg
-                )
+                result = z * np.conj(basis_deriv_2 @ cf) + np.conj(basis_deriv_2 @ cg)
                 eij = np.array(
                     [[result.real, result.imag], [result.imag, -result.real]]
                 )
@@ -112,9 +108,7 @@ def make_function(
                     - ((z - centers) * np.log(z - centers) - z) @ np.conj(clf)
                 )
             case "psi":
-                result = np.imag(
-                    np.conj(z) * (basis @ cf) + basis @ cg
-                ) + np.imag(
+                result = np.imag(np.conj(z) * (basis @ cf) + basis @ cg) + np.imag(
                     np.conj(z) * (np.log(z - centers) @ clf)
                     + np.log(z - centers) @ clg
                     - ((z - centers) * np.log(z - centers) - z) @ np.conj(clf)
@@ -128,8 +122,7 @@ def make_function(
                     + z * np.conj((1 / (z - centers)) @ clf)
                     - np.log(z - centers) @ clf
                     + np.conj(
-                        (1 / (z - centers)) @ clg
-                        - np.log(z - centers) @ np.conj(clf)
+                        (1 / (z - centers)) @ clg - np.log(z - centers) @ np.conj(clf)
                     )
                 )
             case "p":
@@ -166,9 +159,7 @@ def make_function(
                 # return np.moveaxis(eij, 2, 0)
 
 
-def va_orthogonalise(
-    z, n, poles=None, interior_laurents=None, exterior_laurents=None
-):
+def va_orthogonalise(z, n, poles=None, interior_laurents=None, exterior_laurents=None):
     """Orthogonalise the series using the Vandermonde with Arnoldi method.
 
     The matrix Q has orthogonal columns of norm sqrt(m) so that the elements
@@ -261,16 +252,14 @@ def va_evaluate(
         Q[:, k + 1] = (
             (
                 z * Q[:, k].reshape(m, 1)
-                - Q[:, : k + 1].reshape(m, k + 1)
-                @ H[: k + 1, k].reshape(k + 1, 1)
+                - Q[:, : k + 1].reshape(m, k + 1) @ H[: k + 1, k].reshape(k + 1, 1)
             )
             / hkk
         ).reshape(m)
         D[:, k + 1] = (
             (
                 z * D[:, k].reshape(m, 1)
-                - D[:, : k + 1].reshape(m, k + 1)
-                @ H[: k + 1, k].reshape(k + 1, 1)
+                - D[:, : k + 1].reshape(m, k + 1) @ H[: k + 1, k].reshape(k + 1, 1)
                 + Q[:, k].reshape(m, 1)
             )
             / hkk
@@ -279,8 +268,7 @@ def va_evaluate(
             D2[:, k + 1] = (
                 (
                     z * D2[:, k].reshape(m, 1)
-                    - D2[:, : k + 1].reshape(m, k + 1)
-                    @ H[: k + 1, k].reshape(k + 1, 1)
+                    - D2[:, : k + 1].reshape(m, k + 1) @ H[: k + 1, k].reshape(k + 1, 1)
                     + 2 * D[:, k].reshape(m, 1)
                 )
                 / hkk
@@ -390,7 +378,7 @@ def va_evaluate(
 
 def aaa(F, Z, tol=1e-13, mmax=100):  # noqa N803
     """Use the AAA algorithm to compute a rational approximation of f(z)."""
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         M = len(Z)
         if hasattr(F, "__call__"):
             F = F(Z)

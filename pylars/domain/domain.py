@@ -5,6 +5,7 @@ Raises:
     TypeError: Corners must be a list of complex numbers
     TypeError: Number of boundary points must be a non negative integer
 """
+
 import numpy as np  # noqa: D100
 import matplotlib.pyplot as plt
 from numbers import Number, Integral
@@ -93,9 +94,7 @@ class Domain:
         self._update_polygon()
         self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
-            self._generate_mirror_laurents(
-                side, deg_laurent, centroid, mirror_tol
-            )
+            self._generate_mirror_laurents(side, deg_laurent, centroid, mirror_tol)
         if aaa:
             self._generate_aaa_poles(side, mmax=aaa_mmax)
         return side
@@ -125,9 +124,7 @@ class Domain:
 
     def add_point(self, point):
         """Add a point to the domain."""
-        self.boundary_points = np.append(self.boundary_points, point).reshape(
-            -1, 1
-        )
+        self.boundary_points = np.append(self.boundary_points, point).reshape(-1, 1)
         side = f"{len(self.sides)}"
         self.error_points[side] = np.array(point)
         self.sides = np.append(self.sides, side)
@@ -152,8 +149,7 @@ class Domain:
                 np.abs(np.diff(self.boundary_points[self.indices[side]].T))
             )
             err_indices = np.where(
-                np.abs(points_to_delete - err_points.reshape(-1))
-                <= avg_diff / 2
+                np.abs(points_to_delete - err_points.reshape(-1)) <= avg_diff / 2
             )[1]
             self.error_points[side] = np.delete(err_points, err_indices)
         self.boundary_points = np.delete(self.boundary_points, indices, axis=0)
@@ -218,12 +214,10 @@ class Domain:
         self.corners *= L
         self.poles = [pole * L for pole in self.poles]
         self.exterior_laurents = [
-            (centroid * L, degree)
-            for centroid, degree in self.exterior_laurents
+            (centroid * L, degree) for centroid, degree in self.exterior_laurents
         ]
         self.interior_laurents = [
-            (centroid * L, degree)
-            for centroid, degree in self.interior_laurents
+            (centroid * L, degree) for centroid, degree in self.interior_laurents
         ]
         self.centroids = {
             side: centroid * L for side, centroid in self.centroids.items()
@@ -236,9 +230,7 @@ class Domain:
             spacing = np.linspace(0, 1, self.num_edge_points)
             error_spacing = np.linspace(0, 1, self.num_edge_points * 2)
         else:
-            spacing = (
-                np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1
-            ) / 2
+            spacing = (np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1) / 2
             error_spacing = (
                 np.tanh(np.linspace(-10, 10, self.num_edge_points * 2)) + 1
             ) / 2
@@ -255,9 +247,7 @@ class Domain:
             + (self.corners[(i + 1) % nc] - self.corners[i]) * error_spacing
             for i in range(len(self.corners))
         }
-        self.sides = np.array(
-            [str(i) for i in range(len(self.corners))], dtype="<U50"
-        )
+        self.sides = np.array([str(i) for i in range(len(self.corners))], dtype="<U50")
         self.indices = {
             side: [
                 i
@@ -273,9 +263,7 @@ class Domain:
         if not np.isclose(f(0), f(1)):
             raise ValueError("Curve must be closed")
         points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
-        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(
-            np.complex128
-        )
+        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(np.complex128)
         # create a shapely LineString and check it is simple
         # (i.e. does not intersect itself)
         line = LineString(np.array([points.real, points.imag]).T)
@@ -320,7 +308,6 @@ class Domain:
             )
         self.sides = np.concatenate([self.sides, [str(new)]])
 
-
     def _generate_lightning_poles(self):
         """Generate exponentially clustered lightning poles.
 
@@ -333,9 +320,7 @@ class Domain:
                 (self.corners[i] - self.corners[i - 1])
                 / np.abs(self.corners[i] - self.corners[i - 1])
                 + (self.corners[i] - self.corners[(i + 1) % len(self.corners)])
-                / np.abs(
-                    self.corners[i] - self.corners[(i + 1) % len(self.corners)]
-                )
+                / np.abs(self.corners[i] - self.corners[(i + 1) % len(self.corners)])
                 for i in range(len(self.corners))
             ]
         )
@@ -349,8 +334,7 @@ class Domain:
                     np.cross(
                         cart(self.corners[i] - self.corners[i - 1]),
                         cart(
-                            self.corners[(i + 1) % len(self.corners)]
-                            - self.corners[i]
+                            self.corners[(i + 1) % len(self.corners)] - self.corners[i]
                         ),
                     )
                 )
@@ -374,25 +358,17 @@ class Domain:
         self.centroids[side] = centroid
         self.interior_laurents.append((centroid, degree))
         if side not in self.interior_laurent_indices.keys():
-            self.interior_laurent_indices[side] = [
-                len(self.interior_laurents) - 1
-            ]
+            self.interior_laurent_indices[side] = [len(self.interior_laurents) - 1]
         else:
-            self.interior_laurent_indices[side] += [
-                len(self.interior_laurents) - 1
-            ]
+            self.interior_laurent_indices[side] += [len(self.interior_laurents) - 1]
 
     def _generate_exterior_laurent_series(self, side, degree, centroid):
         """Generate Laurent series outside the domain."""
         self.exterior_laurents.append((centroid, degree))
         if side not in self.exterior_laurent_indices.keys():
-            self.exterior_laurent_indices[side] = [
-                len(self.exterior_laurents) - 1
-            ]
+            self.exterior_laurent_indices[side] = [len(self.exterior_laurents) - 1]
         else:
-            self.exterior_laurent_indices[side] += [
-                len(self.exterior_laurents) - 1
-            ]
+            self.exterior_laurent_indices[side] += [len(self.exterior_laurents) - 1]
 
     def _generate_mirror_laurents(self, side, degree, centroid, tol=2):
         """Generate mirror images of the Laurent series."""
@@ -409,21 +385,17 @@ class Domain:
         x2, y2 = corners.real, corners.imag
         x1, y1 = np.roll(corners, 1).real, np.roll(corners, 1).imag
         x0, y0 = centroid.real, centroid.imag
-        distances = np.abs(
-            (x2 - x1) * (y1 - y0) + (x1 - x0) * (y2 - y1)
-        ) / np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        distances = np.abs((x2 - x1) * (y1 - y0) + (x1 - x0) * (y2 - y1)) / np.sqrt(
+            (x2 - x1) ** 2 + (y2 - y1) ** 2
+        )
         mirrors = centroid - 2 * normals * distances
         for mirror in mirrors:
             if np.abs(mirror - centroid) < tol:
                 self._generate_exterior_laurent_series(side, degree, mirror)
                 if side not in self.mirror_indices.keys():
-                    self.mirror_indices[side] = [
-                        len(self.exterior_laurents) - 1
-                    ]
+                    self.mirror_indices[side] = [len(self.exterior_laurents) - 1]
                 else:
-                    self.mirror_indices[side] += [
-                        len(self.exterior_laurents) - 1
-                    ]
+                    self.mirror_indices[side] += [len(self.exterior_laurents) - 1]
 
     def _generate_aaa_poles(self, side, mmax=None):
         """Generate aaa poles that lie outside the domain."""
@@ -433,9 +405,7 @@ class Domain:
             _, poles, _, _ = aaa(f, z)
         else:
             _, poles, _, _ = aaa(f, z, mmax=mmax)
-        exterior_poles = [
-            pole for pole in poles if not self.__contains__(pole)
-        ]
+        exterior_poles = [pole for pole in poles if not self.__contains__(pole)]
         self.poles = list(self.poles) + [np.array(exterior_poles)]
 
     def _update_polygon(self, buffer=0):
@@ -461,15 +431,14 @@ class Domain:
         if buffer > 0:
             self.polygon = self.polygon.buffer(buffer)
 
-    def plot(
-        self, figax=None, set_lims=True, point_color="indices", legend=True
-    ):
+    def plot(self, figax=None, set_lims=True, point_color="indices", legend=True):
         """Display the labelled polygon."""
         if figax is None:
             fig, ax = plt.subplots()
-        flat_poles = np.hstack(
-            [pole_group.flatten() for pole_group in self.poles]
-        )
+        flat_poles = np.hstack([pole_group.flatten() for pole_group in self.poles])
+        if self.exterior_laurents:
+            flat_laurents = np.hstack([laurent[0] for laurent in self.exterior_laurents])
+            flat_poles = np.hstack([flat_poles, flat_laurents])
         if set_lims:
             try:
                 x_min = min(flat_poles.real)
@@ -566,7 +535,7 @@ class Domain:
         poly,
         exterior_color="white",
         interior_color=None,
-        zorder=1000,
+        zorder=1,
     ):
         """Plot a polygon on the given axis."""
         exterior_coords = np.array(self.polygon.exterior.coords)

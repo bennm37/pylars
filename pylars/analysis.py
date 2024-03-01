@@ -37,7 +37,7 @@ class Analysis:
         n_streamlines=20,
         streamline_type="linear",
         interior_patch=True,
-        enlarge_patch=1.03,
+        enlarge_patch=1.00,
         epsilon=1e-3,
         figax=None,
         figsize=None,

@@ -39,6 +39,7 @@ def test_get_nnic():
     import numpy as np
     from collections import Counter
     import warnings
+
     warnings.filterwarnings("error", category=DeprecationWarning)
     with warnings.catch_warnings():
         dom = PeriodicDomain(2, 2)

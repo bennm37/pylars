@@ -32,12 +32,10 @@ def test_domain_spacing_rectangle():
         assert (
             np.cross(
                 cart(
-                    prob.domain.boundary_points[i + 1]
-                    - prob.domain.boundary_points[i]
+                    prob.domain.boundary_points[i + 1] - prob.domain.boundary_points[i]
                 ),
                 cart(
-                    prob.domain.boundary_points[i]
-                    - prob.domain.boundary_points[i - 1]
+                    prob.domain.boundary_points[i] - prob.domain.boundary_points[i - 1]
                 ),
             )
             >= -1e-10
@@ -76,9 +74,7 @@ def test_domain_spacing_circle():
         deg_laurent=deg_laurent,
         centroid=0.0 + 0.0j,
     )
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
 
 
 def test_poles_square():
@@ -130,8 +126,7 @@ def test_contains():
     assert np.array([0.99 + 0j, -1.01 + 0j]) not in prob.domain
     assert np.array([0.99 + 0j, -0.99 + 0j]) in prob.domain
     assert (
-        np.array([[0.5 + 0.5j, -0.5 + 0.5j], [-0.5 + 0.5j, -0.5 - 0.5j]])
-        in prob.domain
+        np.array([[0.5 + 0.5j, -0.5 + 0.5j], [-0.5 + 0.5j, -0.5 - 0.5j]]) in prob.domain
     )
 
 

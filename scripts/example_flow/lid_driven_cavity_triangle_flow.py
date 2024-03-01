@@ -30,9 +30,7 @@ values = a.psi_values[~np.isnan(a.psi_values)].flatten()
 max = values.max()
 min = values.min()
 moffat_levels = max + np.linspace(-3e-4, 0, 10)
-ax.contour(
-    a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5
-)
+ax.contour(a.X, a.Y, a.psi_values, levels=moffat_levels, colors="y", linewidths=0.5)
 # moffat_levels_2 = max + np.linspace(-3e-3, -3e-4, 10)
 # # moffat_levels_2 = min + np.linspace(0, 1e-4, 10)
 # ax.contour(

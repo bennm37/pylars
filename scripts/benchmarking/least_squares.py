@@ -93,9 +93,7 @@ if __name__ == "__main__":
         b_torch = torch.tensor(b)
         A_torch = A_torch.to(device)
         b_torch = b_torch.to(device)
-        sol_torch = torch.linalg.lstsq(
-            A_torch, b_torch, rcond=None, driver="gelsd"
-        )
+        sol_torch = torch.linalg.lstsq(A_torch, b_torch, rcond=None, driver="gelsd")
         end_torch = time.perf_counter()
         time_torch = end_torch - start_torch
         residual_torch = torch.max(

@@ -27,9 +27,7 @@ def test_poiseuille_permeability():
     curve = lambda t: 1 + 2j * t - 1j
     points = curve(np.linspace(0, 1, 100))
     curve_deriv = lambda t: 2j * np.ones_like(t)
-    permeability = an.get_permeability(
-        curve, curve_deriv, delta_x=2, delta_p=p_drop
-    )
+    permeability = an.get_permeability(curve, curve_deriv, delta_x=2, delta_p=p_drop)
     y = curve(np.linspace(0, 1, 100)).imag
     assert np.allclose(sol.uv(1 + y * 1j).reshape(-1), (1 - y**2) / 2)
     assert np.isclose(permeability, 1 / 3)
@@ -43,9 +41,7 @@ def test_poiseuille_permeability():
     dim_permeability = dim_an.get_permeability(
         dim_curve, dim_curve_deriv, delta_x=dim_delta_x, delta_p=dim_delta_p
     )
-    assert np.allclose(
-        dim_sol.uv(L * (1 + y * 1j)).reshape(-1), U * (1 - y**2) / 2
-    )
+    assert np.allclose(dim_sol.uv(L * (1 + y * 1j)).reshape(-1), U * (1 - y**2) / 2)
     assert np.isclose(dim_permeability, L**2 / 3)
 
 

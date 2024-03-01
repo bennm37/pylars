@@ -47,9 +47,7 @@ def test_lid_driven_cavity_split():
 
     n = 24
     num_poles = 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     c = test_answers["c"]
     cf_answer = test_answers["cf"]
     cg_answer = test_answers["cg"]

@@ -16,13 +16,11 @@ sampleNames = ["225ASB", "PV16-216SB"]
 sampleKeys = [
     key
     for key in radii_df.keys()
-    if key.endswith(".csv")
-    and any(sampleName in key for sampleName in sampleNames)
+    if key.endswith(".csv") and any(sampleName in key for sampleName in sampleNames)
 ]
 sampleNames = list(dict.fromkeys(sampleNames))
 nameKeys = [
-    [key for key in sampleKeys if sampleName in key]
-    for sampleName in sampleNames
+    [key for key in sampleKeys if sampleName in key] for sampleName in sampleNames
 ]
 
 axis_dict = {
@@ -85,9 +83,9 @@ for keys, cols in zip(nameKeys, nameData):
     loc = 0.0
     if fitGamma:
         f = lambda x, a, scale: gamma.pdf(x, a=a, scale=scale)
-        a_gamma, scale_gamma = curve_fit(
-            f, binCenters, normHist, maxfev=10000, p0=p0
-        )[0]
+        a_gamma, scale_gamma = curve_fit(f, binCenters, normHist, maxfev=10000, p0=p0)[
+            0
+        ]
         gammaParamsDict[sampleName] = [a_gamma, loc, scale_gamma]
         expected = f(binCenters, a_gamma, scale_gamma)
         expected *= np.sum(hist) / np.sum(expected)
@@ -185,14 +183,10 @@ if fitLognorm:
     lognormParamsDf = pd.DataFrame.from_dict(lognormParamsDict)
     lognormParamsDf.to_csv("data/fiber_radii_lognorm_params.csv", index=False)
 if fitGamma:
-    gammaChiSquaredDf = pd.DataFrame.from_dict(
-        gammaChiSquaredDict, orient="index"
-    )
+    gammaChiSquaredDf = pd.DataFrame.from_dict(gammaChiSquaredDict, orient="index")
     gammaChiSquaredDf.to_csv("data/fiber_radii_gamma_r2.csv", index=True)
 if fitLognorm:
-    lognormChiSquaredDf = pd.DataFrame.from_dict(
-        lognormChiSquaredDict, orient="index"
-    )
+    lognormChiSquaredDf = pd.DataFrame.from_dict(lognormChiSquaredDict, orient="index")
     lognormChiSquaredDf.to_csv("data/fiber_radii_lognorm_r2.csv", index=True)
 
 ChiSquaredDf = pd.concat([lognormChiSquaredDf, gammaChiSquaredDf], axis=1)

@@ -85,9 +85,7 @@ if __name__ == "__main__":
     ax[0].set_ylabel("Number of circles")
     ax[0].set_xlabel("Length (m)")
     err_porosity = np.std(porosity_data, axis=1)
-    ax[1].errorbar(
-        lengths * L, np.mean(porosity_data, axis=1), yerr=err_porosity
-    )
+    ax[1].errorbar(lengths * L, np.mean(porosity_data, axis=1), yerr=err_porosity)
     ax[1].set_ylabel("Porosity")
     ax[1].set_xlabel("Length (m)")
     plt.show()

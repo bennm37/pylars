@@ -129,9 +129,7 @@ def task(task_params):
         wss_std,
         wss_data,
         surface_length,
-    ) = analyse_case(
-        sol, centroids, radii, length=length, p_drop=p_drop, plot=plot
-    )
+    ) = analyse_case(sol, centroids, radii, length=length, p_drop=p_drop, plot=plot)
     return {
         "n_circles": n_circles,
         "centers": centroids,
@@ -224,8 +222,7 @@ def run(parameters):
             n += n_cores
             minibatch_seeds = [i for i in range(n, n + n_cores)]
             minibatch_params = [
-                {"seed": seed, **default_task_params}
-                for seed in minibatch_seeds
+                {"seed": seed, **default_task_params} for seed in minibatch_seeds
             ]
             with mpi.Pool() as pool:
                 results = pool.map(task, minibatch_params)
@@ -269,9 +266,7 @@ def run(parameters):
                         )
                         continue
                     nc_data[i, n] = n_circles
-                    porosity_data[i, n] = (
-                        1 - np.sum(np.pi * radii**2) / length**2
-                    )
+                    porosity_data[i, n] = 1 - np.sum(np.pi * radii**2) / length**2
                     run_time_data[i, n] = run_time
                     error_data[i, n] = error
                     permeability_data[i, n] = permeability
@@ -305,9 +300,7 @@ def run(parameters):
                     n_crit = np.max([n_crit_perm, n_crit_wssm])
                     if n > n_crit:
                         converged_steps += 1
-                        print(
-                            f"Converged {converged_steps} times on iteration {n}."
-                        )
+                        print(f"Converged {converged_steps} times on iteration {n}.")
                     if n < n_crit and converged_steps > 0:
                         converged_steps = 0
                     if converged_steps > 3:
@@ -330,27 +323,19 @@ def plot_summary_data(project_name):
         return data
 
     nc_data = get_data(f"data/{project_name}/summary_data/nc_data.csv")
-    porosity_data = get_data(
-        f"data/{project_name}/summary_data/porosity_data.csv"
-    )
-    run_time_data = get_data(
-        f"data/{project_name}/summary_data/run_time_data.csv"
-    )
+    porosity_data = get_data(f"data/{project_name}/summary_data/porosity_data.csv")
+    run_time_data = get_data(f"data/{project_name}/summary_data/run_time_data.csv")
     permeability_data = get_data(
         f"data/{project_name}/summary_data/permeability_data.csv"
     )
-    wss_mean_data = get_data(
-        f"data/{project_name}/summary_data/wss_mean_data.csv"
-    )
+    wss_mean_data = get_data(f"data/{project_name}/summary_data/wss_mean_data.csv")
 
     fig, ax = plt.subplots(3, 2, sharex=True)
     err_nc = np.std(nc_data, axis=1)
     ax[0, 0].errorbar(lengths, np.ma.mean(nc_data, axis=1), yerr=err_nc)
     ax[0, 0].set_ylabel("Number of circles")
     err_porosity = np.std(porosity_data, axis=1)
-    ax[0, 1].errorbar(
-        lengths, np.ma.mean(porosity_data, axis=1), yerr=err_porosity
-    )
+    ax[0, 1].errorbar(lengths, np.ma.mean(porosity_data, axis=1), yerr=err_porosity)
     ax[0, 1].set_ylabel("Porosity")
 
     err_rt = np.std(run_time_data, axis=1)
@@ -366,9 +351,7 @@ def plot_summary_data(project_name):
     ax[1, 1].set_ylabel("Error")
 
     err_perm = np.std(permeability_data, axis=1)
-    ax[2, 0].errorbar(
-        lengths, np.ma.mean(permeability_data, axis=1), yerr=err_perm
-    )
+    ax[2, 0].errorbar(lengths, np.ma.mean(permeability_data, axis=1), yerr=err_perm)
     ax[2, 0].set_ylabel("Permeability")
     ax[2, 0].set_xlabel("Length (m)")
     err_wss = np.std(wss_mean_data, axis=1)

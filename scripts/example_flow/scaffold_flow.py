@@ -7,9 +7,7 @@ import numpy as np
 # generating the blobs
 np.random.seed(1)
 shape = (500, 500)
-dp_noise = generate_noise(
-    shape=shape, sigma=25, iter=1, porosity=0.95, clear=True
-)
+dp_noise = generate_noise(shape=shape, sigma=25, iter=1, porosity=0.95, clear=True)
 num_points = 100
 tcks = get_boundary_curves(dp_noise, 0.0)
 

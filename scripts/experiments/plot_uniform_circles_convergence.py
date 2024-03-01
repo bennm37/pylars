@@ -54,13 +54,9 @@ def concatenate(project_name, lengths):
         all_summary_dfs.append(summary_dfs)
     for name in summary_names:
         for i, length in enumerate(lengths):
-            concat_summary_dfs[name].iloc[i] = all_summary_dfs[i][name].loc[0][
-                1:1001
-            ]
+            concat_summary_dfs[name].iloc[i] = all_summary_dfs[i][name].loc[0][1:1001]
         concat_summary_dfs[name].index.name = "Lengths"
-        concat_summary_dfs[name].to_csv(
-            f"{root}/{out_name}/summary_data/{name}.csv"
-        )
+        concat_summary_dfs[name].to_csv(f"{root}/{out_name}/summary_data/{name}.csv")
 
 
 def plot_convergence_p_wss(project_name, scale=None):
@@ -84,9 +80,7 @@ def plot_convergence_p_wss(project_name, scale=None):
     permeability_data = get_data(
         f"data/{project_name}/summary_data/permeability_data.csv"
     )
-    wss_mean_data = get_data(
-        f"data/{project_name}/summary_data/wss_mean_data.csv"
-    )
+    wss_mean_data = get_data(f"data/{project_name}/summary_data/wss_mean_data.csv")
     if scale is not None:
         L, U, mu, grad_p = scale
         # the simulations are run with a non-dimensional pressure drop of 2.
@@ -155,9 +149,7 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
             if filename.startswith("seed_") and filename.endswith(".npz")
         ]
         # sort the filenames
-        filenames = sorted(
-            filenames, key=lambda x: int(x.split("_")[1].split(".")[0])
-        )
+        filenames = sorted(filenames, key=lambda x: int(x.split("_")[1].split(".")[0]))
         for filename in filenames:
             data = np.load(f"data/{project_name}/{name}/{filename}")
             wss_data_i = data["wss_data"]
@@ -175,11 +167,7 @@ def plot_wss_distribution(project_name, unfinished=0, scale=None):
     ax[0].set_ylabel("Probability Density")
     for i, name in enumerate(names):
         mean = np.mean(hist_data[name], axis=0)
-        err = (
-            1.96
-            * np.std(hist_data[name], axis=0)
-            / np.sqrt(len(hist_data[name]))
-        )
+        err = 1.96 * np.std(hist_data[name], axis=0) / np.sqrt(len(hist_data[name]))
         ax[i].plot(
             bin_centers,
             mean,
@@ -205,9 +193,7 @@ if __name__ == "__main__":
     project_name = "uniform_circles"
     # fig, ax = plot_summary_data(project_name, scale=(1e-6, 1e-6, 1e-3, 2500))
     # plt.show()
-    fig, ax = plot_convergence_p_wss(
-        project_name, scale=(1e-6, 1e-6, 1e-3, 2500)
-    )
+    fig, ax = plot_convergence_p_wss(project_name, scale=(1e-6, 1e-6, 1e-3, 2500))
     fig.set_size_inches(6, 2)
     plt.tight_layout()
     plt.savefig(f"media/{project_name}_convergence.pdf", bbox_inches="tight")
@@ -217,7 +203,5 @@ if __name__ == "__main__":
     fig, ax = plot_wss_distribution(
         project_name, unfinished=1, scale=(1e-6, 1e-6, 1e-3, 2500)
     )
-    plt.savefig(
-        f"media/{project_name}_wss_distribution.pdf", bbox_inches="tight"
-    )
+    plt.savefig(f"media/{project_name}_wss_distribution.pdf", bbox_inches="tight")
     plt.show()

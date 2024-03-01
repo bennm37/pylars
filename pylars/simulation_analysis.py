@@ -146,9 +146,9 @@ class SimulationAnalysis:
         movers = []
         if domain.interior_curves is not None:
             for interior_curve in domain.interior_curves:
-                points = domain.boundary_points[
-                    domain.indices[interior_curve]
-                ].reshape(-1)
+                points = domain.boundary_points[domain.indices[interior_curve]].reshape(
+                    -1
+                )
                 points = np.array([points.real, points.imag]).T
                 poly = patches.Polygon(points, color="w", zorder=2)
                 patch = ax.add_patch(poly)
@@ -180,13 +180,9 @@ class SimulationAnalysis:
                 linewidths=0.5,
             )
             if self.mover_data is not None:
-                p = np.array(
-                    [self.position_data[i].real, self.position_data[i].imag]
-                ).T
+                p = np.array([self.position_data[i].real, self.position_data[i].imag]).T
                 velocity.set_offsets(p)
-                velocity.set_UVC(
-                    self.velocity_data[i].real, self.velocity_data[i].imag
-                )
+                velocity.set_UVC(self.velocity_data[i].real, self.velocity_data[i].imag)
                 direction.set_offsets(p)
                 direction.set_UVC(
                     np.cos(self.angle_data[i]), np.sin(self.angle_data[i])
@@ -196,9 +192,7 @@ class SimulationAnalysis:
                 movers = []
                 domain = self.solution_data[i].problem.domain
                 for mover in domain.movers:
-                    points = domain.boundary_points[
-                        domain.indices[mover]
-                    ].reshape(-1)
+                    points = domain.boundary_points[domain.indices[mover]].reshape(-1)
                     points = np.array([points.real, points.imag]).T
                     poly = patches.Polygon(points, color="w", zorder=2)
                     patch = ax.add_patch(poly)
@@ -227,37 +221,27 @@ class SimulationAnalysis:
             self.psi_data[i, :, :] = sol.psi(Z.flatten()).reshape(
                 resolution, resolution
             )
-            self.uv_data[i, :, :] = sol.uv(Z.flatten()).reshape(
-                resolution, resolution
-            )
+            self.uv_data[i, :, :] = sol.uv(Z.flatten()).reshape(resolution, resolution)
         self.levels = self.psi_data[:, 0, :: resolution // n_levels].real
         self.levels.sort(axis=1)
         print("finished")
 
-    def generate_pathlines(
-        self, start_frame, end_frame, starting_positions=100
-    ):
+    def generate_pathlines(self, start_frame, end_frame, starting_positions=100):
         """Generate pathlines."""
         if isinstance(starting_positions, int):
-            starting_positions = (
-                -1 + np.linspace(-1, 1, starting_positions) * 1j
-            )
+            starting_positions = -1 + np.linspace(-1, 1, starting_positions) * 1j
         times = self.time_data[start_frame:end_frame]
         n_particles = len(starting_positions)
         n_steps = len(times)
         dt = np.diff(self.time_data)[0]
-        pathline_data = np.zeros(
-            (n_steps + 1, n_particles), dtype=np.complex128
-        )
+        pathline_data = np.zeros((n_steps + 1, n_particles), dtype=np.complex128)
         pathline_velocity_data = np.zeros(
             (n_steps + 1, n_particles), dtype=np.complex128
         )
         pathline_data[0, :] = starting_positions
         for i in range(n_steps):
             velocities = (
-                self.solution_data[start_frame + i]
-                .uv(pathline_data[i, :])
-                .reshape(-1)
+                self.solution_data[start_frame + i].uv(pathline_data[i, :]).reshape(-1)
             )
             pathline_velocity_data[i, :] = velocities
             pathline_data[i + 1, :] = pathline_data[i, :] + velocities * dt

@@ -34,9 +34,7 @@ a = Analysis(sol)
 fig, ax = a.plot(resolution=300)
 max = a.psi_values[~np.isnan(a.psi_values)].max()
 levels_moffat = max + np.linspace(-6e-6, 0, 10)
-ax.contour(
-    a.X, a.Y, a.psi_values, colors="y", levels=levels_moffat, linewidths=0.3
-)
+ax.contour(a.X, a.Y, a.psi_values, colors="y", levels=levels_moffat, linewidths=0.3)
 ax.axis("off")
 # ax.scatter(
 #     prob.domain.poles[:, -18:].real,

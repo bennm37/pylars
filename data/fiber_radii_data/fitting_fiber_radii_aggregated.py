@@ -12,13 +12,10 @@ fig, axs = plt.subplots(8, 2, sharex=True, sharey=True)
 
 # To figure out the sample names:
 sampleKeys = [key for key in radii_df.keys() if key.endswith(".csv")]
-sampleNames = [
-    key.split("_")[0] for key in radii_df.keys() if key.endswith(".csv")
-]
+sampleNames = [key.split("_")[0] for key in radii_df.keys() if key.endswith(".csv")]
 sampleNames = list(dict.fromkeys(sampleNames))
 nameKeys = [
-    [key for key in sampleKeys if sampleName in key]
-    for sampleName in sampleNames
+    [key for key in sampleKeys if sampleName in key] for sampleName in sampleNames
 ]
 
 axis_dict = {
@@ -97,9 +94,9 @@ for keys, cols in zip(nameKeys, nameData):
     loc = 0.0
     if fitGamma:
         f = lambda x, a, scale: gamma.pdf(x, a=a, scale=scale)
-        a_gamma, scale_gamma = curve_fit(
-            f, binCenters, normHist, maxfev=10000, p0=p0
-        )[0]
+        a_gamma, scale_gamma = curve_fit(f, binCenters, normHist, maxfev=10000, p0=p0)[
+            0
+        ]
         gammaParamsDict[sampleName] = [a_gamma, loc, scale_gamma]
         residuals = normHist - f(binCenters, a_gamma, scale_gamma)
         print(f"Gamma parmaeters are {a_gamma=}, {loc=}, {scale_gamma=}")
@@ -145,8 +142,7 @@ for keys, cols in zip(nameKeys, nameData):
         if fitLognorm:
             ax.plot(
                 D,
-                lognorm.pdf(D, s=s_lognorm, loc=loc, scale=scale_lognorm)
-                * 100,
+                lognorm.pdf(D, s=s_lognorm, loc=loc, scale=scale_lognorm) * 100,
                 color=colorLognorm,
                 alpha=1.0,
                 linestyle=linestyleLognorm,
@@ -185,9 +181,7 @@ if fitGamma:
     gammaRSquaredDf = pd.DataFrame.from_dict(gammaRSquaredDict, orient="index")
     gammaRSquaredDf.to_csv("data/fiber_radii_gamma_r2.csv", index=True)
 if fitLognorm:
-    lognormRSquaredDf = pd.DataFrame.from_dict(
-        lognormRSquaredDict, orient="index"
-    )
+    lognormRSquaredDf = pd.DataFrame.from_dict(lognormRSquaredDict, orient="index")
     lognormRSquaredDf.to_csv("data/fiber_radii_lognorm_r2.csv", index=True)
 
 rSquaredDf = pd.concat([lognormRSquaredDf, gammaRSquaredDf], axis=1)

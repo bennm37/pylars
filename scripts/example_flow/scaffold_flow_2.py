@@ -7,9 +7,7 @@ import numpy as np
 # generating the blobs
 np.random.seed(0)
 shape = (500, 500)
-dp_noise = generate_noise(
-    shape=shape, sigma=15, iter=1, porosity=0.95, clear=True
-)
+dp_noise = generate_noise(shape=shape, sigma=15, iter=1, porosity=0.95, clear=True)
 num_points = 100
 tcks = get_boundary_curves(dp_noise, 0.00)
 
@@ -69,9 +67,7 @@ for interior in interiors:
 solver = Solver(prob, verbose=True)
 sol = solver.solve(check=False, normalize=False, weight=False)
 an = Analysis(sol)
-print(
-    f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max():.2e}"
-)
+print(f"Residual: {np.abs(solver.A @ solver.coefficients - solver.b).max():.2e}")
 fig, ax = an.plot(resolution=200, interior_patch=True, enlarge_patch=1.1)
 fig.set_size_inches(3, 3)
 ax.axis("off")

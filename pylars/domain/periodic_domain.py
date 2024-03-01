@@ -66,18 +66,12 @@ class PeriodicDomain(Domain):
         side = str(len(self.sides))
         self.sides = np.append(self.sides, side)
         self.periodic_curves += [side]
-        self._generate_intersecting_images(
-            side, f, num_points, centroid, deg_laurent
-        )
+        self._generate_intersecting_images(side, f, num_points, centroid, deg_laurent)
         self._update_polygon()
         if mirror_laurents:
-            self._generate_mirror_laurents(
-                side, deg_laurent, centroid, mirror_tol
-            )
+            self._generate_mirror_laurents(side, deg_laurent, centroid, mirror_tol)
         if image_laurents:
-            self._generate_image_laurents(
-                side, deg_laurent, centroid, image_tol
-            )
+            self._generate_image_laurents(side, deg_laurent, centroid, image_tol)
         if aaa:
             self._generate_aaa_poles(side, mmax=aaa_mmax)
         return side
@@ -138,13 +132,9 @@ class PeriodicDomain(Domain):
                     image,
                 )
                 if side not in self.image_indices.keys():
-                    self.image_indices[side] = [
-                        len(self.exterior_laurents) - 1
-                    ]
+                    self.image_indices[side] = [len(self.exterior_laurents) - 1]
                 else:
-                    self.image_indices[side] += [
-                        len(self.exterior_laurents) - 1
-                    ]
+                    self.image_indices[side] += [len(self.exterior_laurents) - 1]
 
     def _generate_intersecting_images(
         self, side, curve, num_points, centroid, deg_laurent
@@ -169,12 +159,8 @@ class PeriodicDomain(Domain):
             )
             if len(intersecting_inds[0]) == len(translated_points):
                 # add the whole curve if fully contained
-                self._generate_interior_laurent_series(
-                    side, deg_laurent, image
-                )
-                self.indices[side] = [
-                    i for i in range(n_bp, n_bp + num_points)
-                ]
+                self._generate_interior_laurent_series(side, deg_laurent, image)
+                self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
                 self.boundary_points = np.concatenate(
                     [self.boundary_points, translated_points.reshape(-1, 1)],
                     axis=0,
@@ -182,12 +168,8 @@ class PeriodicDomain(Domain):
                 self.interior_curves += [side]
                 break
             if len(intersecting_inds[0]) > 0:
-                self._generate_exterior_laurent_series(
-                    side, deg_laurent, image
-                )
-                rect_inds = np.concatenate(
-                    [self.indices[str(i)] for i in range(4)]
-                )
+                self._generate_exterior_laurent_series(side, deg_laurent, image)
+                rect_inds = np.concatenate([self.indices[str(i)] for i in range(4)])
                 rect_points = self.boundary_points[rect_inds]
                 trans_poly_points = np.array(
                     [translated_points.real, translated_points.imag]
@@ -197,17 +179,13 @@ class PeriodicDomain(Domain):
                     [
                         ind
                         for ind, rect_point in enumerate(rect_points)
-                        if poly.contains(
-                            Point([rect_point.real, rect_point.imag])
-                        )
+                        if poly.contains(Point([rect_point.real, rect_point.imag]))
                     ]
                 )
                 # intersecting points may indices may jump over the end
                 # of the array, fixing this
                 if not np.all(np.diff(intersecting_inds) == 1):
-                    jump = (
-                        np.where(np.diff(intersecting_inds)[0] != 1)[0][0] + 1
-                    )
+                    jump = np.where(np.diff(intersecting_inds)[0] != 1)[0][0] + 1
                     intersecting_inds = np.concatenate(
                         [
                             intersecting_inds[0][jump:] - num_points,
@@ -220,8 +198,7 @@ class PeriodicDomain(Domain):
 
                 n_bp = len(self.boundary_points)
                 new_indices = [
-                    int(i)
-                    for i in range(n_bp, n_bp + len(intersecting_points))
+                    int(i) for i in range(n_bp, n_bp + len(intersecting_points))
                 ]
                 if self.indices[side] is None:
                     self.indices[side] = new_indices
@@ -244,15 +221,11 @@ class PeriodicDomain(Domain):
                         ]
                     )
                 first_rect_point = rect_points[in_curve_indices[0]]
-                first_rect_ind = np.where(
-                    self.exterior_points == first_rect_point
-                )[0][0]
-                last_rect_point = rect_points[
-                    (in_curve_indices[-1]) % len(rect_points)
+                first_rect_ind = np.where(self.exterior_points == first_rect_point)[0][
+                    0
                 ]
-                last_rect_ind = np.where(
-                    self.exterior_points == last_rect_point
-                )[0][0]
+                last_rect_point = rect_points[(in_curve_indices[-1]) % len(rect_points)]
+                last_rect_ind = np.where(self.exterior_points == last_rect_point)[0][0]
                 if first_rect_ind >= last_rect_ind:
                     after = self.exterior_points[last_rect_ind:first_rect_ind]
                     self.exterior_points = np.concatenate(
@@ -269,7 +242,5 @@ class PeriodicDomain(Domain):
                 # intersecting_points must be inverted as non-convex segments
                 # move clockwise
                 if np.any(in_curve_indices):
-                    in_curve_indices = np.sort(
-                        in_curve_indices % len(rect_points)
-                    )
+                    in_curve_indices = np.sort(in_curve_indices % len(rect_points))
                     self.remove(in_curve_indices)

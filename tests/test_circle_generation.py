@@ -40,15 +40,11 @@ def test_lognormal_circles():
     rv = lognorm.rvs
     rv_args = {"scale": 1.20, "loc": 0.217, "s": 1.27}
     length = 100
-    centers, radii = generate_rv_circles(
-        porosity, rv, rv_args, length, min_dist=0.01
-    )
+    centers, radii = generate_rv_circles(porosity, rv, rv_args, length, min_dist=0.01)
     print("Circles generated.")
     # plot(centers, radii, length)
     assert len(centers) == len(radii)
-    assert np.isclose(
-        1 - np.sum(np.pi * radii**2) / length**2, porosity, rtol=1
-    )
+    assert np.isclose(1 - np.sum(np.pi * radii**2) / length**2, porosity, rtol=1)
 
 
 if __name__ == "__main__":

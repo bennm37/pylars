@@ -38,14 +38,12 @@ trans_speed = 0.057203348929688376 + 0.0017965981663352376j
 prob.add_boundary_condition(
     "4",
     "u[4]",
-    trans_speed.real
-    + rot_speed * circle_deriv(np.linspace(0, 1, num_points)).real,
+    trans_speed.real + rot_speed * circle_deriv(np.linspace(0, 1, num_points)).real,
 )
 prob.add_boundary_condition(
     "4",
     "v[4]",
-    trans_speed.imag
-    + rot_speed * circle_deriv(np.linspace(0, 1, num_points)).imag,
+    trans_speed.imag + rot_speed * circle_deriv(np.linspace(0, 1, num_points)).imag,
 )
 
 solver = Solver(prob)

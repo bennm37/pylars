@@ -45,9 +45,7 @@ def get_force_torque_stokeslet(
         spacing="linear",
     )
     circle = lambda t: centroid + radius * np.exp(2j * np.pi * t)  # noqa: E731
-    circle_deriv = (
-        lambda t: 2j * radius * np.pi * np.exp(2j * np.pi * t)
-    )  # noqa: E731
+    circle_deriv = lambda t: 2j * radius * np.pi * np.exp(2j * np.pi * t)  # noqa: E731
     num_points = 300
     mover = Mover(
         circle,

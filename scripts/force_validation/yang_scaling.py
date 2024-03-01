@@ -44,9 +44,7 @@ def get_force_torque(
         spacing="linear",
     )
     circle = lambda t: centroid + radius * np.exp(2j * np.pi * t)  # noqa: E731
-    circle_deriv = (
-        lambda t: 2j * radius * np.pi * np.exp(2j * np.pi * t)
-    )  # noqa: E731
+    circle_deriv = lambda t: 2j * radius * np.pi * np.exp(2j * np.pi * t)  # noqa: E731
     num_points = 500
     mover = Mover(
         circle,
@@ -131,9 +129,7 @@ def get_data(filename="yang_scaling.npz", n_samples=10):
     )
 
 
-def plot_data(
-    filename="data/yang_scaling.npz", plotname="media/yang_scaling.pdf"
-):
+def plot_data(filename="data/yang_scaling.npz", plotname="media/yang_scaling.pdf"):
     """Recreate Figure 6 from Yang et. al."""
     data = np.load(filename)
     force_results = data["force_results"]
@@ -146,12 +142,8 @@ def plot_data(
     # generate scaling solution data
     CF = -1.14
     CT = -np.pi * np.sqrt(2)
-    eps_bs = np.array(
-        [(length - R + centroids[i].imag) / R for i, R in enumerate(Rs)]
-    )
-    eps_ts = np.array(
-        [(length - R - centroids[i].imag) / R for i, R in enumerate(Rs)]
-    )
+    eps_bs = np.array([(length - R + centroids[i].imag) / R for i, R in enumerate(Rs)])
+    eps_ts = np.array([(length - R - centroids[i].imag) / R for i, R in enumerate(Rs)])
     force_scaling = np.array(
         [
             CF
@@ -165,11 +157,7 @@ def plot_data(
     )
     torque_scaling = np.array(
         [
-            2
-            * CT
-            * omega
-            * R**2
-            * (1 / (eps_bs[i] ** 0.5) + 1 / (eps_ts[i] ** 0.5))
+            2 * CT * omega * R**2 * (1 / (eps_bs[i] ** 0.5) + 1 / (eps_ts[i] ** 0.5))
             for i, R in enumerate(Rs)
         ]
     )
@@ -214,9 +202,7 @@ def plot_data(
     ax[1].set_xlabel("$e/e_{max}$")
     ax[1].set_ylabel("$(1/k-1)^{1/2} T_x/(4\pi\mu\omega R^2)$")
     ax[1].legend()
-    fig.suptitle(
-        "Comparison of Force and Torque to Scaling Solution from Yang et. al."
-    )
+    fig.suptitle("Comparison of Force and Torque to Scaling Solution from Yang et. al.")
     return fig, ax
 
 

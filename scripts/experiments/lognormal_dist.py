@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 scale, s, loc = np.exp(10), 1, 10
-x = np.linspace(
-    lognorm.ppf(0.01, s, loc, scale), lognorm.ppf(0.99, s, loc, scale), 100
-)
+x = np.linspace(lognorm.ppf(0.01, s, loc, scale), lognorm.ppf(0.99, s, loc, scale), 100)
 y = lognorm.pdf(x, s=s, loc=loc, scale=scale)
 data = lognorm.rvs(s=s, loc=loc, scale=scale, size=10000)
 fig, ax = plt.subplots(2, 1)

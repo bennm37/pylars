@@ -54,9 +54,7 @@ def run(
     solver = Solver(prob)
     sol = solver.solve(normalize=False)
     an = Analysis(sol)
-    print(
-        f"residusal = {np.abs(solver.A @ solver.coefficients - solver.b).max()}"
-    )
+    print(f"residusal = {np.abs(solver.A @ solver.coefficients - solver.b).max()}")
     fig, ax = an.plot(
         resolution=resolution,
         interior_patch=True,

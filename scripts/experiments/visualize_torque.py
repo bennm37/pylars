@@ -13,9 +13,7 @@ t = np.linspace(0, 1, n)
 R = 0.5
 x = centroid[0] + R * np.cos(2 * np.pi * t)
 y = centroid[1] + R * np.sin(2 * np.pi * t)
-X, Y = np.meshgrid(
-    np.linspace(-1, 1, 20), np.linspace(-1, 1, 20), indexing="ij"
-)
+X, Y = np.meshgrid(np.linspace(-1, 1, 20), np.linspace(-1, 1, 20), indexing="ij")
 if type == "poiseuille":
     U = 1 - Y**2
     V = np.zeros_like(Y)

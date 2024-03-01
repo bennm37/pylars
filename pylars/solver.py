@@ -1,4 +1,5 @@
 """The Solver class."""
+
 from pylars.numerics import va_orthogonalise, va_evaluate, make_function
 from pylars.problem import DEPENDENT, INDEPENDENT
 from pylars.solution import Solution
@@ -49,7 +50,7 @@ class Solver:
         for side in self.domain.sides:
             expression = re.sub(
                 f"\\[{side}\\]", f'[self.domain.indices["{side}"]]', expression
-            )   
+            )
         for identifier, code in zip(
             INDEPENDENT,
             ["np.real(points)", "np.imag(points)"],
@@ -64,8 +65,8 @@ class Solver:
         u = lambda z: self.functions[1](z).real  # noqa F841
         v = lambda z: self.functions[1](z).imag  # noqa F841
         p = self.functions[2]  # noqa F841
-        e11 = lambda z: self.functions[4](z).real  # noqa F841
-        e12 = lambda z: self.functions[4](z).imag  # noqa F841
+        e11 = lambda z: self.functions[4](z)[:, 0, 0]  # noqa F841
+        e12 = lambda z: self.functions[4](z)[:, 0, 1]  # noqa F841
         code_dependent = [
             "psi",
             "u",
@@ -89,6 +90,7 @@ class Solver:
             ["np.real(points)", "np.imag(points)"],
         ):
             expression = expression.replace(identifier, code)
+
         result = eval(expression)
         return result
 
@@ -218,9 +220,7 @@ class Solver:
         b_torch = torch.tensor(self.b.copy())
         A_torch = A_torch.to(device)
         b_torch = b_torch.to(device)
-        results = torch.linalg.lstsq(
-            A_torch, b_torch, rcond=None, driver="gelsd"
-        )
+        results = torch.linalg.lstsq(A_torch, b_torch, rcond=None, driver="gelsd")
         self.coefficients = np.array(results[0])
         if self.verbose:
             print("Constructing Functions ...")
@@ -234,18 +234,14 @@ class Solver:
                 print(
                     "Warning: using (inaccurate) residual error estimate for periodic domain."
                 )
-                self.max_error = np.max(
-                    np.abs(self.A @ self.coefficients - self.b)
-                )
+                self.max_error = np.max(np.abs(self.A @ self.coefficients - self.b))
                 self.errors = None
             print(f"Max Error: {self.max_error}")
         if pickle:
             self.pickle_solution(filename)
         self.run_time = perf_counter() - self.problem.creation_time
         print(f"Run Time: {self.run_time}")
-        return Solution(
-            self.problem.copy(), *self.functions, error=self.max_error
-        )
+        return Solution(self.problem.copy(), *self.functions, error=self.max_error)
 
     def construct_linear_system(self):
         """Use the basis functions to construct the linear system.
@@ -298,13 +294,9 @@ class Solver:
             centers = np.array(
                 [laurent_series[0] for laurent_series in self.domain.laurents]
             ).reshape(1, -1)
-            flog_a = np.log(a - centers) + (
-                (a - centers) * np.log(a) + a
-            ) / np.conj(a)
+            flog_a = np.log(a - centers) + ((a - centers) * np.log(a) + a) / np.conj(a)
             glog_a = np.log(a - centers)
-            flog_b = np.log(b - centers) + (
-                (b - centers) * np.log(b) + b
-            ) / np.conj(b)
+            flog_b = np.log(b - centers) + ((b - centers) * np.log(b) + b) / np.conj(b)
             zero = np.zeros_like(r0_a, dtype=np.float64)
             zero_log = np.zeros_like(flog_a, dtype=np.float64)
             self.A[-4, :] = np.hstack(
@@ -364,19 +356,11 @@ class Solver:
             self.A = np.vstack([self.A, np.zeros((4, n_col))])
             r0_a, r1_a = va_evaluate(a, self.hessenbergs, self.domain.poles)
             zero = np.zeros_like(r0_a, dtype=np.float64)
-            self.A[-4, :] = np.hstack(
-                [np.real(r0_a), zero, -np.imag(r0_a), zero]
-            )
-            self.A[-3, :] = np.hstack(
-                [np.imag(r0_a), zero, np.real(r0_a), zero]
-            )
-            self.A[-2, :] = np.hstack(
-                [zero, np.real(r0_a), zero, -np.imag(r0_a)]
-            )
+            self.A[-4, :] = np.hstack([np.real(r0_a), zero, -np.imag(r0_a), zero])
+            self.A[-3, :] = np.hstack([np.imag(r0_a), zero, np.real(r0_a), zero])
+            self.A[-2, :] = np.hstack([zero, np.real(r0_a), zero, -np.imag(r0_a)])
             r0_b, r1_b = va_evaluate(b, self.hessenbergs, self.domain.poles)
-            self.A[-1, :] = np.hstack(
-                [np.real(r0_b), zero, -np.imag(r0_b), zero]
-            )
+            self.A[-1, :] = np.hstack([np.real(r0_b), zero, -np.imag(r0_b), zero])
 
     def get_dependents(self):
         """Create the dependent variable arrays.
@@ -439,10 +423,7 @@ class Solver:
             self.E12 = np.hstack((e12_1, e12_2, e12_3, e12_4))
         else:
             centers = np.array(
-                [
-                    laurent_series[0]
-                    for laurent_series in self.domain.interior_laurents
-                ]
+                [laurent_series[0] for laurent_series in self.domain.interior_laurents]
             ).reshape(1, -1)
             num_log = centers.shape[1]
             z_m_centers = z - centers
@@ -607,13 +588,9 @@ class Solver:
                     ).reshape(-1)
                 elif isinstance(value, np.ndarray):
                     if side in self.domain.movers:
-                        value_sol = self.problem.error_values[side][i].reshape(
-                            -1, 1
-                        )
+                        value_sol = self.problem.error_values[side][i].reshape(-1, 1)
                     else:
-                        raise NotImplementedError(
-                            "Non-Mover Array Error Calculation."
-                        )
+                        raise NotImplementedError("Non-Mover Array Error Calculation.")
                 else:
                     value_sol = value
                 self.errors[side][i] = np.abs(expression_sol - value_sol)

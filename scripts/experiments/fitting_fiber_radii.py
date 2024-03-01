@@ -12,9 +12,7 @@ fig, axs = plt.subplots(8, 2, sharex=True, sharey=True)
 
 # To figure out the sample names:
 sampleKeys = [key for key in radii_df.keys() if key.endswith(".csv")]
-sampleNames = [
-    key.split("_")[0] for key in radii_df.keys() if key.endswith(".csv")
-]
+sampleNames = [key.split("_")[0] for key in radii_df.keys() if key.endswith(".csv")]
 r_squared_dict = {}
 # sampleNames = list(dict.fromkeys(sampleNames)) # workaround to drop duplicates
 aggregate

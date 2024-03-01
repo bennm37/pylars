@@ -46,9 +46,7 @@ class CurvedDomain(Domain):
         if not np.isclose(f(0), f(1)):
             raise ValueError("Curve must be closed")
         points = f(np.linspace(0, 1, num_points)).astype(np.complex128)
-        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(
-            np.complex128
-        )
+        error_points = f(np.linspace(0, 1, 2 * num_points)).astype(np.complex128)
         # create a shapely LineString and check it is simple
         # (i.e. does not intersect itself)
         line = LineString(np.array([points.real, points.imag]).T)
@@ -70,8 +68,6 @@ class CurvedDomain(Domain):
             _, poles, _, _ = aaa_func(f, z)
         else:
             _, poles, _, _ = aaa_func(f, z, mmax=mmax)
-        exterior_poles = [
-            pole for pole in poles if not self.__contains__(pole)
-        ]
+        exterior_poles = [pole for pole in poles if not self.__contains__(pole)]
         self.poles = np.array(exterior_poles)
         self.num_poles = len(self.poles)

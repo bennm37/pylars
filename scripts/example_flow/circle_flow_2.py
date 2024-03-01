@@ -17,11 +17,7 @@ def generate_circles(n_circles, radius):
         if i % 100000 == 0:
             print(i)
             print(f"{n_current=}")
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids)) > 2 * radius:
             centroids = np.append(centroids, centroid)
             n_current += 1
@@ -38,11 +34,7 @@ def generate_normal_circles(n_circles, mean, std):
     n_current = 1
     radius = np.random.normal(mean, std, 1)
     while n_current < n_circles:
-        centroid = (
-            L * np.random.rand(1)
-            - L / 2
-            + 1j * (L * np.random.rand(1) - L / 2)
-        )
+        centroid = L * np.random.rand(1) - L / 2 + 1j * (L * np.random.rand(1) - L / 2)
         if np.min(np.abs(centroid - centroids) / (radii + radius)) > 1.5:
             centroids = np.append(centroids, centroid)
             radii = np.append(radii, radius)
@@ -95,6 +87,6 @@ if __name__ == "__main__":
     fig, ax = an.plot(resolution=300, interior_patch=True, enlarge_patch=1.1)
     plt.show()
     # plot the inlet profile
-    
+
     # an.plot_errors(solver.errors)
     # plt.show()

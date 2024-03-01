@@ -69,9 +69,7 @@ def test_large_va_orthongalise():
     # check Q has orthogonal columns with norm M
     # an exception for ATOL is made here as Q will only be
     # approximately orthogonal
-    assert np.allclose(
-        (Q.conj().T @ Q), len(Z) * np.eye(11), atol=1e-10, rtol=RTOL
-    )
+    assert np.allclose((Q.conj().T @ Q), len(Z) * np.eye(11), atol=1e-10, rtol=RTOL)
 
 
 def test_poles_va_orthogonalise():
@@ -82,17 +80,13 @@ def test_poles_va_orthogonalise():
     from scipy.io import loadmat
 
     n, num_poles = 24, 24
-    test_answers = loadmat(
-        f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat"
-    )
+    test_answers = loadmat(f"tests/data/lid_driven_cavity_n_{n}_np_{num_poles}.mat")
     H_answer = test_answers["Hes"]
     hessenbergs_answer = [H_answer[:, k][0] for k in range(H_answer.shape[1])]
     Q_answer = test_answers["Q"]
     Z_answer = test_answers["Z"]
     poles_answer = test_answers["Pol"]
-    poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(
-        4, 24
-    )
+    poles_answer = np.array([poles_answer[0, i] for i in range(4)]).reshape(4, 24)
     corners = [1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j]
     prob = Problem()
     prob.add_exterior_polygon(
@@ -104,9 +98,7 @@ def test_poles_va_orthogonalise():
         num_poles=num_poles,
     )
     # check the MATALB domain points and poles are the same
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     assert np.allclose(prob.domain.poles, poles_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise(
         prob.domain.boundary_points.reshape(1200, 1),
@@ -159,9 +151,7 @@ def test_laurent_va_orthogonalise():
         deg_laurent=deg_laurent,
         centroid=0.0 + 0.0j,
     )
-    assert np.allclose(
-        prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL
-    )
+    assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
     hessenbergs, Q = va_orthogonalise(
         prob.domain.boundary_points.reshape(-1, 1),
         deg_poly,
