@@ -1,4 +1,5 @@
 """Module defining the Problem Class."""
+
 from pylars import Domain, PeriodicDomain, CurvedDomain
 from collections.abc import Sequence
 from time import perf_counter

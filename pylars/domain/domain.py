@@ -346,6 +346,16 @@ class Domain:
             for i in range(len(self.corners))
         ]
 
+    def _generate_clustered_poles(
+        self, num_poles, location, direction, length_scale=1, sigma=4
+    ):
+        pole_spacing = cluster(num_poles, length_scale, sigma)
+        self.poles = list(self.poles) + [location + direction * pole_spacing]
+
+    def _generate_pole_ring(self, num_poles, radius, center):
+        thetas = np.linspace(0, 2 * np.pi, num_poles, endpoint=False)
+        self.poles = list(self.poles) + [center + radius * np.exp(1j * thetas)]
+
     def _get_centroid(self, side):
         """Calculate the centroid of a side."""
         points = self.boundary_points[self.indices[side]]
@@ -437,14 +447,18 @@ class Domain:
             fig, ax = plt.subplots()
         flat_poles = np.hstack([pole_group.flatten() for pole_group in self.poles])
         if self.exterior_laurents:
-            flat_laurents = np.hstack([laurent[0] for laurent in self.exterior_laurents])
-            flat_poles = np.hstack([flat_poles, flat_laurents])
+            flat_laurents = np.hstack(
+                [laurent[0] for laurent in self.exterior_laurents]
+            )
+            outer_most = np.hstack([flat_poles, flat_laurents])
+        else:
+            outer_most = flat_poles
         if set_lims:
             try:
-                x_min = min(flat_poles.real)
-                x_max = max(flat_poles.real)
-                y_min = min(flat_poles.imag)
-                y_max = max(flat_poles.imag)
+                x_min = min(outer_most.real)
+                x_max = max(outer_most.real)
+                y_min = min(outer_most.imag)
+                y_max = max(outer_most.imag)
             except ValueError:
                 x_min = min(self.exterior_points.real)
                 x_max = max(self.exterior_points.real)
@@ -493,7 +507,8 @@ class Domain:
             s=10,
         )
         handles = [lightning_poles]
-        degrees = []
+        interior_degrees = []
+        exterior_degrees = []
         degree_labels = []
         for centroid, degree in self.interior_laurents:
             laruent = ax.scatter(
@@ -502,8 +517,8 @@ class Domain:
                 c=[(0, (1 - np.exp(-degree / 10)), 0)],
                 s=10,
             )
-            if degree not in degrees:
-                degrees.append(degree)
+            if degree not in interior_degrees:
+                interior_degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree}) with log")
         for centroid, degree in self.exterior_laurents:
@@ -513,16 +528,14 @@ class Domain:
                 c=[(0, (1 - np.exp(-degree / 10)), 0)],
                 s=10,
             )
-            if degree not in degrees:
-                degrees.append(degree)
+            if degree not in exterior_degrees:
+                exterior_degrees.append(degree)
                 handles.append(laruent)
                 degree_labels.append(f"Laurent series ({degree})")
         if legend:
             ax.legend(
                 handles=handles,
                 labels=["Lightning poles"] + degree_labels,
-                loc="upper center",
-                bbox_to_anchor=(0.5, 1),
             )
         ax.set_aspect("equal")
         ax.axis("off")

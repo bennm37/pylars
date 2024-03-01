@@ -5,8 +5,9 @@ import pandas as pd
 import time
 
 c = 0.76
+R = np.sqrt(c / np.pi)
 params = {
-    "num_points": 500,
+    "num_points": 600,
     "deg_laurent": 50,
     "mirror_laurents": True,
     "mirror_tol": 1.5,
@@ -15,9 +16,9 @@ prob = Problem()
 corners = [0 + 0j, 1 + 0j, 1 + 1j, 0 + 1j]
 prob.add_exterior_polygon(
     corners,
-    num_edge_points=500,
+    num_edge_points=600,
     num_poles=0,
-    deg_poly=50,
+    deg_poly=20,
     spacing="linear",
 )
 z_0 = 0.5 + 0.5j
@@ -27,6 +28,30 @@ circle_deriv = lambda t: 2j * np.pi * r * np.exp(2j * np.pi * t)
 prob.add_interior_curve(
     lambda t: z_0 + r * np.exp(2j * np.pi * t), centroid=z_0, **params
 )
+# in circle outward clustered
+s = 0.90
+# UD
+prob.domain._generate_clustered_poles(
+    10, 0.5 + 1j * (0.5 + s * R), -1j, length_scale=0.1
+)
+prob.domain._generate_clustered_poles(
+    10, 0.5 + 1j * (0.5 - s * R), 1j, length_scale=0.1
+)
+# LR
+prob.domain._generate_clustered_poles(10, (0.5 + s * R) + 0.5j, -1, length_scale=0.1)
+prob.domain._generate_clustered_poles(10, (0.5 - s * R) + 0.5j, 1, length_scale=0.1)
+# ring
+ring_radius = 2
+# prob.domain._generate_pole_ring(300, radius=2, center=0.5 + 0.5j)
+# out circle inward clustered
+# hp = 0.1
+# prob.domain._generate_clustered_poles(10, 0.5 + (1 + hp) * 1j, -1j, length_scale=1)
+# prob.domain._generate_clustered_poles(10, 0.5 - hp * 1j, 1j, length_scale=1)
+# exterior laurents
+# h = 0.5
+# d = 50
+# prob.domain._generate_exterior_laurent_series(0, d, 0.5 + 1j * (1 + h))
+# prob.domain._generate_exterior_laurent_series(0, d, 0.5 - 1j * h)
 prob.domain.plot()
 plt.show()
 delta_p = 1
