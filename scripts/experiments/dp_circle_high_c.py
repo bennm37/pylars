@@ -6,17 +6,18 @@ import time
 
 c = 0.76
 R = np.sqrt(c / np.pi)
+deg = 50
 params = {
-    "num_points": 600,
-    "deg_laurent": 50,
-    "mirror_laurents": True,
+    "num_points": 800,
+    "deg_laurent": deg,
+    "mirror_laurents": False,
     "mirror_tol": 1.5,
 }
 prob = Problem()
 corners = [0 + 0j, 1 + 0j, 1 + 1j, 0 + 1j]
 prob.add_exterior_polygon(
     corners,
-    num_edge_points=600,
+    num_edge_points=800,
     num_poles=0,
     deg_poly=20,
     spacing="linear",
@@ -28,21 +29,34 @@ circle_deriv = lambda t: 2j * np.pi * r * np.exp(2j * np.pi * t)
 prob.add_interior_curve(
     lambda t: z_0 + r * np.exp(2j * np.pi * t), centroid=z_0, **params
 )
+# Experimental
+# circle laurent series
+w = 0.30
+prob.domain._generate_interior_laurent_series(1, deg, z_0 + w)
+prob.domain._generate_interior_laurent_series(1, deg, z_0 - w)
+prob.domain._generate_interior_laurent_series(1, deg, z_0 + w * 1j)
+prob.domain._generate_interior_laurent_series(1, deg, z_0 - w * 1j)
+# mirrored laurent series
+w2 = 1
+prob.domain._generate_exterior_laurent_series(1, deg, z_0 + w2)
+prob.domain._generate_exterior_laurent_series(1, deg, z_0 - w2)
+prob.domain._generate_exterior_laurent_series(1, deg, z_0 + w2 * 1j)
+prob.domain._generate_exterior_laurent_series(1, deg, z_0 - w2 * 1j)
 # in circle outward clustered
-s = 0.90
 # UD
-prob.domain._generate_clustered_poles(
-    10, 0.5 + 1j * (0.5 + s * R), -1j, length_scale=0.1
-)
-prob.domain._generate_clustered_poles(
-    10, 0.5 + 1j * (0.5 - s * R), 1j, length_scale=0.1
-)
-# LR
-prob.domain._generate_clustered_poles(10, (0.5 + s * R) + 0.5j, -1, length_scale=0.1)
-prob.domain._generate_clustered_poles(10, (0.5 - s * R) + 0.5j, 1, length_scale=0.1)
+# s=0.9
+# prob.domain._generate_clustered_poles(
+#     10, 0.5 + 1j * (0.5 + s * R), -1j, length_scale=0.1
+# )
+# prob.domain._generate_clustered_poles(
+#     10, 0.5 + 1j * (0.5 - s * R), 1j, length_scale=0.1
+# )
+# # LR
+# prob.domain._generate_clustered_poles(10, (0.5 + s * R) + 0.5j, -1, length_scale=0.1)
+# prob.domain._generate_clustered_poles(10, (0.5 - s * R) + 0.5j, 1, length_scale=0.1)
 # ring
-ring_radius = 2
-# prob.domain._generate_pole_ring(300, radius=2, center=0.5 + 0.5j)
+# ring_radius = 2
+# prob.domain._generate_pole_ring(100, radius=1, center=0.5 + 0.5j)
 # out circle inward clustered
 # hp = 0.1
 # prob.domain._generate_clustered_poles(10, 0.5 + (1 + hp) * 1j, -1j, length_scale=1)

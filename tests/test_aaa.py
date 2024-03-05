@@ -1,4 +1,5 @@
 """Test the AAA rational approximation function from numerics.py."""
+
 ATOL, RTOL = 1e-10, 1e-1
 
 

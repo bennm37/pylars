@@ -1,4 +1,5 @@
 """Numerical methods for solving the linear system."""
+
 import numpy as np
 from numbers import Number
 from scipy.sparse import diags
@@ -376,15 +377,19 @@ def va_evaluate(
     return Q, D
 
 
-def aaa(F, Z, tol=1e-13, mmax=100):  # noqa N803
+def aaa(F, Z, tol=1e-13, mmax=100, unique=False):  # noqa N803
     """Use the AAA algorithm to compute a rational approximation of f(z)."""
     with np.errstate(divide="ignore", invalid="ignore"):
-        M = len(Z)
+        if unique:
+            Z, inds = np.unique(Z.flatten(), return_index=True)
+        Z = Z.reshape(-1, 1)
         if hasattr(F, "__call__"):
-            F = F(Z)
-        Z = np.array(Z).reshape(-1, 1)
+            F = np.array(F(Z))
+        else:
+            if unique:
+                F = np.array(F).flatten()[inds]
+        F = F.reshape(-1, 1)
         M = len(Z)
-        F = np.array(F).reshape(-1, 1)
         SF = diags(F.flatten())
         J = np.array(range(M))
         z = np.empty((0, 1))
