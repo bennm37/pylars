@@ -1,4 +1,5 @@
 """Create labelled polygonal domains."""
+
 from pylars import Domain
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,6 +18,6 @@ plt.show()
 
 # Create a non-convex domain
 corners = [0, 1, 1 + 1j, 0.5 + 0.5j, 0.5j]
-domain = Domain(corners, num_edge_points=300, num_poles=0)
+domain = Domain(corners, num_edge_points=300, num_poles=20)
 domain.plot()
 plt.show()

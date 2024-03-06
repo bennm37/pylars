@@ -127,6 +127,36 @@ class Problem:
             mirror_tol=mirror_tol,
         )
 
+    def add_interior_polygon(
+        self,
+        corners,
+        num_edge_points=100,
+        length_scale=1,
+        sigma=1,
+        num_poles=10,
+        spacing="clustered",
+    ):
+        """Create an interior curve from a parametric function.
+
+        f(t) should be a closed simply connected parametric curve
+        defined on t in [0,1].
+        """
+        if self.domain_type == "periodic":
+            raise ValueError(
+                """Can't add interior polygon to periodic domain.
+                Use add_periodic_curve instead."""
+            )
+        if self.domain is None:
+            raise ValueError("Exterior polygon must be set first.")
+        self.domain.add_interior_polygon(
+            corners=corners,
+            num_edge_points=num_edge_points,
+            num_poles=num_poles,
+            length_scale=length_scale,
+            sigma=sigma,
+            spacing=spacing,
+        )
+
     def add_periodic_curve(
         self,
         f,

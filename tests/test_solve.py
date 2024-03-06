@@ -1,4 +1,5 @@
 """Test solver functions."""
+
 from test_settings import RTOL
 
 
@@ -267,8 +268,52 @@ def test_lid_driven_cavity_solve():
     )
 
 
+def test_interior_polygon_solve():
+    from pylars import Problem, Solver, Analysis
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    prob = Problem()
+    corners = np.array([-1 - 1j, 1 - 1j, 1 + 1j, -1 + 1j])
+    prob.add_exterior_polygon(
+        corners, num_edge_points=500, deg_poly=30, num_poles=0, spacing="linear"
+    )
+    # prob.domain._generate_pole_ring(50, 2, center=0)
+    prob.domain._generate_interior_laurent_series("4", 1, 0)
+    sf = 5
+    prob.add_interior_polygon(
+        corners / sf,
+        num_edge_points=500,
+        num_poles=20,
+        length_scale=0.5 / sf,
+        spacing="clustered",
+    )
+    # prob.add_interior_curve(
+    #     lambda t: 0.5 * np.exp(2j * t * np.pi),
+    #     num_points=200,
+    #     deg_laurent=80,
+    # )
+    prob.domain.plot()
+    p_drop = 2 / 0.07
+    prob.add_boundary_condition("0", "u[0]", 0)
+    prob.add_boundary_condition("0", "v[0]", 0)
+    prob.add_boundary_condition("2", "u[2]", 0)
+    prob.add_boundary_condition("2", "v[2]", 0)
+    prob.add_boundary_condition("1", "u[1]-u[3][::-1]", 0)
+    prob.add_boundary_condition("1", "v[1]-v[3][::-1]", 0)
+    prob.add_boundary_condition("3", "p[1]-p[3][::-1]", p_drop)
+    prob.add_boundary_condition("3", "e12[1]-e12[3][::-1]", 0)
+    prob.add_boundary_condition("4", "u[4]", 0)
+    prob.add_boundary_condition("4", "v[4]", 0)
+    solver = Solver(prob, verbose=True)
+    sol = solver.solve(check=False, normalize=True, weight=False)
+    an = Analysis(sol)
+    an.plot()
+
+
 if __name__ == "__main__":
-    test_lid_driven_cavity_make_functions()
-    test_single_circle_make_functions()
-    test_three_circles_make_functions()
-    test_lid_driven_cavity_solve()
+    # test_lid_driven_cavity_make_functions()
+    # test_single_circle_make_functions()
+    # test_three_circles_make_functions()
+    # test_lid_driven_cavity_solve()
+    test_interior_polygon_solve()

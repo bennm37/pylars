@@ -1,4 +1,5 @@
 """Class for creating curved domains."""
+
 import numpy as np
 from pylars import Domain
 from pylars.numerics import aaa as aaa_func
@@ -23,7 +24,6 @@ class CurvedDomain(Domain):
     ):
         self.corners = np.array([])
         self.curve = curve
-        self.num_edge_points = num_edge_points
         self.deg_poly = deg_poly
         self.spacing = spacing
         self._generate_exterior_curve_points(curve, num_edge_points)
@@ -31,7 +31,6 @@ class CurvedDomain(Domain):
             self._generate_exterior_aaa_poles(aaa_mmax)
         else:
             self.poles = np.array([[]])
-            self.num_poles = len(self.poles)
         self.interior_curves = []
         self.centroids = {}
         self.movers = []
@@ -69,5 +68,3 @@ class CurvedDomain(Domain):
         else:
             _, poles, _, _ = aaa_func(f, z, mmax=mmax)
         exterior_poles = [pole for pole in poles if not self.__contains__(pole)]
-        self.poles = np.array(exterior_poles)
-        self.num_poles = len(self.poles)

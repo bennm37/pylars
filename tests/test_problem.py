@@ -1,4 +1,5 @@
 """Test the Problem class."""
+
 from test_settings import ATOL, RTOL
 
 
@@ -74,6 +75,7 @@ def test_domain_spacing_circle():
         deg_laurent=deg_laurent,
         centroid=0.0 + 0.0j,
     )
+    prob.domain.plot()
     assert np.allclose(prob.domain.boundary_points, Z_answer, atol=ATOL, rtol=RTOL)
 
 

@@ -1,4 +1,5 @@
 """Test boundary conditions."""
+
 from test_settings import ATOL, RTOL
 
 

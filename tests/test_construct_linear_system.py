@@ -1,4 +1,5 @@
 """Test contructing the linear system."""
+
 from test_settings import ATOL, RTOL
 
 

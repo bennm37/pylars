@@ -1,4 +1,5 @@
 """Child class for creating periodic domains."""
+
 from pylars import Domain
 import numpy as np
 from shapely import Polygon, Point
@@ -35,13 +36,13 @@ class PeriodicDomain(Domain):
         )
         self.rect = Polygon(np.array([corners.real, corners.imag]).T)
         super().__init__(
-            corners,
-            num_edge_points,
-            num_poles,
-            sigma,
-            length_scale,
-            deg_poly,
-            spacing,
+            corners=corners,
+            num_edge_points=num_edge_points,
+            num_poles=num_poles,
+            sigma=sigma,
+            length_scale=length_scale,
+            deg_poly=deg_poly,
+            spacing=spacing,
         )
         self.image_indices = {}
         self.periodicity = periodicity

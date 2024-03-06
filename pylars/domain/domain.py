@@ -27,24 +27,46 @@ class Domain:
     def __init__(
         self,
         corners,
+        deg_poly=24,
         num_edge_points=100,
         num_poles=24,
         sigma=4,
         length_scale=1,
-        deg_poly=10,
+        spacing="clustered",
+    ):
+        self.boundary_points = np.empty((0, 1))
+        self.error_points = {}
+        self.weights = np.empty((0, 1))
+        self.sides = np.empty((0), dtype="<U50")
+        self.indices = {}
+        self.interior_curves = []
+        self.centroids = {}
+        self.movers = []
+        self.deg_poly = deg_poly
+        self.poles = []
+        self.interior_laurents = []
+        self.exterior_laurents = []
+        self.interior_laurent_indices = {}
+        self.exterior_laurent_indices = {}
+        self.mirror_indices = {}
+        self.add_exterior_polygon(
+            corners, num_edge_points, num_poles, sigma, length_scale, spacing
+        )
+
+    def add_exterior_polygon(
+        self,
+        corners,
+        num_edge_points=100,
+        num_poles=24,
+        sigma=4,
+        length_scale=1,
         spacing="clustered",
     ):
         self.corners = np.array(corners)
-        self.num_edge_points = num_edge_points
-        self.num_poles = num_poles
-        self.sigma = sigma
-        self.length_scale = length_scale
-        self.deg_poly = deg_poly
-        self.spacing = spacing
-        self.check_input()
-        self._generate_exterior_polygon_points()
-        self._generate_lightning_poles()
-        self.exterior_points = self.boundary_points.copy()
+        self._generate_exterior_polygon_points(
+            corners=corners, num_edge_points=num_edge_points, spacing_type=spacing
+        )
+        self._generate_lightning_poles(corners, num_poles, sigma, length_scale)
         self.polygon = Polygon(
             np.array(
                 [
@@ -53,30 +75,21 @@ class Domain:
                 ]
             ).T
         )
-        self.interior_curves = []
-        self.centroids = {}
-        self.movers = []
-        self.interior_laurents = []
-        self.exterior_laurents = []
-        self.interior_laurent_indices = {}
-        self.exterior_laurent_indices = {}
-        self.mirror_indices = {}
 
-    def check_input(self):
-        """Check that the input is valid."""
-        if len(self.corners) <= 2:
-            raise ValueError("Domain must have at least 3 corners")
-        for corner in self.corners:
-            if not isinstance(corner, Number):
-                raise TypeError("Corners must be a list of complex numbers")
-        if (
-            not isinstance(self.num_edge_points, Integral)
-        ) or self.num_edge_points <= 0:
-            raise TypeError("num_edge_points must be a positive integer")
-        if (not isinstance(self.num_poles, Integral)) or self.num_poles < 0:
-            raise TypeError("num_poles must be a non negative integer")
-        if self.spacing != "linear" and self.spacing != "clustered":
-            raise ValueError("spacing must be 'linear' or 'clustered'")
+    def add_interior_polygon(
+        self,
+        corners,
+        num_edge_points=100,
+        num_poles=24,
+        sigma=4,
+        length_scale=1,
+        spacing="clustered",
+    ):
+        self._generate_interior_polygon_points(
+            corners=corners, num_edge_points=num_edge_points, spacing_type=spacing
+        )
+        self._generate_lightning_poles(corners[::-1], num_poles, sigma, length_scale)
+        self._update_polygon()
 
     def add_interior_curve(
         self,
@@ -95,6 +108,25 @@ class Domain:
         self._generate_interior_laurent_series(side, deg_laurent, centroid)
         if mirror_laurents:
             self._generate_mirror_laurents(side, deg_laurent, centroid, mirror_tol)
+        if aaa:
+            self._generate_aaa_poles(side, mmax=aaa_mmax)
+        return side
+
+    def add_inerior_polygon(
+        self,
+        corners,
+        num_points=100,
+        spacing="clustered",
+        lightining_poles=True,
+        length_scale=1,
+        sigma=4,
+        aaa=False,
+        aaa_mmax=10,
+    ):
+        """Create an interior curve from a parametric function."""
+        side = self._generate_interior_polygon_points(corners, num_points, spacing)
+        centroid = np.mean(corners)
+        self._update_polygon()
         if aaa:
             self._generate_aaa_poles(side, mmax=aaa_mmax)
         return side
@@ -224,40 +256,52 @@ class Domain:
         }
         self._update_polygon()
 
-    def _generate_exterior_polygon_points(self):
-        """Create a list of boundary points on each edge."""
-        if self.spacing == "linear":
-            spacing = np.linspace(0, 1, self.num_edge_points)
-            error_spacing = np.linspace(0, 1, self.num_edge_points * 2)
+    def _generate_exterior_polygon_points(self, corners, num_edge_points, spacing_type):
+        if spacing_type == "linear":
+            spacing = np.linspace(0, 1, num_edge_points)
         else:
-            spacing = (np.tanh(np.linspace(-10, 10, self.num_edge_points)) + 1) / 2
-            error_spacing = (
-                np.tanh(np.linspace(-10, 10, self.num_edge_points * 2)) + 1
-            ) / 2
-        nc = len(self.corners)
-        self.boundary_points = np.array(
-            [
-                self.corners[i]
-                + (self.corners[(i + 1) % nc] - self.corners[i]) * spacing
-                for i in range(len(self.corners))
+            spacing = (np.tanh(np.linspace(-10, 10, num_edge_points)) + 1) / 2
+        error_spacing = np.linspace(0, 1, num_edge_points * 2)
+        nc = len(corners)
+        generated_points = np.empty((0, 1))
+        for i in range(nc):
+            points = corners[i] + (corners[(i + 1) % nc] - corners[i]) * spacing
+            points = np.array(points).reshape(-1, 1)
+            self.boundary_points = np.concatenate([self.boundary_points, points])
+            generated_points = np.concatenate([generated_points, points])
+            error_points = (
+                corners[i] + (corners[(i + 1) % nc] - corners[i]) * error_spacing
+            )
+            self.error_points[str(i)] = np.array(error_points)
+            self.sides = np.append(self.sides, i)
+            self.indices[str(i)] = [
+                j for j in range(i * num_edge_points, (i + 1) * num_edge_points)
             ]
-        ).reshape(-1, 1)
-        self.error_points = {
-            str(i): self.corners[i]
-            + (self.corners[(i + 1) % nc] - self.corners[i]) * error_spacing
-            for i in range(len(self.corners))
-        }
-        self.sides = np.array([str(i) for i in range(len(self.corners))], dtype="<U50")
-        self.indices = {
-            side: [
-                i
-                for i in range(
-                    j * self.num_edge_points,
-                    (j + 1) * self.num_edge_points,
-                )
-            ]
-            for j, side in enumerate(self.sides)
-        }
+        self.exterior_points = generated_points
+
+    def _generate_interior_polygon_points(self, corners, num_edge_points, spacing_type):
+        side = str(len(self.sides))
+        self.sides = np.append(self.sides, side)
+        n_bp = len(self.boundary_points)
+        num_points = len(corners) * num_edge_points
+        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
+        self.interior_curves += [side]
+        self.centroids[side] = np.mean(corners)
+        nc = len(corners)
+        if spacing_type == "linear":
+            spacing = np.linspace(0, 1, num_edge_points)
+        else:
+            spacing = (np.tanh(np.linspace(-10, 10, num_edge_points)) + 1) / 2
+        error_spacing = np.linspace(0, 1, num_edge_points * 2)
+        nc = len(corners)
+        for i in range(nc):
+            points = corners[i] + (corners[(i + 1) % nc] - corners[i]) * spacing
+            points = np.array(points).reshape(-1, 1)
+            self.boundary_points = np.concatenate([self.boundary_points, points])
+            error_points = (
+                corners[i] + (corners[(i + 1) % nc] - corners[i]) * error_spacing
+            )
+        self.error_points[side] = np.array(error_points)
 
     def _generate_interior_curve_points(self, f, num_points):
         if not np.isclose(f(0), f(1)):
@@ -270,10 +314,10 @@ class Domain:
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
         side = str(len(self.sides))
-        self.sides = np.append(self.sides, side)
-        self.interior_curves += [side]
         n_bp = len(self.boundary_points)
+        self.sides = np.append(self.sides, side)
         self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
+        self.interior_curves += [side]
         self.boundary_points = np.concatenate(
             [self.boundary_points, points.reshape(-1, 1)], axis=0
         )
@@ -308,43 +352,32 @@ class Domain:
             )
         self.sides = np.concatenate([self.sides, [str(new)]])
 
-    def _generate_lightning_poles(self):
+    def _generate_lightning_poles(self, corners, num_poles, sigma, length_scale):
         """Generate exponentially clustered lightning poles.
 
-        Poles are clustered exponentially.
+        Poles are clustered exponentially. If the corners are positively oriented,
+        returns exterior poles. If negatively oriented, returns interior poles.
         """
-        pole_spacing = cluster(self.num_poles, self.length_scale, self.sigma)
+        pole_spacing = cluster(num_poles, length_scale, sigma)
+        nc = len(corners)
         # find the exterior angle bisector at each corner
-        bisectors = np.array(
-            [
-                (self.corners[i] - self.corners[i - 1])
-                / np.abs(self.corners[i] - self.corners[i - 1])
-                + (self.corners[i] - self.corners[(i + 1) % len(self.corners)])
-                / np.abs(self.corners[i] - self.corners[(i + 1) % len(self.corners)])
-                for i in range(len(self.corners))
-            ]
-        )
-        bisectors /= np.abs(bisectors)
-        # make an array of length len(self.corners) which is one
-        # if the midpoint of the line joining the two neighbouring corners
-        # is inside the domain and -1 otherwise
-        signs = np.array(
-            [
-                np.sign(
-                    np.cross(
-                        cart(self.corners[i] - self.corners[i - 1]),
-                        cart(
-                            self.corners[(i + 1) % len(self.corners)] - self.corners[i]
-                        ),
-                    )
+        for i in range(nc):
+            left = corners[i] - corners[i - 1]
+            right = corners[(i + 1) % nc] - corners[i]
+            bisector = left / np.abs(left) - right / np.abs(right)
+            bisector /= np.abs(bisector)
+            # make an array of length nc which is one
+            # if the midpoint of the line joining the two neighbouring corners
+            # is inside the domain and -1 otherwise
+            sign = np.sign(
+                np.cross(
+                    cart(left),
+                    cart(right),
                 )
-                for i in range(len(self.corners))
+            )
+            self.poles = list(self.poles) + [
+                corners[i] + sign * bisector * pole_spacing
             ]
-        )
-        self.poles = [
-            self.corners[i] + signs[i] * bisectors[i] * pole_spacing
-            for i in range(len(self.corners))
-        ]
 
     def _generate_clustered_poles(
         self, num_poles, location, direction, length_scale=1, sigma=4
@@ -366,7 +399,7 @@ class Domain:
         if centroid is None:
             centroid = self._get_centroid(side)
         self.centroids[side] = centroid
-        self.interior_laurents.append((centroid, degree))
+        self.interior_laurents.append((np.complex128(centroid), np.int64(degree)))
         if side not in self.interior_laurent_indices.keys():
             self.interior_laurent_indices[side] = [len(self.interior_laurents) - 1]
         else:
@@ -407,9 +440,12 @@ class Domain:
                 else:
                     self.mirror_indices[side] += [len(self.exterior_laurents) - 1]
 
-    def _generate_aaa_poles(self, side, mmax=None):
+    def _generate_aaa_poles(self, side=None, mmax=None):
         """Generate aaa poles that lie outside the domain."""
-        z = self.boundary_points[self.indices[side]][:-1]
+        if side is None:
+            z = self.boundary_points[:-1]
+        else:
+            z = self.boundary_points[self.indices[side]][:-1]
         f = np.conj(z)
         if mmax is None:
             _, poles, _, _ = aaa(f, z)

@@ -26,9 +26,7 @@ class Solver:
         self.verbose = verbose
         self.domain = problem.domain
         self.boundary_conditions = problem.boundary_conditions
-        self.num_edge_points = self.domain.num_edge_points
         self.boundary_points = self.domain.boundary_points
-        self.num_poles = self.domain.num_poles
         self.poles = self.domain.poles
         self.degree = self.domain.deg_poly
         self.creation_time = perf_counter()
