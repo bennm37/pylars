@@ -30,11 +30,11 @@ def test_domain_error_points():
     error_points_circle = prob.domain.error_points["4"]
     for i in range(4):
         assert np.allclose(
-            error_points_rect[i],
+            error_points_rect[i].flatten(),
             np.linspace(corners[i], corners[(i + 1) % 4], num_edge_points * 2),
         )
     assert np.allclose(
-        error_points_circle,
+        error_points_circle.flatten(),
         circle(np.linspace(0, 1, num_circle_points * 2)),
     )
 

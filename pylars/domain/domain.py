@@ -24,19 +24,10 @@ class Domain:
     The corners must be in anticlockwise order.
     """
 
-    def __init__(
-        self,
-        corners,
-        deg_poly=24,
-        num_edge_points=100,
-        num_poles=24,
-        sigma=4,
-        length_scale=1,
-        spacing="clustered",
-    ):
+    def __init__(self, deg_poly=24):
         self.boundary_points = np.empty((0, 1))
         self.error_points = {}
-        self.weights = np.empty((0, 1))
+        self.weights = np.empty(0)
         self.sides = np.empty((0), dtype="<U50")
         self.indices = {}
         self.interior_curves = []
@@ -49,9 +40,21 @@ class Domain:
         self.interior_laurent_indices = {}
         self.exterior_laurent_indices = {}
         self.mirror_indices = {}
-        self.add_exterior_polygon(
-            corners, num_edge_points, num_poles, sigma, length_scale, spacing
-        )
+
+    def add_side(self, points, error_points, weights=None):
+        side = f"{len(self.sides)}"
+        n_bp = self.boundary_points.shape[0]
+        num_points = len(points)
+        points = np.array(points).reshape(-1, 1)
+        error_points = np.array(error_points).reshape(-1, 1)
+        if weights is None:
+            weights = np.ones(points.shape[0])
+        self.boundary_points = np.concatenate([self.boundary_points, points])
+        self.error_points[side] = np.array(error_points)
+        self.weights = np.concatenate([self.weights, weights])
+        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
+        self.sides = np.append(self.sides, side)
+        return side
 
     def add_exterior_polygon(
         self,
@@ -126,6 +129,7 @@ class Domain:
         """Create an interior curve from a parametric function."""
         side = self._generate_interior_polygon_points(corners, num_points, spacing)
         centroid = np.mean(corners)
+        self._generate_interior_laurent_series(side, 0, centroid)
         self._update_polygon()
         if aaa:
             self._generate_aaa_poles(side, mmax=aaa_mmax)
@@ -156,11 +160,7 @@ class Domain:
 
     def add_point(self, point):
         """Add a point to the domain."""
-        self.boundary_points = np.append(self.boundary_points, point).reshape(-1, 1)
-        side = f"{len(self.sides)}"
-        self.error_points[side] = np.array(point)
-        self.sides = np.append(self.sides, side)
-        self.indices[side] = len(self.boundary_points) - 1
+        self.add_side([point], [point])
 
     def remove(self, indices):
         """Remove the points at the given indices and adjust the indices."""
@@ -259,49 +259,47 @@ class Domain:
     def _generate_exterior_polygon_points(self, corners, num_edge_points, spacing_type):
         if spacing_type == "linear":
             spacing = np.linspace(0, 1, num_edge_points)
+            weights = np.ones(num_edge_points)
         else:
             spacing = (np.tanh(np.linspace(-10, 10, num_edge_points)) + 1) / 2
+            weights = 1 / np.min([spacing, 1 - spacing], axis=0)
         error_spacing = np.linspace(0, 1, num_edge_points * 2)
         nc = len(corners)
         generated_points = np.empty((0, 1))
         for i in range(nc):
-            points = corners[i] + (corners[(i + 1) % nc] - corners[i]) * spacing
-            points = np.array(points).reshape(-1, 1)
-            self.boundary_points = np.concatenate([self.boundary_points, points])
+            side_vector = corners[(i + 1) % nc] - corners[i]
+            dist = np.abs(side_vector)
+            points = np.array(corners[i] + side_vector * spacing).reshape(-1, 1)
             generated_points = np.concatenate([generated_points, points])
-            error_points = (
-                corners[i] + (corners[(i + 1) % nc] - corners[i]) * error_spacing
-            )
-            self.error_points[str(i)] = np.array(error_points)
-            self.sides = np.append(self.sides, i)
-            self.indices[str(i)] = [
-                j for j in range(i * num_edge_points, (i + 1) * num_edge_points)
-            ]
+            error_points = corners[i] + side_vector * error_spacing
+            self.add_side(points, error_points, weights / dist)
         self.exterior_points = generated_points
 
     def _generate_interior_polygon_points(self, corners, num_edge_points, spacing_type):
-        side = str(len(self.sides))
-        self.sides = np.append(self.sides, side)
-        n_bp = len(self.boundary_points)
-        num_points = len(corners) * num_edge_points
-        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
-        self.interior_curves += [side]
-        self.centroids[side] = np.mean(corners)
         nc = len(corners)
         if spacing_type == "linear":
             spacing = np.linspace(0, 1, num_edge_points)
+            weights = np.ones(num_edge_points)
         else:
             spacing = (np.tanh(np.linspace(-10, 10, num_edge_points)) + 1) / 2
+            weights = np.min([spacing, 1 - spacing], axis=0)
         error_spacing = np.linspace(0, 1, num_edge_points * 2)
         nc = len(corners)
+        total_points = np.empty(0)
+        total_error_points = np.empty(0)
+        total_weights = np.empty(0)
         for i in range(nc):
-            points = corners[i] + (corners[(i + 1) % nc] - corners[i]) * spacing
-            points = np.array(points).reshape(-1, 1)
-            self.boundary_points = np.concatenate([self.boundary_points, points])
-            error_points = (
-                corners[i] + (corners[(i + 1) % nc] - corners[i]) * error_spacing
-            )
-        self.error_points[side] = np.array(error_points)
+            side_vector = corners[(i + 1) % nc] - corners[i]
+            dist = np.abs(side_vector)
+            points = corners[i] + side_vector * spacing
+            error_points = corners[i] + side_vector * error_spacing
+            total_points = np.concatenate([total_points, points])
+            total_error_points = np.concatenate([total_error_points, error_points])
+            total_weights = np.concatenate([total_weights, weights / dist])
+
+        side = self.add_side(total_points, total_error_points, total_weights)
+        self.interior_curves += [side]
+        self.centroids[side] = np.mean(corners)
 
     def _generate_interior_curve_points(self, f, num_points):
         if not np.isclose(f(0), f(1)):
@@ -313,15 +311,8 @@ class Domain:
         line = LineString(np.array([points.real, points.imag]).T)
         if not line.is_simple:
             raise ValueError("Curve must not intersect itself")
-        side = str(len(self.sides))
-        n_bp = len(self.boundary_points)
-        self.sides = np.append(self.sides, side)
-        self.indices[side] = [i for i in range(n_bp, n_bp + num_points)]
+        side = self.add_side(points, error_points)
         self.interior_curves += [side]
-        self.boundary_points = np.concatenate(
-            [self.boundary_points, points.reshape(-1, 1)], axis=0
-        )
-        self.error_points[side] = error_points
         return side
 
     def _name_side(self, old, new):
@@ -340,7 +331,7 @@ class Domain:
     def _group_sides(self, old_sides, new):
         """Rename a list of side labels as a single side label."""
         self.indices[str(new)] = []
-        self.error_points[str(new)] = []
+        self.error_points[str(new)] = np.empty((0,1))
         for side in old_sides:
             self.sides = np.delete(self.sides, np.where(self.sides == side))
             self.indices[str(new)] += self.indices.pop(side)

@@ -11,7 +11,15 @@ class PeriodicDomain(Domain):
     Currently only rectangular domains are supported.
     """
 
-    def __init__(
+    def __init__(self, deg_poly=20, periodicity="xy"):
+        super().__init__(
+            deg_poly=deg_poly,
+        )
+        self.image_indices = {}
+        self.periodicity = periodicity
+        self.periodic_curves = []
+
+    def add_periodic_domain(
         self,
         length,
         height,
@@ -19,11 +27,8 @@ class PeriodicDomain(Domain):
         num_poles=0,
         sigma=0,
         length_scale=0,
-        deg_poly=10,
         spacing="linear",
-        periodicity="xy",
     ):
-        # anticlockwise from top left
         self.length = length
         self.height = height
         corners = np.array(
@@ -34,19 +39,14 @@ class PeriodicDomain(Domain):
                 length / 2 - 1j * height / 2,
             ]
         )
-        self.rect = Polygon(np.array([corners.real, corners.imag]).T)
-        super().__init__(
-            corners=corners,
+        self.add_exterior_polygon(
+            corners,
             num_edge_points=num_edge_points,
             num_poles=num_poles,
             sigma=sigma,
             length_scale=length_scale,
-            deg_poly=deg_poly,
             spacing=spacing,
         )
-        self.image_indices = {}
-        self.periodicity = periodicity
-        self.periodic_curves = []
 
     def add_periodic_curve(
         self,
@@ -126,7 +126,7 @@ class PeriodicDomain(Domain):
         nnic = self.get_nn_image_centroids(centroid, original=False)
         for image in nnic:
             point = Point(np.array([image.real, image.imag]))
-            if self.rect.exterior.distance(point) < tol:
+            if self.polygon.exterior.distance(point) < tol:
                 self._generate_exterior_laurent_series(
                     side,
                     deg_laurent,

@@ -34,13 +34,13 @@ class Problem:
         """Create a new Domain object from a list of corners."""
         if self.domain is not None:
             raise Warning("Deleting old domain object and creating a new one.")
-        self.domain = Domain(
+        self.domain = Domain(deg_poly=deg_poly)
+        self.domain.add_exterior_polygon(
             corners=corners,
             num_edge_points=num_edge_points,
             num_poles=num_poles,
             length_scale=length_scale,
             sigma=sigma,
-            deg_poly=deg_poly,
             spacing=spacing,
         )
         self.domain_type = "polygon"
@@ -59,14 +59,14 @@ class Problem:
         """Create a PeriodicDomain object from its aspect ratio."""
         if self.domain is not None:
             raise Warning("Deleting old domain object and creating a new one.")
-        self.domain = PeriodicDomain(
+        self.domain = PeriodicDomain(deg_poly=deg_poly)
+        self.domain.add_periodic_domain(
             length=length,
             height=height,
             num_edge_points=num_edge_points,
             num_poles=num_poles,
             length_scale=length_scale,
             sigma=sigma,
-            deg_poly=deg_poly,
             spacing=spacing,
         )
         self.domain_type = "periodic"
@@ -83,13 +83,12 @@ class Problem:
         """Add a curved domain."""
         if self.domain is not None:
             raise Warning("Deleting old domain object and creating a new one.")
-        self.domain = CurvedDomain(
+        self.domain = CurvedDomain(deg_poly=deg_poly)
+        self.domain.add_exterior_curve(
             curve,
             num_edge_points=num_edge_points,
             aaa=aaa,
             aaa_mmax=aaa_mmax,
-            deg_poly=deg_poly,
-            spacing=spacing,
         )
         self.domain_type = "curved"
 

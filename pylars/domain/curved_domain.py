@@ -13,33 +13,21 @@ from shapely import LineString
 class CurvedDomain(Domain):
     """Class for creating curved domains."""
 
-    def __init__(
+    def __init__(self, deg_poly):
+        super().__init__(deg_poly=deg_poly)
+
+    def add_exterior_curve(
         self,
         curve,
         num_edge_points=500,
         aaa=False,
         aaa_mmax=None,
-        deg_poly=30,
-        spacing="linear",
     ):
-        self.corners = np.array([])
-        self.curve = curve
-        self.deg_poly = deg_poly
-        self.spacing = spacing
         self._generate_exterior_curve_points(curve, num_edge_points)
         if aaa:
             self._generate_exterior_aaa_poles(aaa_mmax)
         else:
             self.poles = np.array([[]])
-        self.interior_curves = []
-        self.centroids = {}
-        self.movers = []
-        self.interior_laurents = []
-        self.exterior_laurents = []
-        self.interior_laurent_indices = {}
-        self.exterior_laurent_indices = {}
-        self.mirror_indices = {}
-        self._update_polygon()
 
     def _generate_exterior_curve_points(self, f, num_points):
         if not np.isclose(f(0), f(1)):

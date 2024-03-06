@@ -7,7 +7,8 @@ def test_remove_points():
     import numpy as np
 
     corners = [0, 1, 1 + 1j, 1j]
-    dom = Domain(corners, num_edge_points=100, spacing="linear")
+    dom = Domain()
+    dom.add_exterior_polygon(corners, num_edge_points=100, spacing="linear")
     dom.remove(np.array(range(75, 125)))
     assert np.all(dom.indices["0"] == np.array(np.array(range(75))))
     assert np.all(dom.indices["1"] == np.array(np.array(range(75, 150))))
@@ -23,7 +24,8 @@ def test_remove_points_2():
     import numpy as np
 
     corners = [-1, 1, 1 + 1j, 1j]
-    dom = Domain(corners, num_edge_points=10, spacing="linear")
+    dom = Domain()
+    dom.add_exterior_polygon(corners, num_edge_points=10, spacing="linear")
     dom.remove(np.array(range(16, 28, 2)))
     assert len(dom.boundary_points) == 34
     assert np.all(dom.indices["0"] == np.array(np.array(range(10))))
@@ -42,7 +44,8 @@ def test_get_nnic():
 
     warnings.filterwarnings("error", category=DeprecationWarning)
     with warnings.catch_warnings():
-        dom = PeriodicDomain(2, 2)
+        dom = PeriodicDomain()
+        dom.add_periodic_domain(2, 2)
         R = 0.5
         centroid = 0.75 + 0.75j
         circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
@@ -73,7 +76,8 @@ def test_generate_periodic_curve():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    dom = PeriodicDomain(2, 2, num_edge_points=300)
+    dom = PeriodicDomain()
+    dom.add_periodic_domain(2, 2, num_edge_points=300)
     R = 0.5
     centroid = 0.75 + 0.75j
     circle = lambda t: centroid + R * np.exp(2j * np.pi * t)
